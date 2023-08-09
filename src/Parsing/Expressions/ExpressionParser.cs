@@ -4,90 +4,116 @@ namespace NMLServer.Parsing.Expression;
 
 internal class ExpressionParser
 {
+    private static ExpressionAST? FromToken(Token token)
+    {
+        return token switch
+        {
+            LiteralToken literalToken => new Variable(null, literalToken),
+            NumericToken numericToken => new Number(null, numericToken),
+            BinaryOpToken binaryOpToken => new BinaryOperation(null, binaryOpToken),
+            BaseRecordingToken baseRecordingToken => throw new NotImplementedException(),
+            BracketToken bracketToken => throw new NotImplementedException(),
+            ColonToken colonToken => throw new NotImplementedException(),
+            FailedToken failedToken => throw new NotImplementedException(),
+            FeatureToken featureToken => throw new NotImplementedException(),
+            KeywordToken keywordToken => throw new NotImplementedException(),
+            SemicolonToken semicolonToken => throw new NotImplementedException(),
+            TernaryOpToken ternaryOpToken => throw new NotImplementedException(),
+            UnaryOpToken unaryOpToken => throw new NotImplementedException(),
+            _ => throw new ArgumentOutOfRangeException(nameof(token))
+        };
+    }
+
     public (ExpressionAST?, Token?) Parse(Token[] tokens, int start)
     {
         int i = start;
         int max = tokens.Length;
 
-        ExpressionAST? tree = null;
-        
+        if (i >= max)
+        {
+            return (null, null);
+        }
+        var root = FromToken(tokens[i]);
+        i++;
+        if (root == null)
+        {
+            return (null, tokens[i]);
+        }
+        ExpressionAST current = root;
+
         while (i < max)
         {
-            var current = tokens[i];
-            switch (current)
+            var token = tokens[i];
+            Console.WriteLine($"Parsing on {token};");
+            switch (token)
             {
+                case LiteralToken literalToken:
+                    switch (current)
+                    {
+                        // Two literals in a raw is a fail, return
+                        case Variable:
+                            return (root, token);
+
+                        case BinaryOperation binaryOperation:
+                            if (binaryOperation.Right != null)
+                            {
+                                return (root, token);
+                            }
+                            binaryOperation.Right = new Variable(binaryOperation, literalToken);
+                            break;
+                    }
+                    break;
                 case BinaryOpToken binaryOpToken:
-                    while (true)
+                    switch (current)
                     {
-                        switch (tree)
-                        {
-                            case null:
-                                break;
-                            case ValueNode valueNode:
-                                break;
-                            case Variable variable:
-                                break;
-                            case ArrayExpression arrayExpression:
-                                break;
-                            case BinaryOperation binaryOperation:
-                                break;
-                            case FunctionCall functionCall:
-                                break;
-                            case LiteralString literalString:
-                                break;
-                            case Number number:
-                                break;
-                            case ParentedExpression parentedExpression:
-                                break;
-                            case TernaryOperation ternaryOperation:
-                                break;
-                            case UnaryOperation unaryOperation:
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException(nameof(tree));
-                        }
-                    }
-                    throw new NotImplementedException();
-                case BracketToken bracketToken:
-                    switch (bracketToken.Bracket)
-                    {
-                        case '(':
-                            throw new NotImplementedException();
-                        case '[':
-                            throw new NotImplementedException();
-                        // Any other bracket will finish the expression
+                        case BinaryOperation binaryOperation:
+                            if (binaryOperation.Right == null)
+                            {
+                                throw new NotImplementedException("Failing scheme");
+                            }
+                            else if (binaryOpToken.precedence > binaryOperation.Operation.precedence)
+                            {
+                                var right = new BinaryOperation(binaryOperation, binaryOpToken)
+                                {
+                                    Left = binaryOperation.Right
+                                };
+                                binaryOperation.Right = right;
+                                current = right;
+                            }
+                            else
+                            {
+                                // TODO: propagate until precedence is less, then do tree rotation
+                                throw new NotImplementedException();
+                            }
+                            break;
+                        case Variable:
+                            if (current.Parent == null)
+                            {
+                                var next = new BinaryOperation(null, binaryOpToken)
+                                {
+                                    Left = current
+                                };
+                                current.Parent = next;
+                                current = next;
+                                root = current;
+                            }
+                            else
+                            {
+                                current = current.Parent.Replace(current,
+                                    new BinaryOperation(current, binaryOpToken));
+                            }
+                            break;
                         default:
-                            return (tree, current);
+                            throw new ArgumentOutOfRangeException(nameof(current));
                     }
-                case KeywordToken { Type: "var" }:
-                    throw new NotImplementedException();
-                case LiteralToken:
-                    throw new NotImplementedException();
-                case NumericToken:
-                    throw new NotImplementedException();
-                case TernaryOpToken:
-                    throw new NotImplementedException();
-                case UnaryOpToken:
-                    throw new NotImplementedException();
-                // * May be expected. Used in ternary expression and has lowest (after commas) precedence,
-                //   so the tree should be returned with it as ender. 
-                case ColonToken:
-                // These will fail or end the expression, return it and |current| as sequence ender.
-                // * any keyword except "var" is invalid token
-                case KeywordToken:
-                // * Unexpected, fail
-                case FeatureToken:
-                // * Unexpected, fail
-                case FailedToken:
-                // * May be expected. Can end valid expression
-                case SemicolonToken:
-                    return (tree, current);
+                    break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(current));
+                    throw new ArgumentOutOfRangeException(nameof(token));
             }
+
             i++;
         }
 
-        return (tree, null);
+        return (root, null);
     }
 }

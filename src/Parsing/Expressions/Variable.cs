@@ -6,10 +6,10 @@ internal class Variable : ValueNode
 {
     public LiteralToken Value;
 
-    public Variable(LiteralToken value)
+    public Variable(ExpressionAST? parent, LiteralToken value) : base(parent)
     {
         Value = value;
     }
 
-    public override string ToString() => $"Variable: {Value.value}";
+    public override string ToString() => $"(Var: {Value})";
 }

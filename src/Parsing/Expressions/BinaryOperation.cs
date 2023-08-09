@@ -8,13 +8,28 @@ internal class BinaryOperation : ExpressionAST
     public BinaryOpToken Operation;
     public ExpressionAST? Right;
 
-    public BinaryOperation(ExpressionAST? left, BinaryOpToken operation, ExpressionAST? right)
+    public BinaryOperation(ExpressionAST? parent, BinaryOpToken binaryOpToken) : base(parent)
     {
-        Left = left;
-        Operation = operation;
-        Right = right;
+        Operation = binaryOpToken;
     }
 
-    public override string ToString() =>
-        $"Bin ({Operation.Operation}), Left={{{Left}}}, Right={{{Right}}}";
+    public override ExpressionAST Replace(ExpressionAST target, ExpressionAST value)
+    {
+        if (Left == target)
+        {
+            Left = value;
+        }
+        else if (Right != target)
+        {
+            throw new Exception();
+        }
+        else
+        {
+            Right = value;
+        }
+        
+        return value;
+    }
+
+    public override string ToString() => $"({Left} {Operation?.Operation} {Right})";
 }
