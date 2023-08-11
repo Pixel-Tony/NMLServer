@@ -2,10 +2,10 @@
 
 internal class UnaryOpToken : Token
 {
-    public readonly bool IsLogical;
+    public readonly char Sign;
 
     public UnaryOpToken(char token)
     {
-        IsLogical = token == '!';
+        Sign = token;
     }
 }

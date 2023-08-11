@@ -1,18 +1,34 @@
-﻿namespace NMLServer.Lexing.Tokens;
+﻿using System.Text;
+
+namespace NMLServer.Lexing.Tokens;
 
 internal abstract class BaseRecordingToken : Token
 {
-    public string value { get; private set; }
+    public string value => _builder.ToString();
 
-    protected BaseRecordingToken(string s = "")
+    private readonly StringBuilder _builder;
+
+    protected BaseRecordingToken(string s)
     {
-        value = s;
+        _builder = new StringBuilder();
+        _builder.Append(s);
     }
 
     protected BaseRecordingToken(char c)
     {
-        value = c.ToString();
+        _builder = new StringBuilder();
+        _builder.Append(c);
     }
 
-    public void Add(char prefix) => value += prefix;
+    protected BaseRecordingToken()
+    {
+        _builder = new StringBuilder();
+    }
+
+    protected BaseRecordingToken(BaseRecordingToken another)
+    {
+        _builder = another._builder;
+    }
+
+    public void Add(char prefix) => _builder.Append(prefix);
 }
