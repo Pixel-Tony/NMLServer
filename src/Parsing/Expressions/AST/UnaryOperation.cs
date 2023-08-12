@@ -12,5 +12,5 @@ internal class UnaryOperation : ExpressionAST
         _operation = operation;
     }
 
-    public override string ToString() => $"({_operation.Sign}{Expression})";
+    public override string ToString() => $"({_operation.Sign}{Expression?.ToString() ?? "."})";
 }

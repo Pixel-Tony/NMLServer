@@ -8,11 +8,19 @@ internal class Program
 {
     public static void Main(string[] args)
     {
-        const string test = "!3 + !7 * !!~~!5 - ~6";
-        var tokens = new Lexer(test).Tokenize().ToArray();
-        var parser = new ExpressionParser(tokens);
-        var (a, b) = parser.Parse(0);
-        Console.WriteLine(a?.ToString() ?? (a is null).ToString());
-        Console.WriteLine((b as LiteralToken)?.value ?? null);
+        string[] tests =
+        {
+            "[1, 2, 3, a, 1 + 2, 6 | 8, !9]",
+            "7 - !(33",
+            "a | | b + c(d + e"
+        };
+        var tokensArrays = tests.Select(test => new Lexer(test).Tokenize().ToArray());
+        var parsers = tokensArrays.Select(tokens => new ExpressionParser(tokens));
+        var list = parsers.Select(parser => parser.Parse(0));
+        foreach (var (a, b) in list)
+        {
+            Console.WriteLine(a?.ToString() ?? (a is null).ToString());
+            Console.WriteLine((b as LiteralToken)?.value ?? null);
+        }
     }
 }

@@ -2,28 +2,31 @@
 
 namespace NMLServer.Parsing.Expression;
 
-internal class BinaryOperation : ExpressionAST
+internal class BinaryOperation : ExpressionAST, IHasPrecedence
 {
-    public ExpressionAST? Left;
-    public readonly BinaryOpToken Operation;
+    private ExpressionAST? _left;
+    private readonly BinaryOpToken _operation;
     public ExpressionAST? Right;
 
-    public BinaryOperation(ExpressionAST? parent, BinaryOpToken binaryOpToken) : base(parent)
-    {
-        Operation = binaryOpToken;
-    }
+    public int precedence => _operation.precedence;
 
-    public BinaryOperation(ExpressionAST? parent, ExpressionAST? left, BinaryOpToken op) 
-        : this(parent, op)
-    {
-        Left = left;
-    }
-    
+    public static bool operator >(BinaryOperation left, IHasPrecedence right) => left.precedence > right.precedence;
+    public static bool operator <(BinaryOperation left, IHasPrecedence right) => left.precedence < right.precedence;
+
+    public override string ToString() =>
+        $"({_left?.ToString() ?? "."} {_operation.Operation} {Right?.ToString() ?? "."})";
+
+    public BinaryOperation(ExpressionAST? parent, BinaryOpToken binaryOpToken) : base(parent) =>
+        _operation = binaryOpToken;
+
+    public BinaryOperation(ExpressionAST? parent, ExpressionAST? left, BinaryOpToken op) : this(parent, op) =>
+        _left = left;
+
     public override ExpressionAST Replace(ExpressionAST target, ExpressionAST value)
     {
-        if (Left == target)
+        if (_left == target)
         {
-            Left = value;
+            _left = value;
         }
         else if (Right != target)
         {
@@ -33,9 +36,6 @@ internal class BinaryOperation : ExpressionAST
         {
             Right = value;
         }
-        
         return value;
     }
-
-    public override string ToString() => $"({Left} {Operation?.Operation} {Right})";
 }

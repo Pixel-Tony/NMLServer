@@ -1,6 +1,6 @@
-﻿#define DEBUG_CONSOLE
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using NMLServer.Lexing.Tokens;
+using static NMLServer.Parsing.Grammar;
 
 namespace NMLServer.Parsing.Expression;
 
@@ -20,8 +20,6 @@ internal class ExpressionParser
 
     // BracketToken ColonToken FailedToken FeatureToken KeywordToken SemicolonToken TernaryOpToken
 
-    // Array FunctionCall Keyword Parens Ternary
-
     public (ExpressionAST?, Token?) Parse(int start)
     {
         int i = start;
@@ -33,27 +31,135 @@ internal class ExpressionParser
         {
             return (null, null);
         }
-        var root = TokenToAST(_tokens[i]);
-        i++;
+        var firstToken = _tokens[i];
+        var root = TokenToAST(firstToken);
         if (root == null)
         {
-            return (null, _tokens[i]);
+            return (null, firstToken);
         }
         ExpressionAST current = root;
+        i++;
 
         while (i < _max)
         {
             var token = _tokens[i];
-#if DEBUG_CONSOLE
-            Console.WriteLine($"Parsing on {token};");
-#endif
+            // Console.WriteLine($"Parsing on {token};");
             switch (token)
             {
-                case KeywordToken keywordToken:
-                    if (Grammar.NotExpressionKeywords.Contains(keywordToken.value))
+                case ColonToken colonToken:
+                    switch (current)
                     {
-                        return (root, token);
+                        case TernaryOperation { Colon: null } ternaryOperation:
+                            ternaryOperation.Colon = colonToken;
+                            break;
+                        case TernaryOperation:
+                        case FunctionCall:
+                        case ParentedExpression:
+                        case BinaryOperation:
+                        case UnaryOperation:
+                        case IHoldsSingleToken:
+                            if (current.Parent == null)
+                            {
+                                return (root, token);
+                            }
+                            current = current.Parent;
+                            continue;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(current));
                     }
+                    break;
+                case FailedToken:
+                    return (root, token);
+                case TernaryOpToken:
+                    throw new NotImplementedException();
+                case BracketToken { Bracket: '(' or '[' } openingParen:
+                {
+                    switch (current)
+                    {
+                        case TernaryOperation:
+                            throw new NotImplementedException();
+                        case FunctionCall { Arguments: null } futureCall:
+                            futureCall.Arguments = new ParentedExpression(futureCall, openingParen);
+                            current = futureCall.Arguments;
+                            break;
+                        case BinaryOperation { Right: null } binaryOperation:
+                            binaryOperation.Right = new ParentedExpression(binaryOperation, openingParen);
+                            current = binaryOperation.Right;
+                            break;
+                        case BinaryOperation binaryOperation:
+                            current = binaryOperation.Right;
+                            continue;
+                        case ParentedExpression { ClosingBracket: null, Expression: null } openedParen:
+                            openedParen.Expression = new ParentedExpression(openedParen, openingParen);
+                            current = openedParen.Expression;
+                            break;
+                        case ParentedExpression { ClosingBracket: null } parentedExpression:
+                            current = parentedExpression.Expression;
+                            continue;
+                        case ParentedExpression:
+                        case FunctionCall:
+                            return (root, token);
+                        case UnaryOperation { Expression: null } unaryOperation:
+                        {
+                            unaryOperation.Expression = new ParentedExpression(unaryOperation, openingParen);
+                            current = unaryOperation.Expression;
+                            break;
+                        }
+                        case UnaryOperation unaryOperation:
+                        {
+                            current = unaryOperation.Expression;
+                            continue;
+                        }
+                        case IHoldsSingleToken valueNode:
+                            var call = new FunctionCall(current.Parent, valueNode.token);
+                            var parens = new ParentedExpression(call, openingParen);
+                            call.Arguments = parens;
+                            if (current.Parent == null)
+                            {
+                                root = call;
+                            }
+                            else
+                            {
+                                current.Parent.Replace(current, call);
+                            }
+                            current = parens;
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(current));
+                    }
+                    break;
+                }
+                case BracketToken { Bracket: ')' or ']' } closingParen:
+                    switch (current)
+                    {
+                        case ParentedExpression { Expression: null, ClosingBracket: null } openParen:
+                            openParen.ClosingBracket = closingParen;
+                            break;
+                        case ParentedExpression { ClosingBracket: null } parentedExpression:
+                            parentedExpression.ClosingBracket = closingParen;
+                            break;
+                        case UnaryOperation:
+                        case BinaryOperation:
+                        case ParentedExpression:
+                        case FunctionCall:
+                        case IHoldsSingleToken:
+                            if (current.Parent == null)
+                            {
+                                return (root, token);
+                            }
+                            current = current.Parent;
+                            continue;
+                        case TernaryOperation:
+                            throw new NotImplementedException();
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(current));
+                    }
+                    break;
+                case BracketToken { Bracket: '{' or '}' }:
+                case SemicolonToken:
+                case KeywordToken keywordToken when NotExpressionKeywords.Contains(keywordToken.value):
+                    return (root, token);
+                case KeywordToken keywordToken:
                     switch (current)
                     {
                         case UnaryOperation { Expression: null } unaryOperation:
@@ -64,12 +170,18 @@ internal class ExpressionParser
                             binaryOperation.Right = new FunctionCall(binaryOperation, keywordToken);
                             current = binaryOperation.Right;
                             break;
+                        case ParentedExpression { Expression: null, ClosingBracket: null } parentedExpression:
+                            parentedExpression.Expression = new FunctionCall(parentedExpression, keywordToken);
+                            current = parentedExpression.Expression;
+                            break;
+                        case ParentedExpression:
                         case UnaryOperation:
                         case BinaryOperation:
-                        case LiteralString:
-                        case Number:
-                        case Identifier:
+                        case IHoldsSingleToken:
+                        case FunctionCall:
                             return (root, token);
+                        case TernaryOperation:
+                            throw new NotImplementedException();
                         default:
                             throw new ArgumentOutOfRangeException(nameof(current));
                     }
@@ -85,68 +197,45 @@ internal class ExpressionParser
                             binaryOperation.Right = new UnaryOperation(binaryOperation, unaryOpToken);
                             current = binaryOperation.Right;
                             break;
+                        case FunctionCall { Arguments: null }:
+                            return (root, token);
+                        case FunctionCall:
+                            throw new NotImplementedException();
+                        case ParentedExpression:
+                            throw new NotImplementedException();
+                        case TernaryOperation:
+                            throw new NotImplementedException();
                         case UnaryOperation:
                         case BinaryOperation:
-                        case LiteralString:
-                        case Number:
-                        case Identifier:
+                        case IHoldsSingleToken:
                             return (root, token);
                         default:
                             throw new ArgumentOutOfRangeException(nameof(current));
                     }
                     break;
-                case LiteralToken literalToken:
+                case BaseValueToken valueToken:
                     switch (current)
                     {
                         case UnaryOperation { Expression: null } unaryOperation:
-                            unaryOperation.Expression = new Identifier(unaryOperation, literalToken);
+                            unaryOperation.Expression = valueToken.ToAST(unaryOperation);
+                            current = unaryOperation.Expression;
                             break;
                         case BinaryOperation { Right: null } binaryOperation:
-                            binaryOperation.Right = new Identifier(binaryOperation, literalToken);
+                            binaryOperation.Right = valueToken.ToAST(binaryOperation);
+                            current = binaryOperation.Right;
                             break;
-                        case UnaryOperation:
-                        case BinaryOperation:
-                        case LiteralString:
-                        case Number:
-                        case Identifier:
+                        case TernaryOperation:
+                            throw new NotImplementedException();
+                        case ParentedExpression { Expression: null, ClosingBracket: null } openParen:
+                            openParen.Expression = valueToken.ToAST(openParen);
+                            current = openParen.Expression;
+                            break;
+                        case ParentedExpression:
                             return (root, token);
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
-                    }
-                    break;
-                case NumericToken numericToken:
-                    switch (current)
-                    {
-                        case UnaryOperation { Expression: null } unaryOperation:
-                            unaryOperation.Expression = new Number(unaryOperation, numericToken);
-                            break;
-                        case BinaryOperation { Right: null } binaryOperation:
-                            binaryOperation.Right = new Number(binaryOperation, numericToken);
-                            break;
+                        case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
-                        case LiteralString:
-                        case Number:
-                        case Identifier:
-                            return (root, token);
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
-                    }
-                    break;
-                case StringToken stringToken:
-                    switch (current)
-                    {
-                        case UnaryOperation { Expression: null } unaryOperation:
-                            unaryOperation.Expression = new LiteralString(unaryOperation, stringToken);
-                            break;
-                        case BinaryOperation { Right: null } binaryOperation:
-                            binaryOperation.Right = new LiteralString(binaryOperation, stringToken);
-                            break;
-                        case UnaryOperation:
-                        case BinaryOperation:
-                        case LiteralString:
-                        case Number:
-                        case Identifier:
+                        case IHoldsSingleToken:
                             return (root, token);
                         default:
                             throw new ArgumentOutOfRangeException(nameof(current));
@@ -155,62 +244,49 @@ internal class ExpressionParser
                 case BinaryOpToken binaryOpToken:
                     switch (current)
                     {
-                        case UnaryOperation unaryOperation:
-                            if (current.Parent == null)
-                            {
-                                var next = new BinaryOperation(null, unaryOperation, binaryOpToken);
-                                current.Parent = next;
-                                current = next;
-                                root = current;
-                                break;
-                            }
-                            current = current.Parent;
-                            continue;
-                        case BinaryOperation binaryOperation:
-                            if (binaryOpToken.precedence > binaryOperation.Operation.precedence)
-                            {
-                                var right = new BinaryOperation(binaryOperation, binaryOperation.Right, binaryOpToken);
-                                binaryOperation.Right = right;
-                                current = right;
-                                break;
-                            }
-                            if (current.Parent == null)
-                            {
-                                var next = new BinaryOperation(null, binaryOperation, binaryOpToken);
-                                current.Parent = next;
-                                current = next;
-                                root = current;
-                                break;
-                            }
-                            current = current.Parent;
-                            continue;
-                        case LiteralString:
-                        case Number:
-                        case Identifier:
-                            if (current.Parent == null)
-                            {
-                                var next = new BinaryOperation(null, current, binaryOpToken);
-                                current.Parent = next;
-                                current = next;
-                                root = current;
-                                break;
-                            }
-                            current = current.Parent.Replace(current, new BinaryOperation(current, binaryOpToken));
+                        case BinaryOperation binaryOperation when binaryOpToken > binaryOperation:
+                        {
+                            binaryOperation.Right = new BinaryOperation(binaryOperation, binaryOperation.Right,
+                                binaryOpToken);
+                            current = binaryOperation.Right;
                             break;
+                        }
+                        case BinaryOperation:
+                        case IHoldsSingleToken:
+                        case UnaryOperation:
+                        case FunctionCall:
+                            if (current.Parent == null)
+                            {
+                                current.Parent = new BinaryOperation(null, current, binaryOpToken);
+                                current = current.Parent;
+                                root = current;
+                                break;
+                            }
+                            current = current.Parent;
+                            continue;
+                        case ParentedExpression { ClosingBracket: null } parentedExpression:
+                            parentedExpression.Expression = new BinaryOperation(parentedExpression,
+                                parentedExpression.Expression, binaryOpToken);
+                            current = parentedExpression.Expression;
+                            break;
+                        case ParentedExpression:
+                            if (current.Parent == null)
+                            {
+                                current.Parent = new BinaryOperation(null, current, binaryOpToken);
+                                current = current.Parent;
+                                root = current;
+                                break;
+                            }
+                            current = current.Parent;
+                            continue;
+                        case TernaryOperation:
+                            throw new NotImplementedException();
                         default:
                             throw new ArgumentOutOfRangeException(nameof(current));
                     }
                     break;
                 case CommentToken:
                     break;
-                case SemicolonToken:
-                    return (root, token);
-                case BracketToken:
-                case ColonToken:
-                case FailedToken:
-                case FeatureToken:
-                case TernaryOpToken:
-                    throw new NotImplementedException();
                 default:
                     throw new ArgumentOutOfRangeException(nameof(token));
             }
@@ -218,24 +294,14 @@ internal class ExpressionParser
         }
         return (root, null);
     }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ExpressionAST? LiteralTokenToAST(BaseRecordingToken token)
-    {
-        if (token.value == null)
-        {
-            throw new Exception();
-        }
-        string value = token.value;
 
-        // Features and most keywords cannot be used in expressions
-        if (Grammar.Features.Contains(value) || Grammar.NotExpressionKeywords.Contains(value))
-        {
-            return null;
-        }
-        return Grammar.ExpressionKeywords.ContainsKey(value)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ExpressionAST? KeywordTokenToAST(BaseRecordingToken token)
+    {
+        string value = token.value ?? throw new Exception();
+        return ExpressionKeywords.ContainsKey(value)
             ? new FunctionCall(null, token)
-            : new Identifier(null, token);
+            : null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -243,17 +309,17 @@ internal class ExpressionParser
     {
         return token switch
         {
+            KeywordToken keywordToken => KeywordTokenToAST(keywordToken),
+            StringToken stringToken => new LiteralString(null, stringToken),
+            NumericToken numericToken => new Number(null, numericToken),
+            LiteralToken literalToken => new Identifier(null, literalToken),
             BinaryOpToken binaryOpToken => new BinaryOperation(null, binaryOpToken),
             UnaryOpToken unaryOpToken => new UnaryOperation(null, unaryOpToken),
-            LiteralToken literalToken => LiteralTokenToAST(literalToken),
-            KeywordToken keywordToken => LiteralTokenToAST(keywordToken),
-            NumericToken numericToken => new Number(null, numericToken),
-            StringToken stringToken => new LiteralString(null, stringToken),
             TernaryOpToken ternaryOpToken => new TernaryOperation(null, ternaryOpToken),
             BracketToken bracketToken => bracketToken.Bracket switch
             {
                 '(' => new ParentedExpression(null, bracketToken),
-                '[' => new ArrayExpression(null, bracketToken),
+                '[' => new ParentedExpression(null, bracketToken),
                 ')' => null,
                 '{' => null,
                 '}' => null,
@@ -262,7 +328,6 @@ internal class ExpressionParser
             },
             ColonToken => null,
             FailedToken => null,
-            FeatureToken => null,
             SemicolonToken => null,
             _ => throw new ArgumentOutOfRangeException(nameof(token))
         };

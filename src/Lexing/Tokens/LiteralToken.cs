@@ -1,13 +1,14 @@
-﻿namespace NMLServer.Lexing.Tokens;
+﻿using NMLServer.Parsing.Expression;
 
-internal class LiteralToken : BaseRecordingToken
+namespace NMLServer.Lexing.Tokens;
+
+internal class LiteralToken : BaseValueToken
 {
-    public LiteralToken(string s) : base(s)
-    { }
-
     public LiteralToken(char c) : base(c)
     { }
 
     public LiteralToken()
     { }
+
+    public override ValueNode<BaseValueToken> ToAST(ExpressionAST? parent) => new Identifier(parent, this);
 }

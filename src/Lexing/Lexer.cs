@@ -7,7 +7,7 @@ namespace NMLServer.Lexing;
 internal class Lexer
 {
     private static readonly HashSet<char> _opStarts = new(Grammar.Operators.Select(o => o[0]));
-    
+
     private readonly string _input;
     private readonly int _maxPos;
     private int _pos;
@@ -95,12 +95,12 @@ internal class Lexer
             _ => new BinaryOpToken(opChar)
         };
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseOperator(char c)
     {
         // ? and : are handled earlier
-        
+
         string opChar = c.ToString();
         if (_pos == _maxPos)
         {
@@ -119,8 +119,8 @@ internal class Lexer
             return ConsumeInto(new BinaryOpToken(withNextChar), charPointedAt);
         }
         _pos++;
-        return charPointedAt == '>' 
-            ? ConsumeInto(new BinaryOpToken(">>>"), '>') 
+        return charPointedAt == '>'
+            ? ConsumeInto(new BinaryOpToken(">>>"), '>')
             : new BinaryOpToken(withNextChar);
     }
 
@@ -131,7 +131,7 @@ internal class Lexer
         _pos++;
         return t;
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ConsumeInto<T>(char consumed) where T : Token, new()
     {
@@ -232,17 +232,12 @@ internal class Lexer
             {
                 break;
             }
-
             AppendInto(token, c);
         }
         var value = token.value;
-        if (Grammar.Keywords.Contains(value))
-        {
-            return new KeywordToken(value);
-        }
-        return Grammar.Features.Contains(value) 
-            ? new FeatureToken(value) 
-            : new LiteralToken(value);
+        return Grammar.Keywords.Contains(value)
+            ? new KeywordToken(token)
+            : token;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -263,8 +258,8 @@ internal class Lexer
     private Token ParseNumber(char c)
     {
         NumericToken token = new();
-        var state = c == '0' 
-            ? NumberLexState.StartingZero 
+        var state = c == '0'
+            ? NumberLexState.StartingZero
             : NumberLexState.Int;
         AppendInto(token, c);
         while (_pos <= _maxPos)
@@ -354,4 +349,3 @@ internal class Lexer
         FloatAfterDot
     }
 }
-

@@ -2,9 +2,6 @@
 
 internal class KeywordToken : BaseRecordingToken
 {
-    public KeywordToken(string type) : base(type)
-    { }
-
-    public KeywordToken(BaseRecordingToken another) : base(another)
+    public KeywordToken(BaseRecordingToken other) : base(other)
     { }
 }

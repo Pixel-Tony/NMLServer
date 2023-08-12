@@ -4,14 +4,13 @@ namespace NMLServer.Parsing.Expression;
 
 internal class ParentedExpression : ExpressionAST
 {
-    public BracketToken? OpeningBracket;
+    public readonly BracketToken OpeningBracket;
     public ExpressionAST? Expression;
     public BracketToken? ClosingBracket;
 
     public ParentedExpression(ExpressionAST? parent, BracketToken openingBracket) : base(parent)
-    {
-        OpeningBracket = openingBracket;
-    }
+        => OpeningBracket = openingBracket;
 
-    public override string ToString() => $"({Expression})";
+    public override string ToString() 
+        => $"{OpeningBracket.ToString()}{Expression}{ClosingBracket?.ToString() ?? "."}";
 }

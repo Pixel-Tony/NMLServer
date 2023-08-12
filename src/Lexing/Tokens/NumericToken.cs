@@ -1,4 +1,8 @@
-﻿namespace NMLServer.Lexing.Tokens;
+﻿using NMLServer.Parsing.Expression;
 
-internal class NumericToken : BaseRecordingToken
-{ }
+namespace NMLServer.Lexing.Tokens;
+
+internal class NumericToken : BaseValueToken
+{
+    public override ValueNode<BaseValueToken> ToAST(ExpressionAST? parent) => new Number(parent, this);
+}

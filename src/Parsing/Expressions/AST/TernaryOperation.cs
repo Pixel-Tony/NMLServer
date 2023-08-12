@@ -5,15 +5,15 @@ namespace NMLServer.Parsing.Expression;
 internal class TernaryOperation : ExpressionAST
 {
     public ExpressionAST? Condition;
+    public TernaryOpToken QuestionMark;
     public ExpressionAST? TrueBranch;
-    public ExpressionAST? FalseBranch;
-    public TernaryOpToken? QuestionMark;
     public ColonToken? Colon;
+    public ExpressionAST? FalseBranch;
 
-    public TernaryOperation(ExpressionAST? parent, TernaryOpToken? questionMark) : base(parent)
+    public TernaryOperation(ExpressionAST? parent, TernaryOpToken questionMark) : base(parent)
     {
         QuestionMark = questionMark;
     }
 
-    public override string ToString() => $"({Condition} ? {TrueBranch} : {FalseBranch})";
+    public override string ToString() => $"({Condition} ? {TrueBranch} {(Colon != null ? ':' : '.')} {FalseBranch})";
 }

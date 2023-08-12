@@ -2,10 +2,8 @@
 
 namespace NMLServer.Parsing.Expression;
 
-internal sealed class Number : ValueNode<NumericToken>
+internal sealed class Number : ValueNode<BaseValueToken>
 {
-    public Number(ExpressionAST? parent, NumericToken value) : base(parent, value)
+    public Number(ExpressionAST? parent, BaseValueToken token) : base(parent, token)
     { }
-
-    public override string ToString() => Value?.value ?? "null";
 }

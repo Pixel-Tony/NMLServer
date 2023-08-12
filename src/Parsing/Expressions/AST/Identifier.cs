@@ -2,10 +2,8 @@
 
 namespace NMLServer.Parsing.Expression;
 
-internal class Identifier : ValueNode<BaseRecordingToken>
+internal class Identifier : ValueNode<BaseValueToken>
 {
-    public Identifier(ExpressionAST? parent, BaseRecordingToken value) : base(parent, value)
+    public Identifier(ExpressionAST? parent, BaseValueToken token) : base(parent, token)
     { }
-
-    public override string ToString() => Value?.value ?? "null";
 }

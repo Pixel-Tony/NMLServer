@@ -6,10 +6,11 @@ internal class BracketToken : Token
     
     public BracketToken(char bracket)
     {
-        Bracket = _brackets.Contains(bracket)
-            ? bracket
-            : throw new ArgumentException("Not a bracket: " + bracket);
+        Bracket = bracket;
     }
 
-    private static readonly HashSet<char> _brackets = new("(){}[]");
+    public override string ToString()
+    {
+        return Bracket.ToString();
+    }
 }

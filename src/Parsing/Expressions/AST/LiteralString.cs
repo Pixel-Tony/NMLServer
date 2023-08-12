@@ -2,10 +2,8 @@
 
 namespace NMLServer.Parsing.Expression;
 
-internal class LiteralString : ValueNode<StringToken>
+internal class LiteralString : ValueNode<BaseValueToken>
 {
-    public LiteralString(ExpressionAST? parent, StringToken str) : base(parent, str)
+    public LiteralString(ExpressionAST? parent, BaseValueToken token) : base(parent, token)
     { }
-
-    public override string ToString() => Value?.value ?? ".";
 }
