@@ -49,7 +49,7 @@ internal class ExpressionParser
                 case ColonToken colonToken:
                     switch (current)
                     {
-                        case TernaryOperation { Colon: null } ternaryOperation:
+                        case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
                             ternaryOperation.Colon = colonToken;
                             break;
                         case TernaryOperation:
@@ -64,20 +64,61 @@ internal class ExpressionParser
                             }
                             current = current.Parent;
                             continue;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
                     }
                     break;
                 case FailedToken:
                     return (root, token);
-                case TernaryOpToken:
-                    throw new NotImplementedException();
+                case TernaryOpToken questionMark:
+                    switch (current)
+                    {
+                        case ParentedExpression { ClosingBracket: null } openBrackets:
+                            openBrackets.Expression = new TernaryOperation(openBrackets, openBrackets.Expression,
+                                questionMark);
+                            current = openBrackets.Expression;
+                            break;
+                        case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
+                            ternaryOperation.TrueBranch = new TernaryOperation(ternaryOperation,
+                                ternaryOperation.TrueBranch, questionMark);
+                            current = ternaryOperation.TrueBranch;
+                            break;
+                        case TernaryOperation ternaryOperation:
+                            ternaryOperation.FalseBranch = new TernaryOperation(ternaryOperation,
+                                ternaryOperation.FalseBranch, questionMark);
+                            current = ternaryOperation.FalseBranch;
+                            break;
+                        case UnaryOperation:
+                        case ParentedExpression:
+                        case FunctionCall:
+                        case IHoldsSingleToken:
+                        case BinaryOperation binaryOperation when binaryOperation > questionMark:
+                            if (current.Parent == null)
+                            {
+                                current.Parent = new TernaryOperation(null, current, questionMark);
+                                current = current.Parent;
+                                root = current;
+                                break;
+                            }
+                            current = current.Parent;
+                            continue;
+                        case BinaryOperation comma:
+                            comma.Right = new TernaryOperation(comma, comma.Right, questionMark);
+                            current = comma.Right;
+                            break;
+                    }
+                    break;
                 case BracketToken { Bracket: '(' or '[' } openingParen:
                 {
                     switch (current)
                     {
-                        case TernaryOperation:
-                            throw new NotImplementedException();
+                        // opening BracketToken pulls down, on TernaryExpression level => TrueBranch is null
+                        case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
+                            ternaryOperation.TrueBranch = new ParentedExpression(ternaryOperation, openingParen);
+                            current = ternaryOperation.TrueBranch;
+                            break;
+                        case TernaryOperation ternaryOperation:
+                            ternaryOperation.FalseBranch = new ParentedExpression(ternaryOperation, openingParen);
+                            current = ternaryOperation.FalseBranch;
+                            break;
                         case FunctionCall { Arguments: null } futureCall:
                             futureCall.Arguments = new ParentedExpression(futureCall, openingParen);
                             current = futureCall.Arguments;
@@ -124,8 +165,6 @@ internal class ExpressionParser
                             }
                             current = parens;
                             break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
                     }
                     break;
                 }
@@ -134,25 +173,30 @@ internal class ExpressionParser
                     {
                         case ParentedExpression { Expression: null, ClosingBracket: null } openParen:
                             openParen.ClosingBracket = closingParen;
+                            if (current.Parent is FunctionCall)
+                            {
+                                current = current.Parent;
+                            }
                             break;
                         case ParentedExpression { ClosingBracket: null } parentedExpression:
                             parentedExpression.ClosingBracket = closingParen;
+                            if (current.Parent is FunctionCall)
+                            {
+                                current = current.Parent;
+                            }
                             break;
                         case UnaryOperation:
                         case BinaryOperation:
                         case ParentedExpression:
                         case FunctionCall:
                         case IHoldsSingleToken:
+                        case TernaryOperation:
                             if (current.Parent == null)
                             {
                                 return (root, token);
                             }
                             current = current.Parent;
                             continue;
-                        case TernaryOperation:
-                            throw new NotImplementedException();
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
                     }
                     break;
                 case BracketToken { Bracket: '{' or '}' }:
@@ -174,16 +218,21 @@ internal class ExpressionParser
                             parentedExpression.Expression = new FunctionCall(parentedExpression, keywordToken);
                             current = parentedExpression.Expression;
                             break;
+                        // KeywordToken pulls down, on TernaryExpression level => TrueBranch is null
+                        case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
+                            ternaryOperation.TrueBranch = new FunctionCall(ternaryOperation, keywordToken);
+                            current = ternaryOperation.TrueBranch;
+                            break;
+                        case TernaryOperation ternaryOperation:
+                            ternaryOperation.FalseBranch = new FunctionCall(ternaryOperation, keywordToken);
+                            current = ternaryOperation.FalseBranch;
+                            break;
                         case ParentedExpression:
                         case UnaryOperation:
                         case BinaryOperation:
                         case IHoldsSingleToken:
                         case FunctionCall:
                             return (root, token);
-                        case TernaryOperation:
-                            throw new NotImplementedException();
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
                     }
                     break;
                 case UnaryOpToken unaryOpToken:
@@ -197,20 +246,25 @@ internal class ExpressionParser
                             binaryOperation.Right = new UnaryOperation(binaryOperation, unaryOpToken);
                             current = binaryOperation.Right;
                             break;
-                        case FunctionCall { Arguments: null }:
-                            return (root, token);
+                        case ParentedExpression { Expression: null, ClosingBracket: null } parentedExpression:
+                            parentedExpression.Expression = new UnaryOperation(parentedExpression, unaryOpToken);
+                            current = parentedExpression.Expression;
+                            break;
+                        // UnaryOpToken pulls down, on TernaryExpression level => TrueBranch is null
+                        case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
+                            ternaryOperation.TrueBranch = new UnaryOperation(ternaryOperation, unaryOpToken);
+                            current = ternaryOperation.TrueBranch;
+                            break;
+                        case TernaryOperation ternaryOperation:
+                            ternaryOperation.FalseBranch = new UnaryOperation(ternaryOperation, unaryOpToken);
+                            current = ternaryOperation.FalseBranch;
+                            break;
                         case FunctionCall:
-                            throw new NotImplementedException();
                         case ParentedExpression:
-                            throw new NotImplementedException();
-                        case TernaryOperation:
-                            throw new NotImplementedException();
                         case UnaryOperation:
                         case BinaryOperation:
                         case IHoldsSingleToken:
                             return (root, token);
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
                     }
                     break;
                 case BaseValueToken valueToken:
@@ -224,8 +278,15 @@ internal class ExpressionParser
                             binaryOperation.Right = valueToken.ToAST(binaryOperation);
                             current = binaryOperation.Right;
                             break;
-                        case TernaryOperation:
-                            throw new NotImplementedException();
+                        // ValueToken pulls down, on TernaryExpression level => TrueBranch/FalseBranch is null
+                        case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
+                            ternaryOperation.TrueBranch = valueToken.ToAST(ternaryOperation);
+                            current = ternaryOperation.TrueBranch;
+                            break;
+                        case TernaryOperation ternaryOperation:
+                            ternaryOperation.FalseBranch = valueToken.ToAST(ternaryOperation);
+                            current = ternaryOperation.FalseBranch;
+                            break;
                         case ParentedExpression { Expression: null, ClosingBracket: null } openParen:
                             openParen.Expression = valueToken.ToAST(openParen);
                             current = openParen.Expression;
@@ -237,39 +298,27 @@ internal class ExpressionParser
                         case BinaryOperation:
                         case IHoldsSingleToken:
                             return (root, token);
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
                     }
                     break;
                 case BinaryOpToken binaryOpToken:
                     switch (current)
                     {
                         case BinaryOperation binaryOperation when binaryOpToken > binaryOperation:
-                        {
                             binaryOperation.Right = new BinaryOperation(binaryOperation, binaryOperation.Right,
                                 binaryOpToken);
                             current = binaryOperation.Right;
                             break;
-                        }
-                        case BinaryOperation:
-                        case IHoldsSingleToken:
-                        case UnaryOperation:
-                        case FunctionCall:
-                            if (current.Parent == null)
-                            {
-                                current.Parent = new BinaryOperation(null, current, binaryOpToken);
-                                current = current.Parent;
-                                root = current;
-                                break;
-                            }
-                            current = current.Parent;
-                            continue;
                         case ParentedExpression { ClosingBracket: null } parentedExpression:
                             parentedExpression.Expression = new BinaryOperation(parentedExpression,
                                 parentedExpression.Expression, binaryOpToken);
                             current = parentedExpression.Expression;
                             break;
                         case ParentedExpression:
+                        case BinaryOperation:
+                        case IHoldsSingleToken:
+                        case UnaryOperation:
+                        case FunctionCall:
+                        case TernaryOperation ternaryOperation when binaryOpToken < ternaryOperation:
                             if (current.Parent == null)
                             {
                                 current.Parent = new BinaryOperation(null, current, binaryOpToken);
@@ -279,16 +328,20 @@ internal class ExpressionParser
                             }
                             current = current.Parent;
                             continue;
-                        case TernaryOperation:
-                            throw new NotImplementedException();
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(current));
+                        case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
+                            ternaryOperation.TrueBranch = new BinaryOperation(ternaryOperation,
+                                ternaryOperation.TrueBranch, binaryOpToken);
+                            current = ternaryOperation.TrueBranch;
+                            break;
+                        case TernaryOperation ternaryOperation:
+                            ternaryOperation.FalseBranch = new BinaryOperation(ternaryOperation,
+                                ternaryOperation.FalseBranch, binaryOpToken);
+                            current = ternaryOperation.FalseBranch;
+                            break;
                     }
                     break;
                 case CommentToken:
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(token));
             }
             i++;
         }

@@ -1,4 +1,8 @@
-﻿namespace NMLServer.Lexing.Tokens;
+﻿using NMLServer.Parsing.Expression;
 
-internal class TernaryOpToken : Token
-{ }
+namespace NMLServer.Lexing.Tokens;
+
+internal class TernaryOpToken : Token, IHasPrecedence
+{
+    public int precedence => TernaryOperation.Precedence;
+}

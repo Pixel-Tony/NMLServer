@@ -9,8 +9,5 @@ internal class BracketToken : Token
         Bracket = bracket;
     }
 
-    public override string ToString()
-    {
-        return Bracket.ToString();
-    }
+    public override string ToString() => Bracket.ToString();
 }

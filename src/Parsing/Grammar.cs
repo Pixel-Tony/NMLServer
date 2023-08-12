@@ -1,4 +1,6 @@
-﻿namespace NMLServer.Parsing;
+﻿using NMLServer.Parsing.Expression;
+
+namespace NMLServer.Parsing;
 
 internal static class Grammar
 {
@@ -51,7 +53,8 @@ internal static class Grammar
     public static readonly Dictionary<string, int> OperatorPrecedence = new()
     {
         [","] = 0,
-        ["?"] = 1, [":"] = 1,
+        ["?"] = TernaryOperation.Precedence, 
+        [":"] = TernaryOperation.Precedence,
         ["||"] = 2,
         ["&&"] = 3,
         ["|"] = 4,
