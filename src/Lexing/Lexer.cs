@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Text;
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing;
 
@@ -8,8 +7,6 @@ namespace NMLServer.Lexing;
 internal class Lexer
 {
     private static readonly HashSet<char> _opStarts = new(Grammar.Operators.Select(o => o[0]));
-    
-    private static readonly HashSet<char> _brackets = new("[]{}()");
 
     private readonly string _input;
     private readonly int _maxPos;
@@ -36,13 +33,13 @@ internal class Lexer
             switch (c)
             {
                 case ';':
-                    yield return Consume(c, new SemicolonToken());
+                    yield return ConsumeInto<SemicolonToken>(c);
                     continue;
                 case ':':
-                    yield return Consume(c, new ColonToken());
+                    yield return ConsumeInto<ColonToken>(c);
                     continue;
                 case '?':
-                    yield return Consume(c, new TernaryOpToken());
+                    yield return ConsumeInto<TernaryOpToken>(c);
                     continue;
             }
 
@@ -58,7 +55,7 @@ internal class Lexer
                 continue;
             }
 
-            if (_brackets.Contains(c))
+            if (Grammar.Brackets.Contains(c))
             {
                 yield return ParseBracket(c);
                 continue;
@@ -83,7 +80,7 @@ internal class Lexer
                 '\'' or '"' => ParseLiteralString(c),
                 '#' => ParseHashtagComment(),
                 '/' => ParseFromSlash(),
-                _ => Consume(c, new FailedToken(c))
+                _ => ConsumeInto(new FailedToken(c), c)
             };
         }
     }
@@ -98,17 +95,17 @@ internal class Lexer
             _ => new BinaryOpToken(opChar)
         };
     }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseOperator(char c)
     {
         // ? and : are handled earlier
-        
+
         string opChar = c.ToString();
         if (_pos == _maxPos)
         {
             Token token = DecideOperatorType(c, opChar);
-            return Consume(c, token);
+            return ConsumeInto(token, c);
         }
 
         _pos++;
@@ -119,45 +116,51 @@ internal class Lexer
         }
         if (withNextChar != ">>" || _pos >= _maxPos)
         {
-            return Consume(charPointedAt, new BinaryOpToken(withNextChar));
+            return ConsumeInto(new BinaryOpToken(withNextChar), charPointedAt);
         }
         _pos++;
-        return charPointedAt == '>' 
-            ? Consume('>', new BinaryOpToken(">>>")) 
+        return charPointedAt == '>'
+            ? ConsumeInto(new BinaryOpToken(">>>"), '>')
             : new BinaryOpToken(withNextChar);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Token Consume(char consumed, Token t)
+    // consumed needed for future _pos refactor, when it will hold line/column information
+    private Token ConsumeInto(Token t, char consumed)
     {
         _pos++;
         return t;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Token ConsumeInto<T>(char consumed) where T : Token, new()
+    {
+        _pos++;
+        return new T();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseHashtagComment()
     {
-        StringBuilder builer = new StringBuilder().Append('#');
-
+        CommentToken token = new CommentToken('#');
         _pos++;
         while (_pos <= _maxPos)
         {
             char c = charPointedAt;
+            token.Add(c);
             _pos++;
-            builer.Append(c);
             if (c == '\n')
             {
                 break;
             }
         }
-
-        return new LiteralToken(builer.ToString());
+        return token;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseFromSlash()
     {
-        LiteralToken token = ConsumeIntoNew('/');
+        BaseRecordingToken token = ConsumeIntoNew('/');
         char c = charPointedAt;
         switch (c)
         {
@@ -166,10 +169,10 @@ internal class Lexer
                 _pos++;
                 while (_pos <= _maxPos && !(token.value.EndsWith("*/") && token.value.Length > 3))
                 {
-                    ConsumeInto(token, charPointedAt);
+                    AppendInto(token, charPointedAt);
                 }
 
-                return token;
+                return new CommentToken(token.value);
             }
             case '/':
             {
@@ -177,30 +180,30 @@ internal class Lexer
                 while (_pos <= _maxPos)
                 {
                     c = charPointedAt;
-                    ConsumeInto(token, c);
+                    AppendInto(token, c);
                     if (c == '\n')
                     {
-                        return token;
+                        break;
                     }
                 }
 
-                return token;
+                return new CommentToken(token.value);
             }
             default:
                 return new BinaryOpToken("/");
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseLiteralString(char c)
     {
         char openingQuote = c;
-        LiteralToken token = new();
-        ConsumeInto(token, openingQuote);
+        StringToken token = new();
+        AppendInto(token, openingQuote);
         while (_pos <= _maxPos)
         {
             c = charPointedAt;
-            ConsumeInto(token, c);
+            AppendInto(token, c);
             if (c == openingQuote)
             {
                 break;
@@ -210,20 +213,18 @@ internal class Lexer
         return token;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseBracket(char bracket)
     {
         _pos++;
         return new BracketToken(bracket);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseIdentifier(char c)
     {
-        StringBuilder identifierToken = new();
-        ConsumeIntoBuilder(identifierToken, c);
-
-        _pos++;
+        LiteralToken token = new();
+        AppendInto(token, c);
         while (_pos <= _maxPos)
         {
             c = charPointedAt;
@@ -231,49 +232,36 @@ internal class Lexer
             {
                 break;
             }
-
-            ConsumeIntoBuilder(identifierToken, c);
+            AppendInto(token, c);
         }
-        var value = identifierToken.ToString();
-        if (Grammar.Keywords.Contains(value))
-        {
-            return new KeywordToken(value);
-        }
-        if (Grammar.Features.Contains(value))
-        {
-            return new FeatureToken(value);
-        }
-        return new LiteralToken(value);
+        var value = token.value;
+        return Grammar.Keywords.Contains(value)
+            ? new KeywordToken(token)
+            : token;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private LiteralToken ConsumeIntoNew(char c)
+    private BaseRecordingToken ConsumeIntoNew(char c)
     {
         _pos++;
         return new LiteralToken(c);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ConsumeInto(BaseRecordingToken t, char c)
+    private void AppendInto(BaseRecordingToken t, char c)
     {
         _pos++;
         t.Add(c);
     }
 
-    private void ConsumeIntoBuilder(StringBuilder tokenBuilder, char c)
-    {
-        _pos++;
-        tokenBuilder.Append(c);
-    }
-    
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseNumber(char c)
     {
-        StringBuilder numberBuilder = new(16);
-        var state = c == '0' ? NumberLexState.StartingZero : NumberLexState.Int;
-
-        ConsumeIntoBuilder(numberBuilder, c);
+        NumericToken token = new();
+        var state = c == '0'
+            ? NumberLexState.StartingZero
+            : NumberLexState.Int;
+        AppendInto(token, c);
         while (_pos <= _maxPos)
         {
             c = charPointedAt;
@@ -282,24 +270,21 @@ internal class Lexer
                 case NumberLexState.StartingZero:
                     if (c == 'x' || c == 'X')
                     {
-                        ConsumeIntoBuilder(numberBuilder, c);
+                        AppendInto(token, c);
                         state = NumberLexState.HexOnX;
                         continue;
                     }
-
                     if (!char.IsDigit(c))
                     {
                         break;
                     }
-
-                    ConsumeIntoBuilder(numberBuilder, c);
+                    AppendInto(token, c);
                     state = NumberLexState.Int;
                     continue;
-
                 case NumberLexState.Int:
                     if (char.IsDigit(c))
                     {
-                        ConsumeIntoBuilder(numberBuilder, c);
+                        AppendInto(token, c);
                         continue;
                     }
 
@@ -307,56 +292,45 @@ internal class Lexer
                     {
                         break;
                     }
-
-                    ConsumeIntoBuilder(numberBuilder, c);
+                    AppendInto(token, c);
                     state = NumberLexState.FloatOnDot;
                     continue;
-
                 case NumberLexState.HexOnX:
                     if (!char.IsAsciiHexDigit(c))
                     {
                         break;
                     }
-
-                    ConsumeIntoBuilder(numberBuilder, c);
+                    AppendInto(token, c);
                     state = NumberLexState.HexAfterX;
                     continue;
-
                 case NumberLexState.HexAfterX:
                     if (!char.IsAsciiHexDigit(c))
                     {
                         break;
                     }
-
-                    ConsumeIntoBuilder(numberBuilder, c);
+                    AppendInto(token, c);
                     continue;
-
                 case NumberLexState.FloatOnDot:
                     if (!char.IsDigit(c))
                     {
                         break;
                     }
-
-                    ConsumeIntoBuilder(numberBuilder, c);
+                    AppendInto(token, c);
                     state = NumberLexState.FloatAfterDot;
                     continue;
-
                 case NumberLexState.FloatAfterDot:
                     if (!char.IsDigit(c))
                     {
                         break;
                     }
-
-                    ConsumeIntoBuilder(numberBuilder, c);
+                    AppendInto(token, c);
                     continue;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
             break;
         }
-        
-        return new NumericToken(numberBuilder.ToString());
+        return token;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -375,4 +349,3 @@ internal class Lexer
         FloatAfterDot
     }
 }
-

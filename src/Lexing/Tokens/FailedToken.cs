@@ -2,6 +2,6 @@
 
 internal sealed class FailedToken : Token
 {
-    public readonly char Token;
-    public FailedToken(char c) => Token = c;
+    private readonly char _token;
+    public FailedToken(char c) => _token = c;
 }
