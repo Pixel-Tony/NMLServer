@@ -10,9 +10,7 @@ internal class Program
     {
         string[] tests =
         {
-            "[1, 2, 3, a, 1 + 2, 6 | 8, !9]",
-            "7 - !(33",
-            "a | | b + c(d + e"
+            "1 ? 2 : 3 + 1 ? 4 : 5"
         };
         var tokensArrays = tests.Select(test => new Lexer(test).Tokenize().ToArray());
         var parsers = tokensArrays.Select(tokens => new ExpressionParser(tokens));
