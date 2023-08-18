@@ -4,46 +4,26 @@ using static NMLServer.Parsing.Grammar;
 
 namespace NMLServer.Parsing.Expression;
 
-internal class ExpressionParser
+internal class ExpressionParser : BaseParser
 {
-    private readonly Token[] _tokens;
-    private readonly int _max;
-
-    public ExpressionParser(Token[] tokens)
+    public static (ExpressionAST?, Token?) Apply()
     {
-        _tokens = tokens;
-        _max = _tokens.Length;
-    }
-
-    // BinaryOpToken BracketToken ColonToken CommentToken FailedToken FeatureToken KeywordToken LiteralToken
-    // NumericToken SemicolonToken StringToken TernaryOpToken UnaryOpToken
-
-    // BracketToken ColonToken FailedToken FeatureToken KeywordToken SemicolonToken TernaryOpToken
-
-    public (ExpressionAST?, Token?) Parse(int start)
-    {
-        int i = start;
-        while (i < _max && _tokens[i] is CommentToken)
-        {
-            i++;
-        }
-        if (i >= _max)
+        if (Pointer >= Max)
         {
             return (null, null);
         }
-        var firstToken = _tokens[i];
+        var firstToken = Tokens[Pointer];
         var root = TokenToAST(firstToken);
         if (root == null)
         {
-            return (null, firstToken);
+            return (root, firstToken);
         }
         ExpressionAST current = root;
-        i++;
+        Pointer++;
 
-        while (i < _max)
+        while (Pointer < Max)
         {
-            var token = _tokens[i];
-            // Console.WriteLine($"Parsing on {token};");
+            var token = Tokens[Pointer];
             switch (token)
             {
                 case ColonToken colonToken:
@@ -292,7 +272,6 @@ internal class ExpressionParser
                             current = openParen.Expression;
                             break;
                         case ParentedExpression:
-                            return (root, token);
                         case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
@@ -340,10 +319,8 @@ internal class ExpressionParser
                             break;
                     }
                     break;
-                case CommentToken:
-                    break;
             }
-            i++;
+            Pointer++;
         }
         return (root, null);
     }
@@ -365,7 +342,7 @@ internal class ExpressionParser
             KeywordToken keywordToken => KeywordTokenToAST(keywordToken),
             StringToken stringToken => new LiteralString(null, stringToken),
             NumericToken numericToken => new Number(null, numericToken),
-            LiteralToken literalToken => new Identifier(null, literalToken),
+            IdentifierToken literalToken => new Identifier(null, literalToken),
             BinaryOpToken binaryOpToken => new BinaryOperation(null, binaryOpToken),
             UnaryOpToken unaryOpToken => new UnaryOperation(null, unaryOpToken),
             TernaryOpToken ternaryOpToken => new TernaryOperation(null, ternaryOpToken),
@@ -377,12 +354,10 @@ internal class ExpressionParser
                 '{' => null,
                 '}' => null,
                 ']' => null,
-                _ => throw new ArgumentOutOfRangeException()
             },
             ColonToken => null,
             FailedToken => null,
             SemicolonToken => null,
-            _ => throw new ArgumentOutOfRangeException(nameof(token))
         };
     }
 }

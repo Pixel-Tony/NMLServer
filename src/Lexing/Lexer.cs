@@ -20,7 +20,10 @@ internal class Lexer
         _maxPos = inputString.Length - 1;
     }
 
-    public IEnumerable<Token> Tokenize()
+    private readonly List<Token> _tokens = new();
+    private readonly List<Token> _comments = new();
+    
+    public (Token[] tokens, Token[] comments) Tokenize()
     {
         while (_pos <= _maxPos)
         {
@@ -33,31 +36,31 @@ internal class Lexer
             switch (c)
             {
                 case ';':
-                    yield return ConsumeInto<SemicolonToken>(c);
+                    _tokens.Add(ConsumeInto<SemicolonToken>(c));
                     continue;
                 case ':':
-                    yield return ConsumeInto<ColonToken>(c);
+                    _tokens.Add(ConsumeInto<ColonToken>(c));
                     continue;
                 case '?':
-                    yield return ConsumeInto<TernaryOpToken>(c);
+                    _tokens.Add(ConsumeInto<TernaryOpToken>(c));
                     continue;
             }
 
             if (IsValidIdStartCharacter(c))
             {
-                yield return ParseIdentifier(c);
+                _tokens.Add(ParseIdentifier(c));
                 continue;
             }
 
             if (char.IsDigit(c))
             {
-                yield return ParseNumber(c);
+                _tokens.Add(ParseNumber(c));
                 continue;
             }
 
             if (Grammar.Brackets.Contains(c))
             {
-                yield return ParseBracket(c);
+                _tokens.Add(ParseBracket(c));
                 continue;
             }
 
@@ -65,24 +68,31 @@ internal class Lexer
             // also parses (/) division operator
             if (c == '/')
             {
-                yield return ParseFromSlash();
+                ParseFromSlash();
                 continue;
             }
 
             if (_opStarts.Contains(c))
             {
-                yield return ParseOperator(c);
+                _tokens.Add(ParseOperator(c));
                 continue;
             }
 
-            yield return c switch
+            switch (c)
             {
-                '\'' or '"' => ParseLiteralString(c),
-                '#' => ParseHashtagComment(),
-                '/' => ParseFromSlash(),
-                _ => ConsumeInto(new FailedToken(c), c)
-            };
+                case '\'':
+                case '"':
+                    _tokens.Add(ParseLiteralString(c));
+                    break;
+                case '#':
+                    _comments.Add(ParseHashtagComment());
+                    break;
+                default:
+                    _tokens.Add(ConsumeInto(new FailedToken(c), c));
+                    break;
+            }
         }
+        return (_tokens.ToArray(), _comments.ToArray());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -142,7 +152,7 @@ internal class Lexer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseHashtagComment()
     {
-        CommentToken token = new CommentToken('#');
+        CommentToken token = new('#');
         _pos++;
         while (_pos <= _maxPos)
         {
@@ -158,7 +168,7 @@ internal class Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Token ParseFromSlash()
+    private void ParseFromSlash()
     {
         BaseRecordingToken token = ConsumeIntoNew('/');
         char c = charPointedAt;
@@ -172,7 +182,8 @@ internal class Lexer
                     AppendInto(token, charPointedAt);
                 }
 
-                return new CommentToken(token.value);
+                _comments.Add(new CommentToken(token));
+                break;
             }
             case '/':
             {
@@ -187,10 +198,12 @@ internal class Lexer
                     }
                 }
 
-                return new CommentToken(token.value);
+                _comments.Add(new CommentToken(token));
+                break;
             }
             default:
-                return new BinaryOpToken("/");
+                _tokens.Add(new BinaryOpToken("/"));
+                break;
         }
     }
 
@@ -223,7 +236,7 @@ internal class Lexer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseIdentifier(char c)
     {
-        LiteralToken token = new();
+        IdentifierToken token = new();
         AppendInto(token, c);
         while (_pos <= _maxPos)
         {
@@ -244,7 +257,7 @@ internal class Lexer
     private BaseRecordingToken ConsumeIntoNew(char c)
     {
         _pos++;
-        return new LiteralToken(c);
+        return new IdentifierToken(c);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

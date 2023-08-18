@@ -4,11 +4,12 @@ namespace NMLServer.Parsing.Expression;
 
 internal abstract class ValueNode<T> : ExpressionAST, IHoldsSingleToken where T : BaseRecordingToken
 {
-    public BaseRecordingToken token { get; }
+    private readonly T _token;
+    public BaseRecordingToken token => _token;
 
     protected ValueNode(ExpressionAST? parent, T recordingToken) : base(parent)
     {
-        token = recordingToken;
+        _token = recordingToken;
     }
 
     public sealed override ExpressionAST Replace(ExpressionAST target, ExpressionAST value)
@@ -16,5 +17,5 @@ internal abstract class ValueNode<T> : ExpressionAST, IHoldsSingleToken where T 
         return base.Replace(target, value);
     }
 
-    public override string ToString() => token.value;
+    public override string ToString() => _token.value;
 }

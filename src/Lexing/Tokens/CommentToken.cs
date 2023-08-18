@@ -2,9 +2,9 @@
 
 internal class CommentToken : BaseRecordingToken
 {
-    public CommentToken(string s) : base(s)
+    public CommentToken(char c) : base(c)
     { }
 
-    public CommentToken(char c) : base(c)
+    public CommentToken(BaseRecordingToken other) : base(other)
     { }
 }

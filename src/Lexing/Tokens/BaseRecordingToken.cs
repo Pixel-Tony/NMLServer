@@ -8,8 +8,6 @@ internal abstract class BaseRecordingToken : Token
 
     private readonly StringBuilder _builder;
 
-    protected BaseRecordingToken(string s) : this(new StringBuilder()) => _builder.Append(s);
-
     protected BaseRecordingToken(char c) : this(new StringBuilder()) => _builder.Append(c);
 
     protected BaseRecordingToken(BaseRecordingToken other) : this(other._builder)
