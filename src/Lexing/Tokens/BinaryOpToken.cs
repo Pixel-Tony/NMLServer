@@ -1,12 +1,18 @@
-﻿using NMLServer.Parsing;
+﻿namespace NMLServer.Lexing.Tokens;
 
-namespace NMLServer.Lexing.Tokens;
-
-internal class BinaryOpToken : Token, IHasPrecedence
+internal class BinaryOpToken : BaseRecordingToken, IHasPrecedence
 {
-    public readonly string Operation;
-    public int precedence => Grammar.OperatorPrecedence[Operation];
-    public BinaryOpToken(string operation) => Operation = operation;
+    public int precedence { get; }
+
+    public BinaryOpToken(int start, int end, string value) : base(start, end)
+    {
+        precedence = Grammar.OperatorPrecedence[value];
+    }
+
+    public BinaryOpToken(int start, int end, char value) : base(start, end)
+    {
+        precedence = Grammar.GetOperatorPrecedence(value);
+    }
 
     public static bool operator >(BinaryOpToken left, IHasPrecedence right) => left.precedence > right.precedence;
     public static bool operator <(BinaryOpToken left, IHasPrecedence right) => left.precedence < right.precedence;

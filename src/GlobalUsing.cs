@@ -2,5 +2,5 @@
     NMLServer.Parsing.Pair<NMLServer.Lexing.Tokens.IdentifierToken, NMLServer.Parsing.Expression.ExpressionAST>;
 global using NamesAttribute = 
     NMLServer.Parsing.Pair<NMLServer.Lexing.Tokens.IdentifierToken, NMLServer.Parsing.Statement.ParameterNames>;
-global using ParameterTypeAttribute = 
-    NMLServer.Parsing.Pair<NMLServer.Lexing.Tokens.IdentifierToken, NMLServer.Lexing.Tokens.KeywordToken>;
+global using Range = 
+    LanguageServer.Parameters.Range;

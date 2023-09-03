@@ -5,7 +5,14 @@ namespace NMLServer.Parsing.Statement;
 
 internal record struct ParameterNames(BracketToken OpeningBracket)
 {
-    public BracketToken OpeningBracket = OpeningBracket;
+    public readonly BracketToken OpeningBracket = OpeningBracket;
     public Pair<NumericToken, ExpressionAST>[]? Items;
     public BracketToken? ClosingBracket;
+
+    public override string ToString()
+    {
+        return $"      {OpeningBracket?.Bracket ?? '.'}\n"
+               + $"      {(Items != null ? string.Join(",\n    ", Items) : ".")}\n"
+               + $"      {ClosingBracket?.Bracket ?? '.'}";
+    }
 }

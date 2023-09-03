@@ -6,10 +6,10 @@ internal abstract class ExpressionAST
 
     protected ExpressionAST(ExpressionAST? parent) => Parent = parent;
 
-    public virtual ExpressionAST Replace(ExpressionAST target, ExpressionAST value)
+    public abstract void Replace(ExpressionAST target, ExpressionAST value);
+
+    protected void FailReplacement()
     {
         throw new ReplaceAttemptException(this);
     }
-
-    public abstract override string ToString();
 }

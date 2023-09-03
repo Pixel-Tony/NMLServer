@@ -1,8 +1,9 @@
-﻿using NMLServer.Parsing.Expression;
+﻿namespace NMLServer.Lexing.Tokens;
 
-namespace NMLServer.Lexing.Tokens;
-
-internal class TernaryOpToken : Token, IHasPrecedence
+internal class TernaryOpToken : BaseSingleCharacterToken, IHasPrecedence
 {
-    public int precedence => TernaryOperation.Precedence;
+    public int precedence => Grammar.TernaryOperatorPrecedence;
+
+    public TernaryOpToken(int position) : base(position)
+    { }
 }

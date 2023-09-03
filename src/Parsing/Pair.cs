@@ -13,7 +13,7 @@ internal record struct Pair<TKey, TValue>(TKey? Key = null, ColonToken? Colon = 
 
     public override string ToString()
     {
-        return $"({Key?.ToString() ?? "."}{(Colon != null ? ":" : "")}"
-               + $" {Value?.ToString() ?? "."}{(Semicolon != null ? ";" : ".")})";
+        return $"{Key?.ToString() ?? "."}{(Colon != null ? ":" : "")}"
+               + $" {Value?.ToString() ?? "."}{(Semicolon != null ? ";" : ".")}";
     }
 }

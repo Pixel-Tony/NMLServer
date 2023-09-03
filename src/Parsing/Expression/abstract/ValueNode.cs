@@ -12,10 +12,8 @@ internal abstract class ValueNode<T> : ExpressionAST, IHoldsSingleToken where T 
         _token = recordingToken;
     }
 
-    public sealed override ExpressionAST Replace(ExpressionAST target, ExpressionAST value)
+    public sealed override void Replace(ExpressionAST target, ExpressionAST value)
     {
-        return base.Replace(target, value);
+        FailReplacement();
     }
-
-    public override string ToString() => _token.value;
 }

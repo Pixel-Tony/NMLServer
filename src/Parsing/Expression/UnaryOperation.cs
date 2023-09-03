@@ -12,5 +12,10 @@ internal class UnaryOperation : ExpressionAST
         _operation = operation;
     }
 
+    public override void Replace(ExpressionAST target, ExpressionAST value)
+    {
+        Expression = value;
+    }
+
     public override string ToString() => $"({_operation.Sign}{Expression?.ToString() ?? "."})";
 }

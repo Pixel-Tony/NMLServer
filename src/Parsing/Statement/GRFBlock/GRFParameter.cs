@@ -1,4 +1,6 @@
 ﻿using NMLServer.Lexing.Tokens;
+using NMLServer.Parsing.Expression;
+using NMLServer.Parsing.Statement.Results;
 
 namespace NMLServer.Parsing.Statement;
 
@@ -6,7 +8,7 @@ namespace NMLServer.Parsing.Statement;
  * param:
  * param [<num>] {
  *   <name> {
- *     type:       <"int"|"bool">;
+ *     type:       int | bool;
  *     name:       <string>;
  *     desc:       <string>;
  *     min_value:  <expression>;
@@ -21,26 +23,49 @@ namespace NMLServer.Parsing.Statement;
  */
 internal class GRFParameter : BaseTitledStatement
 {
-    public NumericToken? ParameterNumber;
-    public BracketToken? OpeningBracket;
-    public IdentifierToken? Name;
-    public BracketToken? InnerOpeningBracket;
-    public NMLAttribute[]? Attributes;
-    public ParameterTypeAttribute[]? ParameterType;
-    public NamesAttribute[]? Names;
-    public BracketToken? InnerClosingBracket;
-    public BracketToken? ClosingBracket;
+    private NumericToken? ParameterNumber;
+    private BracketToken? OpeningBracket;
+    private IdentifierToken? Name;
+    private BracketToken? InnerOpeningBracket;
+    private NMLAttribute[]? Attributes;
+    private NamesAttribute[]? Names;
+    private BracketToken? InnerClosingBracket;
+    private BracketToken? ClosingBracket;
 
-    public GRFParameter(GRFBlock grfBlock, KeywordToken alwaysPARAM) : base(grfBlock, alwaysPARAM)
+    private GRFParameter(GRFBlock grfBlock, KeywordToken alwaysParam) : base(grfBlock, alwaysParam)
     { }
 
-    public override string ToString()
+    public static GRFParameter? FromParseResult(in GRFBlock parent, BlockStatementParseResult data, string textualContext)
     {
-        return $"  {Type.value} {ParameterNumber?.value ?? ""} {OpeningBracket?.Bracket ?? '.'}\n"
-               + $"    {Name?.value ?? "."} {InnerOpeningBracket?.Bracket ?? '.'}\n"
-               + $"      {(Attributes != null ? string.Join("\n", Attributes) : "")}\n"
-               + $"      {(Names != null ? string.Join("\n", Names) : "")}\n"
-               + $"    {InnerClosingBracket?.Bracket ?? '.'}\n"
-               + $"  {ClosingBracket?.Bracket ?? '.'}";
+        if (data.Keyword is not KeywordToken paramKeyword || paramKeyword.Value(textualContext) != "param")
+        {
+            return null;
+        }
+
+        if (data.Body.Blocks.Count < 1)
+        {
+            return new GRFParameter(parent, paramKeyword)
+            {
+                ParameterNumber = null,
+                OpeningBracket = data.Body.OpeningBracket,
+                ClosingBracket = data.Body.ClosingBracket
+            };
+        }
+
+        var inside = data.Body.Blocks[0];
+        
+        // TODO
+
+        return new GRFParameter(parent, paramKeyword)
+        {
+            ParameterNumber = (data.Parameters as Number)?.token as NumericToken,
+            OpeningBracket = data.Body.OpeningBracket,
+            Name = inside.Keyword as IdentifierToken,
+            InnerOpeningBracket = inside.Body.OpeningBracket,
+            Attributes = inside.Body.Attributes.ToArray(),
+            Names = inside.Body.NamesBlocks.ToArray(),
+            InnerClosingBracket = inside.Body.ClosingBracket,
+            ClosingBracket = data.Body.ClosingBracket
+        };
     }
 }

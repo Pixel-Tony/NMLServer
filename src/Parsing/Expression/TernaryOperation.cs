@@ -4,14 +4,13 @@ namespace NMLServer.Parsing.Expression;
 
 internal class TernaryOperation : ExpressionAST, IHasPrecedence
 {
-    private readonly ExpressionAST? _condition;
-    public TernaryOpToken QuestionMark;
+    private ExpressionAST? _condition;
     public ExpressionAST? TrueBranch;
-    public ColonToken? Colon;
     public ExpressionAST? FalseBranch;
+    public TernaryOpToken QuestionMark;
+    public ColonToken? Colon;
 
-    public const int Precedence = 1;
-    public int precedence => Precedence;
+    public int precedence => Grammar.TernaryOperatorPrecedence;
 
     public TernaryOperation(ExpressionAST? parent, TernaryOpToken questionMark) : base(parent)
     {
@@ -22,6 +21,22 @@ internal class TernaryOperation : ExpressionAST, IHasPrecedence
         : this(parent, questionMark)
     {
         _condition = condition;
+    }
+
+    public override void Replace(ExpressionAST target, ExpressionAST value)
+    {
+        if (target == _condition)
+        {
+            _condition = value;
+        }
+        else if (target == TrueBranch)
+        {
+            TrueBranch = value;
+        }
+        else
+        {
+            FalseBranch = value;
+        }
     }
 
     public override string ToString() => $"({_condition} ? {TrueBranch} {(Colon != null ? ':' : '.')} {FalseBranch})";

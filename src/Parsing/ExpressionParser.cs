@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using NMLServer.Lexing.Tokens;
-using static NMLServer.Parsing.Grammar;
 
 namespace NMLServer.Parsing.Expression;
 
@@ -8,10 +7,6 @@ internal class ExpressionParser : BaseParser
 {
     public static (ExpressionAST?, Token?) Apply()
     {
-        if (Pointer >= Max)
-        {
-            return (null, null);
-        }
         var firstToken = Tokens[Pointer];
         var root = TokenToAST(firstToken);
         if (root == null)
@@ -151,15 +146,8 @@ internal class ExpressionParser : BaseParser
                 case BracketToken { Bracket: ')' or ']' } closingParen:
                     switch (current)
                     {
-                        case ParentedExpression { Expression: null, ClosingBracket: null } openParen:
+                        case ParentedExpression { ClosingBracket: null } openParen when openParen.Matches(closingParen):
                             openParen.ClosingBracket = closingParen;
-                            if (current.Parent is FunctionCall)
-                            {
-                                current = current.Parent;
-                            }
-                            break;
-                        case ParentedExpression { ClosingBracket: null } parentedExpression:
-                            parentedExpression.ClosingBracket = closingParen;
                             if (current.Parent is FunctionCall)
                             {
                                 current = current.Parent;
@@ -173,15 +161,21 @@ internal class ExpressionParser : BaseParser
                         case TernaryOperation:
                             if (current.Parent == null)
                             {
-                                return (root, token);
+                                var next = new ParentedExpression(null, null)
+                                {
+                                    Expression = root,
+                                    ClosingBracket = closingParen,
+                                };
+                                current = root = root.Parent = next;
+                                break;
                             }
                             current = current.Parent;
                             continue;
                     }
                     break;
-                case BracketToken { Bracket: '{' or '}' }:
+                case BracketToken:
                 case SemicolonToken:
-                case KeywordToken keywordToken when NotExpressionKeywords.Contains(keywordToken.value):
+                case KeywordToken { IsExpressionUsable: false }:
                     return (root, token);
                 case KeywordToken keywordToken:
                     switch (current)
@@ -326,10 +320,9 @@ internal class ExpressionParser : BaseParser
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ExpressionAST? KeywordTokenToAST(BaseRecordingToken token)
+    private static ExpressionAST? KeywordTokenToAST(KeywordToken token)
     {
-        string value = token.value ?? throw new Exception();
-        return ExpressionKeywords.ContainsKey(value)
+        return token.IsExpressionUsable
             ? new FunctionCall(null, token)
             : null;
     }

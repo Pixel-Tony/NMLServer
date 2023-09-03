@@ -8,4 +8,7 @@ internal class StringToken : BaseValueToken
     {
         return new LiteralString(parent, this);
     }
+
+    public StringToken(int start, int end) : base(start, end)
+    { }
 }
