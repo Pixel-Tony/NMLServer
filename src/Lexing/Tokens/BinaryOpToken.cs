@@ -1,6 +1,6 @@
 ﻿namespace NMLServer.Lexing.Tokens;
 
-internal class BinaryOpToken : BaseRecordingToken, IHasPrecedence
+internal class BinaryOpToken : BaseMulticharToken, IHasPrecedence
 {
     public int precedence { get; }
 

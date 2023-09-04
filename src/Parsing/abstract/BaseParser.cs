@@ -1,4 +1,6 @@
-﻿using LanguageServer.Parameters.TextDocument;
+﻿using LanguageServer.Client;
+using LanguageServer.Parameters.TextDocument;
+using LanguageServer.Parameters.Window;
 using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing;
@@ -10,10 +12,22 @@ internal abstract class BaseParser
     protected static int Max;
     protected static List<Token> UnexpectedTokens = null!;
 
-    public static void GetUnexpectedTokensDiagnostics(List<Diagnostic> l, IPositionConverter converter)
+    public static void GetUnexpectedTokensDiagnostics(List<Diagnostic> l, IPositionConverter converter, Proxy a)
     {
+        a.Window.LogMessage(new LogMessageParams
+        {
+            message = $"found {UnexpectedTokens.Count} unexpected tokens",
+            type = MessageType.Warning
+        });
+
+        int i = 0;
         foreach (var unexpectedToken in UnexpectedTokens)
         {
+            if (++i > 400)
+            {
+                return;
+            }
+
             l.Add(new Diagnostic
             {
                 severity = DiagnosticSeverity.Error,

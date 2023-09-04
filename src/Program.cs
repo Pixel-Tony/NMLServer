@@ -19,20 +19,16 @@ internal interface IPositionConverter
     public Position this[int pos] { get; }
 }
 
-internal class Analyzer
+file static class G
 {
-    public void Analyze(GRFBlock tree, Proxy a, Uri uri, IPositionConverter converter, string s)
+    public static Proxy a;
+
+    public static void Log(string message)
     {
-        List<Diagnostic> diagnostics = new();
-
-        tree.Analyze(diagnostics, converter, s);
-
-        BaseParser.GetUnexpectedTokensDiagnostics(diagnostics, converter);
-
-        a.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams
+        a.Window.LogMessage(new LogMessageParams
         {
-            diagnostics = diagnostics.ToArray(),
-            uri = uri
+            type = MessageType.Log,
+            message = message
         });
     }
 }
@@ -56,10 +52,21 @@ internal class DocumentManager : IPositionConverter
         (this as IPositionConverter).SetContext(document.text);
         BaseParser.Use(new Lexer(document.text).Tokenize().tokens);
 
-        NMLParser.Apply(out var result);
-        //TODO
+        var result = NMLParser.Apply();
+        a.Window.LogMessage(new LogMessageParams
+        {
+            message = $"parsed {result.Children.Count} items until the end!",
+            type = MessageType.Log
+        });
+        var diagnostics = new List<Diagnostic>(1500);
+        BaseParser.GetUnexpectedTokensDiagnostics(diagnostics, this, a);
+        a.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams
+        {
+            diagnostics = diagnostics.ToArray(),
+            uri = document.uri
+        });
     }
-    
+
     public void Change(VersionedTextDocumentIdentifier document, TextDocumentContentChangeEvent[] events, Proxy a)
     {
         var target = _textDocuments.Find(d => d.uri == document.uri);
@@ -124,7 +131,11 @@ internal class Application : ServiceConnection
     private readonly DocumentManager _documents = new();
 
     public Application(Stream input, Stream output) : base(input, output)
-    { }
+    {
+        G.a = Proxy;
+    }
+
+    private static void Log(string m) => G.Log(m);
 
     protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params)
     {
@@ -164,17 +175,8 @@ internal class Application : ServiceConnection
         return VoidResult<ResponseError>.Success();
     }
 
-    private void Log(string message)
-    {
-        Proxy.Window.LogMessage(new LogMessageParams
-        {
-            type = MessageType.Log,
-            message = message
-        });
-    }
-
     private bool _isOpen;
-    
+
     public async Task ListenUntilShutdown()
     {
         _isOpen = true;

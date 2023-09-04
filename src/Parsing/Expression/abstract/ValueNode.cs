@@ -2,10 +2,10 @@
 
 namespace NMLServer.Parsing.Expression;
 
-internal abstract class ValueNode<T> : ExpressionAST, IHoldsSingleToken where T : BaseRecordingToken
+internal abstract class ValueNode<T> : ExpressionAST, IHoldsSingleToken where T : BaseMulticharToken
 {
     private readonly T _token;
-    public BaseRecordingToken token => _token;
+    public BaseMulticharToken token => _token;
 
     protected ValueNode(ExpressionAST? parent, T recordingToken) : base(parent)
     {

@@ -5,7 +5,7 @@ namespace NMLServer.Lexing;
 
 internal class Lexer
 {
-    private static readonly HashSet<char> _opStarts = new(Grammar.Operators.Select(o => o[0]));
+    private static readonly ISet<char> _opStarts = new HashSet<char>(Grammar.Operators.Select(o => o[0]));
 
     private readonly string _input;
     private readonly int _maxPos;
@@ -27,6 +27,7 @@ internal class Lexer
 
     public (Token[] tokens, Token[] comments) Tokenize()
     {
+        var span = _input.AsSpan();
         while (_pos <= _maxPos)
         {
             char c = charPointedAt;
@@ -56,7 +57,7 @@ internal class Lexer
 
             if (IsValidIdStartCharacter(c))
             {
-                _tokens.Add(ParseIdentifier());
+                _tokens.Add(ParseIdentifier(c, span));
                 continue;
             }
 
@@ -210,34 +211,57 @@ internal class Lexer
         return new StringToken(start, _pos);
     }
 
-    private Token ParseIdentifier()
+    private Token ParseIdentifier(char first, ReadOnlySpan<char> span)
     {
         int start = _pos++;
+        char c = '\0';
         while (_pos <= _maxPos)
         {
-            var c = charPointedAt;
+            c = charPointedAt;
             if (!IsValidIdentifierCharacter(c))
             {
                 break;
             }
             _pos++;
         }
-        var value = _input[start.._pos];
-        if (value == "km")
+        switch (_pos - start)
         {
-            if (_maxPos - _pos < 2)
+            case 1 when c == 'm':
+                switch (_maxPos - _pos)
+                {
+                    case 2 when span[_pos..(_pos + 2)] == "/s":
+                    case > 2 when span[_pos..(_pos + 2)] == "/s" && !IsValidIdentifierCharacter(span[_pos + 2]):
+                    {
+                        _pos += 2;
+                        return new UnitToken(start, UnitType.MPS);
+                    }
+                }
+                break;
+
+            case 2 when span[start] == 'k' && c == 'm':
             {
-                throw new NotImplementedException();
+                switch (_maxPos - _pos)
+                {
+                    case 2 when span[_pos..(_pos + 2)] == "/h":
+                    case > 2 when span[_pos..(_pos + 2)] == "/h" && !IsValidIdentifierCharacter(span[_pos + 2]):
+                    {
+                        _pos += 2;
+                        return new UnitToken(start, UnitType.KMPH);
+                    }
+                }
+                break;
             }
         }
-        else if (value == "m")
+        var value = _input[start.._pos];
+        if (Grammar.Units.ContainsKey(value))
         {
-            
-        } 
-        
-        return Grammar.Keywords.Contains(value)
-            ? new KeywordToken(start, _pos, value)
-            : new IdentifierToken(start, _pos);
+            return new UnitToken(start, value);
+        }
+        if (Grammar.KeywordTypeByString.TryGetValue(value, out var keywordType))
+        {
+            return new KeywordToken(start, _pos, keywordType);
+        }
+        return new IdentifierToken(start, _pos);
     }
 
     private Token ParseNumber(char c)
@@ -325,7 +349,6 @@ internal class Lexer
     }
 
     private static bool IsValidIdentifierCharacter(char c) => c == '_' || char.IsLetterOrDigit(c);
-
 
     private static bool IsValidIdStartCharacter(char c) => c == '_' || char.IsLetter(c);
 

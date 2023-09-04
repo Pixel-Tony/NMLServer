@@ -4,5 +4,5 @@ namespace NMLServer.Parsing.Expression;
 
 internal interface IHoldsSingleToken
 {
-    public BaseRecordingToken token { get; }
+    public BaseMulticharToken token { get; }
 }

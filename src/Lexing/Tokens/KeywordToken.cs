@@ -2,14 +2,16 @@
 
 namespace NMLServer.Lexing.Tokens;
 
-internal class KeywordToken : BaseRecordingToken
+internal class KeywordToken : BaseMulticharToken
 {
-    public KeywordToken(int start, int end, string value) : base(start, end)
-    {
-        IsBlock = BlockKeywords.Contains(value);
-        IsExpressionUsable = ExpressionKeywords.ContainsKey(value);
-    }
-    
+    public readonly KeywordType Type;
     public readonly bool IsBlock;
     public readonly bool IsExpressionUsable;
+
+    public KeywordToken(int start, int end, KeywordType type) : base(start, end)
+    {
+        Type = type;
+        IsBlock = BlockKeywordTypes.Contains(Type);
+        IsExpressionUsable = ExpressionKeywordTypes.Contains(Type);
+    }
 }

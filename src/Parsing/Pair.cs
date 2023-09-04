@@ -11,9 +11,8 @@ internal record struct Pair<TKey, TValue>(TKey? Key = null, ColonToken? Colon = 
     public TValue? Value = Value;
     public SemicolonToken? Semicolon = Semicolon;
 
-    public override string ToString()
-    {
-        return $"{Key?.ToString() ?? "."}{(Colon != null ? ":" : "")}"
-               + $" {Value?.ToString() ?? "."}{(Semicolon != null ? ";" : ".")}";
-    }
+    public static Pair<TKey, TValue> From<TOther>(Pair<TKey, TOther> test) => new(test.Key, test.Colon);
+
+    public static Pair<TKey, TValue> From<TOther>(Pair<TKey, TOther> test, TValue value) => new(test.Key, test.Colon, value);
+
 }
