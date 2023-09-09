@@ -5,8 +5,9 @@ namespace NMLServer.Parsing.Statement;
 
 internal class SpriteHolderParser : ExpressionParser
 {
-    public static void Apply(KeywordToken keyword, BaseSpriteHolder result)
+    public static T Apply<T>(KeywordToken keyword) where T : BaseSpriteHolder, new()
     {
+        T result = new();
         HeadingParser.Apply(keyword, out result.Heading);
 
         while (result.OpeningBracket is null && areTokensLeft)
@@ -16,7 +17,7 @@ internal class SpriteHolderParser : ExpressionParser
             {
                 case BracketToken { Bracket: '}' } closing:
                     result.ClosingBracket = closing;
-                    return;
+                    return result;
 
                 case BracketToken { Bracket: '{' } opening:
                     result.OpeningBracket = opening;
@@ -30,7 +31,7 @@ internal class SpriteHolderParser : ExpressionParser
         }
         if (!areTokensLeft)
         {
-            return;
+            return result;
         }
 
         result.Content = ExpressionSequenceParser.Apply();
@@ -45,7 +46,7 @@ internal class SpriteHolderParser : ExpressionParser
                     break;
 
                 case KeywordToken { IsExpressionUsable: false }:
-                    return;
+                    return result;
 
                 default:
                     UnexpectedTokens.Add(current);
@@ -53,5 +54,6 @@ internal class SpriteHolderParser : ExpressionParser
             }
             Pointer++;
         }
+        return result;
     }
 }

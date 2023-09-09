@@ -7,8 +7,6 @@ internal class SpritesetParser : ExpressionParser
 {
     public static Spriteset Apply(KeywordToken alwaysSpriteset)
     {
-        Spriteset result = new();
-        SpriteHolderParser.Apply(alwaysSpriteset, result);
-        return result;
+        return SpriteHolderParser.Apply<Spriteset>(alwaysSpriteset);
     }
 }

@@ -52,6 +52,9 @@ internal class BlockParser : AttributeParser
             case KeywordType.SpriteSet:
                 return SpritesetParser.Apply(keyword);
 
+            case KeywordType.Template:
+                return TemplateParser.Apply(keyword);
+
             default:
                 Pointer = Max;
                 return null!;
