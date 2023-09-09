@@ -1,4 +1,4 @@
-﻿namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Parsing.Expression;
 
 internal abstract class ExpressionAST
 {

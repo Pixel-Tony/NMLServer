@@ -1,3 +1,7 @@
-﻿**/*.*
+﻿/.**/
+/*.**
+!/*.csproj
+/bin
+/built
+/obj
 !.gitignore
-!/src/**/*.*

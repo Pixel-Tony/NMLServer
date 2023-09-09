@@ -1,4 +1,4 @@
-﻿namespace NMLServer;
+namespace NMLServer;
 
 public interface IHasPrecedence
 {

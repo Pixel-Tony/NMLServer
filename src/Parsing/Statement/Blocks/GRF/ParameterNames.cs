@@ -1,4 +1,4 @@
-﻿using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;

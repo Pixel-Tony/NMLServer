@@ -1,6 +1,6 @@
 namespace NMLServer;
 
-internal enum KeywordType
+internal enum KeywordType : byte
 {
     Grf,
     Param,

@@ -1,4 +1,4 @@
-﻿using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Expression;
 
@@ -10,6 +10,9 @@ internal class ParentedExpression : ExpressionAST
 
     public ParentedExpression(ExpressionAST? parent, BracketToken? openingBracket) : base(parent)
         => _openingBracket = openingBracket;
+
+    public ParentedExpression() : base(null)
+    { }
 
     public override void Replace(ExpressionAST target, ExpressionAST value)
     {

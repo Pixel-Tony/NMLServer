@@ -19,13 +19,13 @@ internal interface IPositionConverter
     public Position this[int pos] { get; }
 }
 
-file static class G
+public static class G
 {
-    public static Proxy a;
+    public static Proxy? A;
 
     public static void Log(string message)
     {
-        a.Window.LogMessage(new LogMessageParams
+        A?.Window.LogMessage(new LogMessageParams
         {
             type = MessageType.Log,
             message = message
@@ -70,7 +70,7 @@ internal class DocumentManager : IPositionConverter
     public void Change(VersionedTextDocumentIdentifier document, TextDocumentContentChangeEvent[] events, Proxy a)
     {
         var target = _textDocuments.Find(d => d.uri == document.uri);
-        if (target == null)
+        if (target is null)
         {
             throw new Exception();
         }
@@ -132,7 +132,7 @@ internal class Application : ServiceConnection
 
     public Application(Stream input, Stream output) : base(input, output)
     {
-        G.a = Proxy;
+        G.A = Proxy;
     }
 
     private static void Log(string m) => G.Log(m);

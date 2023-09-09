@@ -1,4 +1,4 @@
-﻿namespace NMLServer.Lexing.Tokens;
+namespace NMLServer.Lexing.Tokens;
 
 internal class BracketToken : BaseSingleCharacterToken
 {

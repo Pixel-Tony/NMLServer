@@ -3,38 +3,37 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-using NamesAttributePair = Pair<NumericToken, ExpressionAST>;
+using NamesPair = Pair<NumericToken, ExpressionAST>;
 
 internal sealed class GRFBlockParser : AttributeParser
 {
     /*
      * <kw:grf> "{" [<id> : <expr> | <param-block>]* "}"
      */
-    public static GRFBlock Apply(KeywordToken alwaysGRF, BaseStatementAST parent)
+    public static GRFBlock Apply(KeywordToken alwaysGRF)
     {
         Pointer++;
-        if (Pointer >= Max)
+        if (!areTokensLeft)
         {
-            return new GRFBlock(parent, alwaysGRF);
+            return new GRFBlock(alwaysGRF);
         }
 
-        BracketToken? openingBracket = null;
-        BracketToken? closingBracket = null;
+        GRFBlock result = new GRFBlock(alwaysGRF);
 
-        while (Pointer < Max && openingBracket is null)
+        while (areTokensLeft && result.OpeningBracket is null)
         {
             var current = Tokens[Pointer];
             switch (current)
             {
-                case BracketToken { Bracket: '{' } expectedOpeningBracket:
-                    openingBracket = expectedOpeningBracket;
+                case BracketToken { Bracket: '{' } openingBracket:
+                    result.OpeningBracket = openingBracket;
                     break;
 
-                case BracketToken { Bracket: '}' } unexpectedClosingBracket:
+                case BracketToken { Bracket: '}' } closingBracket:
                     Pointer++;
-                    return new GRFBlock(parent, alwaysGRF)
+                    return new GRFBlock(alwaysGRF)
                     {
-                        _closingBracket = unexpectedClosingBracket
+                        ClosingBracket = closingBracket
                     };
 
                 case IdentifierToken:
@@ -48,20 +47,25 @@ internal sealed class GRFBlockParser : AttributeParser
             Pointer++;
         }
 
-    bodyStart:
+        bodyStart:
         var attributes = new List<NMLAttribute>(6);
         var parameters = new List<GRFParameter>(2);
-        while (Pointer < Max)
+        while (areTokensLeft)
         {
             var current = Tokens[Pointer];
             switch (current)
             {
+                case BracketToken { Bracket: '}' } closingBracket:
+                    result.ClosingBracket = closingBracket;
+                    Pointer++;
+                    goto end;
+
                 case IdentifierToken identifier:
                     attributes.Add(ParseAttribute(identifier));
                     continue;
 
                 case KeywordToken { Type: KeywordType.Param } paramKeyword:
-                    TryParseParameter(paramKeyword, out var parameter);
+                    ParseParameter(paramKeyword, out var parameter);
                     parameters.Add(parameter);
                     continue;
 
@@ -74,42 +78,42 @@ internal sealed class GRFBlockParser : AttributeParser
             }
             Pointer++;
         }
-    end:
-        return new GRFBlock(parent, alwaysGRF)
-        {
-            _openingBracket = openingBracket,
-            _attributes = attributes.ToArray(),
-            _parameters = parameters.ToArray(),
-            _closingBracket = closingBracket
-        };
+
+        end:
+        result.Attributes = attributes.Count > 0
+            ? attributes.ToArray()
+            : null;
+        result.Parameters = parameters.Count > 0
+            ? parameters.ToArray()
+            : null;
+        return result;
     }
 
-    private static void TryParseParameter(KeywordToken paramKeyword, out GRFParameter result)
+    private static void ParseParameter(KeywordToken paramKeyword, out GRFParameter result)
     {
         result = new GRFParameter(paramKeyword);
         Pointer++;
-        while (Pointer < Max)
+        while (result.OpeningBracket is null && areTokensLeft)
         {
             var current = Tokens[Pointer];
             switch (current)
             {
                 case BracketToken { Bracket: '{' } openingBracket:
                     result.OpeningBracket = openingBracket;
-                    Pointer++;
-                    goto openingBracketParsed;
+                    break;
 
                 case BracketToken { Bracket: '}' } closingBracket:
                     result.ClosingBracket = closingBracket;
                     return;
 
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { IsExpressionUsable: true }:
                 case BaseValueToken:
                 case BinaryOpToken:
                 case BracketToken:
                 case TernaryOpToken:
                 case UnitToken:
                 case UnaryOpToken:
-                    if (result.ParameterNumber != null)
+                    if (result.ParameterNumber is not null)
                     {
                         goto default;
                     }
@@ -124,17 +128,16 @@ internal sealed class GRFBlockParser : AttributeParser
             Pointer++;
         }
 
-    openingBracketParsed:
         ParseParameterBody(ref result);
 
-        if (Pointer < Max && Tokens[Pointer] is BracketToken { Bracket: '}' } outerClosingBracket)
+        if (areTokensLeft && Tokens[Pointer] is BracketToken { Bracket: '}' } outerClosingBracket)
         {
             result.ClosingBracket = outerClosingBracket;
             Pointer++;
             return;
         }
 
-        while (Pointer < Max)
+        while (areTokensLeft)
         {
             var current = Tokens[Pointer];
             switch (current)
@@ -154,12 +157,12 @@ internal sealed class GRFBlockParser : AttributeParser
 
     private static void ParseParameterBody(ref GRFParameter parameter)
     {
-        if (Pointer >= Max)
+        if (!areTokensLeft)
         {
             return;
         }
 
-        while (Pointer < Max && parameter.InnerOpeningBracket is null)
+        while (parameter.InnerOpeningBracket is null && areTokensLeft)
         {
             var current = Tokens[Pointer];
             switch (current)
@@ -183,14 +186,14 @@ internal sealed class GRFBlockParser : AttributeParser
             }
             Pointer++;
         }
-        if (Pointer >= Max)
+        if (!areTokensLeft)
         {
             return;
         }
 
         ParseInnerParameterBody(ref parameter);
 
-        while (Pointer < Max)
+        while (areTokensLeft)
         {
             var current = Tokens[Pointer];
             if (current is not BracketToken { Bracket: '}' } bracket)
@@ -199,7 +202,6 @@ internal sealed class GRFBlockParser : AttributeParser
                 Pointer++;
                 continue;
             }
-
             parameter.ClosingBracket = bracket;
             break;
         }
@@ -208,13 +210,13 @@ internal sealed class GRFBlockParser : AttributeParser
     private static void ParseInnerParameterBody(ref GRFParameter parameter)
     {
         List<NMLAttribute> attributes = new(5);
-        List<NamesAttribute> namesAttributes = null!;
+        List<NamesAttribute> namesAttributes = new();
 
         // Start parsing attributes and names blocks...
-        while (Pointer < Max)
+        while (areTokensLeft)
         {
             var current = Tokens[Pointer];
-            NMLAttribute pair = new();
+            NMLAttribute pair;
             switch (current)
             {
                 case IdentifierToken identifier:
@@ -234,6 +236,7 @@ internal sealed class GRFBlockParser : AttributeParser
 
                 case BracketToken { Bracket: '}' } bracket:
                     parameter.InnerClosingBracket = bracket;
+                    Pointer++;
                     goto end;
 
                 case KeywordToken { IsExpressionUsable: false }:
@@ -246,14 +249,17 @@ internal sealed class GRFBlockParser : AttributeParser
             }
 
             // If colon was already found, this block is skipped
-            while (pair.Colon is null && Pointer < Max)
+            while (pair.Colon is null && areTokensLeft)
             {
                 switch (current = Tokens[Pointer])
                 {
                     case ColonToken colonToken:
                         pair.Colon = colonToken;
-                        Pointer++;
                         break;
+
+                    case KeywordToken:
+                    case BracketToken:
+                        return;
 
                     default:
                         UnexpectedTokens.Add(current);
@@ -264,9 +270,10 @@ internal sealed class GRFBlockParser : AttributeParser
 
             // On colon found Pointer is incremented, no need to increment before this block
             bool added = false;
-            while (!added && Pointer < Max)
+            while (!added && areTokensLeft)
             {
-                switch (current = Tokens[Pointer])
+                current = Tokens[Pointer];
+                switch (current)
                 {
                     case BracketToken { Bracket: '}' } closingBracket:
                         attributes.Add(pair);
@@ -275,10 +282,9 @@ internal sealed class GRFBlockParser : AttributeParser
                         return;
 
                     case BracketToken { Bracket: '{' } openingBracket:
-                        namesAttributes ??= new List<NamesAttribute>();
                         namesAttributes.Add(ParseNamesAttribute(pair, openingBracket));
                         added = true;
-                        break;
+                        continue;
 
                     case SemicolonToken semicolon:
                         pair.Semicolon = semicolon;
@@ -286,8 +292,8 @@ internal sealed class GRFBlockParser : AttributeParser
                         added = true;
                         break;
 
-                    case KeywordToken { IsExpressionUsable: false}:
-                        throw new NotImplementedException();
+                    case KeywordToken { IsExpressionUsable: false }:
+                        goto end;
 
                     case AssignmentToken:
                     case ColonToken:
@@ -296,33 +302,46 @@ internal sealed class GRFBlockParser : AttributeParser
                         break;
 
                     default:
-                        ParseAttribute(ref pair);
+                    {
+                        TryParseExpression(out pair.Value, out var finalizer);
+                        if (finalizer is SemicolonToken semicolon)
+                        {
+                            pair.Semicolon = semicolon;
+                            Pointer++;
+                        }
+
                         attributes.Add(pair);
-                        break;
+                        added = true;
+                        continue;
+                    }
                 }
                 Pointer++;
             }
 
-            if (Pointer >= Max)
+            if (!areTokensLeft)
             {
                 attributes.Add(pair);
             }
         }
 
         end:
-        if (attributes.Count > 0)
-        {
-            parameter.Attributes = attributes.ToArray();
-        }
-        parameter.Names = namesAttributes?.ToArray();
+        parameter.Attributes = attributes.Count > 0
+            ? attributes.ToArray()
+            : null;
+
+        parameter.Names = namesAttributes.Count > 0
+            ? namesAttributes.ToArray()
+            : null;
     }
 
     private static NamesAttribute ParseNamesAttribute(NMLAttribute sketch, BracketToken openingBracket)
     {
         var result = NamesAttribute.From(sketch, new ParameterNames(openingBracket));
-        List<NamesAttributePair> content = new();
+        List<NamesPair> content = new();
+        Pointer++;
 
-        while (Pointer < Max)
+        // Parsing body
+        while (result.Value.ClosingBracket is null && areTokensLeft)
         {
             var current = Tokens[Pointer];
             switch (current)
@@ -333,33 +352,37 @@ internal sealed class GRFBlockParser : AttributeParser
 
                 case BracketToken { Bracket: '}' } closingBracket:
                     result.Value.ClosingBracket = closingBracket;
-                    return result;
-            }
-            Pointer++;
-        }
-        result.Value.Items = content.ToArray();
-        while (Pointer < Max)
-        {
-            var current = Tokens[Pointer];
-            if (current is BracketToken { Bracket: '}' } closing)
-            {
-                result.Value.ClosingBracket = closing;
-                break;
-            }
-            Pointer++;
-        }
+                    Pointer++;
+                    break;
 
-        while (Pointer < Max)
+                case KeywordToken:
+                    return result;
+
+                default:
+                    UnexpectedTokens.Add(current);
+                    Pointer++;
+                    break;
+            }
+        }
+        result.Value.Items = content.Count > 0
+            ? content.ToArray()
+            : null;
+
+        // Parsing closing bracket
+        while (result.Value.ClosingBracket is null && areTokensLeft)
         {
             var current = Tokens[Pointer];
             switch (current)
             {
-                case SemicolonToken semicolon:
-                    result.Semicolon = semicolon;
-                    Pointer++;
+                case BracketToken { Bracket: '}' } closing:
+                    result.Value.ClosingBracket = closing;
+                    break;
+
+                case SemicolonToken semicolonToken:
+                    result.Semicolon = semicolonToken;
                     return result;
 
-                case BracketToken { Bracket: '}' }:
+                case KeywordToken:
                     return result;
 
                 default:
@@ -368,6 +391,12 @@ internal sealed class GRFBlockParser : AttributeParser
             }
             Pointer++;
         }
+        if (!areTokensLeft || Tokens[Pointer] is not SemicolonToken semicolon)
+        {
+            return result;
+        }
+        result.Semicolon = semicolon;
+        Pointer++;
         return result;
     }
 }

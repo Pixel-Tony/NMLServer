@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Expression;
@@ -16,7 +16,7 @@ internal class ExpressionParser : BaseParser
 
             case UnitTerminatedExpression:
                 Pointer++;
-                token = Pointer < Max
+                token = areTokensLeft
                     ? Tokens[Pointer]
                     : null;
                 return;
@@ -24,7 +24,7 @@ internal class ExpressionParser : BaseParser
         ExpressionAST current = result;
 
         Pointer++;
-        while (Pointer < Max)
+        while (areTokensLeft)
         {
             token = Tokens[Pointer];
             switch (token)
@@ -36,7 +36,7 @@ internal class ExpressionParser : BaseParser
                     }
                     result = new UnitTerminatedExpression(result, unitToken);
                     Pointer++;
-                    token = Pointer >= Max
+                    token = areTokensLeft
                         ? Tokens[Pointer]
                         : null;
                     return;
@@ -53,7 +53,7 @@ internal class ExpressionParser : BaseParser
                         case BinaryOperation:
                         case UnaryOperation:
                         case IHoldsSingleToken:
-                            if (current.Parent == null)
+                            if (current.Parent is null)
                             {
                                 return;
                             }
@@ -88,7 +88,7 @@ internal class ExpressionParser : BaseParser
                         case FunctionCall:
                         case IHoldsSingleToken:
                         case BinaryOperation binaryOperation when binaryOperation > questionMark:
-                            if (current.Parent == null)
+                            if (current.Parent is null)
                             {
                                 current.Parent = new TernaryOperation(null, current, questionMark);
                                 current = current.Parent;
@@ -164,7 +164,7 @@ internal class ExpressionParser : BaseParser
                             var call = new FunctionCall(current.Parent, valueNode.token);
                             var parens = new ParentedExpression(call, openingParen);
                             call.Arguments = parens;
-                            if (current.Parent == null)
+                            if (current.Parent is null)
                             {
                                 result = call;
                             }
@@ -194,7 +194,7 @@ internal class ExpressionParser : BaseParser
                         case FunctionCall:
                         case IHoldsSingleToken:
                         case TernaryOperation:
-                            if (current.Parent == null)
+                            if (current.Parent is null)
                             {
                                 var next = new ParentedExpression(null, null)
                                 {
@@ -352,7 +352,7 @@ internal class ExpressionParser : BaseParser
                         case UnaryOperation:
                         case FunctionCall:
                         case TernaryOperation ternaryOperation when binaryOpToken < ternaryOperation:
-                            if (current.Parent == null)
+                            if (current.Parent is null)
                             {
                                 current.Parent = new BinaryOperation(null, current, binaryOpToken);
                                 current = current.Parent;
@@ -412,6 +412,7 @@ internal class ExpressionParser : BaseParser
                 '{' => null,
                 '}' => null,
                 ']' => null,
+                _ => throw new Exception()
             },
             ColonToken => null,
             FailedToken => null,

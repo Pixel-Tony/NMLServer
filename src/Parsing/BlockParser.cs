@@ -1,17 +1,14 @@
-﻿using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing.Expression;
 using NMLServer.Parsing.Statement;
 
 namespace NMLServer.Parsing;
-
-using NamesPair = Pair<NumericToken, ExpressionAST>;
 
 internal record struct StatementHeadingParseResult(KeywordToken Keyword)
 {
     public readonly KeywordToken Keyword = Keyword;
     public ExpressionAST? Parameters;
 
-    // ReSharper disable once UnusedMember.Global
     public StatementHeadingParseResult() : this(null!)
     {
         throw new Exception($"Do not use parameterless constructor of type {nameof(StatementHeadingParseResult)}");
@@ -24,7 +21,8 @@ internal class BlockParser : AttributeParser
     {
         result = new StatementHeadingParseResult(keyword);
         start:
-        if (++Pointer >= Max)
+        Pointer++;
+        if (!areTokensLeft)
         {
             return;
         }
@@ -32,8 +30,10 @@ internal class BlockParser : AttributeParser
         var current = Tokens[Pointer];
         switch (current)
         {
+            case UnitToken:
             case ColonToken:
             case FailedToken:
+            case AssignmentToken:
                 UnexpectedTokens.Add(current);
                 goto start;
 
@@ -42,12 +42,12 @@ internal class BlockParser : AttributeParser
             case SemicolonToken:
                 return;
 
+            case BracketToken:
+            case KeywordToken:
             case UnaryOpToken:
             case BinaryOpToken:
             case TernaryOpToken:
             case BaseValueToken:
-            case BracketToken:
-            case KeywordToken:
                 TryParseExpression(out result.Parameters, out _);
                 return;
 
@@ -56,12 +56,12 @@ internal class BlockParser : AttributeParser
         }
     }
 
-    protected static FunctionStatement ParseFunctionStatement(NMLFileRoot? parent, KeywordToken keyword)
+    protected static FunctionStatement ParseFunctionStatement(KeywordToken keyword)
     {
-        var result = new FunctionStatement(parent);
+        var result = new FunctionStatement();
         StatementHeading(keyword, out result.Heading);
 
-        while (Pointer < Max)
+        while (areTokensLeft)
         {
             var current = Tokens[Pointer];
             switch (current)
@@ -72,9 +72,6 @@ internal class BlockParser : AttributeParser
                     return result;
 
                 case BracketToken:
-                    UnexpectedTokens.Add(current);
-                    return result;
-
                 case KeywordToken { IsExpressionUsable: false }:
                     return result;
 
@@ -87,19 +84,25 @@ internal class BlockParser : AttributeParser
         return result;
     }
 
-    protected static BaseStatementAST ParseBlockStatement(BaseStatementAST parent, KeywordToken keyword)
+    protected static BaseStatement ParseBlockStatement(KeywordToken keyword)
     {
         switch (keyword.Type)
         {
             case KeywordType.Grf:
-                return GRFBlockParser.Apply(keyword, parent);
-        }
+                return GRFBlockParser.Apply(keyword);
 
-        StatementHeading(keyword, out var heading);
-        if (Pointer >= Max)
-        {
-            return new FunctionStatement(parent, heading);
+            case KeywordType.BaseCost:
+                return BasecostParser.Apply(keyword);
+
+            case KeywordType.TramTypeTable:
+            case KeywordType.RailTypeTable:
+            case KeywordType.RoadTypeTable:
+                return TracktypeTableParser.Apply(keyword);
+
+            default:
+                UnexpectedTokens.Add(keyword);
+                Pointer = Max;
+                return null!;
         }
-        throw new NotImplementedException();
     }
 }

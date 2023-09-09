@@ -1,4 +1,6 @@
-﻿namespace NMLServer;
+using NMLServer.Lexing.Tokens;
+
+namespace NMLServer;
 
 internal static class Grammar
 {
@@ -112,7 +114,7 @@ internal static class Grammar
 
     public const int TernaryOperatorPrecedence = 1;
 
-    public static readonly Dictionary<string, int> OperatorPrecedence = new()
+    private static readonly Dictionary<string, int> _operatorPrecedence = new()
     {
         [","] = 0,
         ["?"] = TernaryOperatorPrecedence,
@@ -143,9 +145,92 @@ internal static class Grammar
         ["kg"] = UnitType.Kg
     };
 
-    private static readonly Dictionary<char, int> _oneCharOperatorPrecedence = OperatorPrecedence
+    private static readonly Dictionary<char, int> _oneCharOperatorPrecedence = _operatorPrecedence
         .Where(p => p.Key.Length == 1)
         .ToDictionary(kv => kv.Key[0], kv => kv.Value);
 
+    public static OperatorType GetOperatorType(string value) => value switch
+    {
+        "," => OperatorType.Comma,
+        "?" => OperatorType.QuestionMark,
+        ":" => OperatorType.Colon,
+        "||" => OperatorType.LogicalOr,
+        "&&" => OperatorType.LogicalAnd,
+        "|" => OperatorType.BinaryOr,
+        "^" => OperatorType.BinaryXor,
+        "&" => OperatorType.BinaryAnd,
+        "==" => OperatorType.Eq,
+        "!=" => OperatorType.Ne,
+        "<=" => OperatorType.Le,
+        ">=" => OperatorType.Ge,
+        "<" => OperatorType.Lt,
+        ">" => OperatorType.Gt,
+        "<<" => OperatorType.ShiftLeft,
+        ">>" => OperatorType.ShiftRight,
+        ">>>" => OperatorType.ShiftRightFunky,
+        "+" => OperatorType.Plus,
+        "-" => OperatorType.Minus,
+        "*" => OperatorType.Multiply,
+        "/" => OperatorType.Divide,
+        "%" => OperatorType.Modula,
+        "!" => OperatorType.LogicalNot,
+        "~" => OperatorType.BinaryNot,
+        _ => throw new Exception()
+    };
+
+    public static OperatorType GetOperatorType(char value) => value switch
+    {
+        ',' => OperatorType.Comma,
+        '?' => OperatorType.QuestionMark,
+        ':' => OperatorType.Colon,
+        '|' => OperatorType.BinaryOr,
+        '^' => OperatorType.BinaryXor,
+        '&' => OperatorType.BinaryAnd,
+        '<' => OperatorType.Lt,
+        '>' => OperatorType.Gt,
+        '+' => OperatorType.Plus,
+        '-' => OperatorType.Minus,
+        '*' => OperatorType.Multiply,
+        '/' => OperatorType.Divide,
+        '%' => OperatorType.Modula,
+        '!' => OperatorType.LogicalNot,
+        '~' => OperatorType.BinaryNot,
+        _ => throw new Exception()
+    };
+
     public static int GetOperatorPrecedence(char value) => _oneCharOperatorPrecedence[value];
+
+    public static int GetOperatorPrecedance(string value) => value switch
+    {
+        "?" or ":" => TernaryOperatorPrecedence,
+        _ => _operatorPrecedence[value]
+    };
+}
+
+internal enum OperatorType : byte
+{
+    Comma,
+    QuestionMark,
+    Colon,
+    LogicalOr,
+    LogicalAnd,
+    BinaryOr,
+    BinaryXor,
+    BinaryAnd,
+    Eq,
+    Ne,
+    Le,
+    Ge,
+    Lt,
+    Gt,
+    ShiftLeft,
+    ShiftRight,
+    ShiftRightFunky,
+    Plus,
+    Minus,
+    Multiply,
+    Divide,
+    Modula,
+    LogicalNot,
+    BinaryNot,
 }

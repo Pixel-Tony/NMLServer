@@ -2,20 +2,20 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class FunctionStatement : BaseStatementAST
+internal class FunctionStatement : BaseStatement
 {
     public StatementHeadingParseResult Heading;
     public SemicolonToken? Semicolon;
 
-    public FunctionStatement(BaseStatementAST? parent) : base(parent)
+    public FunctionStatement()
     { }
 
-    public FunctionStatement(BaseStatementAST? parent, KeywordToken keyword) : base(parent)
+    public FunctionStatement(KeywordToken keyword)
     {
         Heading = new StatementHeadingParseResult(keyword);
     }
 
-    public FunctionStatement(BaseStatementAST? parent, StatementHeadingParseResult heading) : base(parent)
+    public FunctionStatement(StatementHeadingParseResult heading)
     {
         Heading = heading;
     }

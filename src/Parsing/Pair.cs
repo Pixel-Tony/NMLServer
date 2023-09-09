@@ -1,4 +1,4 @@
-﻿using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing;
 
@@ -11,8 +11,7 @@ internal record struct Pair<TKey, TValue>(TKey? Key = null, ColonToken? Colon = 
     public TValue? Value = Value;
     public SemicolonToken? Semicolon = Semicolon;
 
-    public static Pair<TKey, TValue> From<TOther>(Pair<TKey, TOther> test) => new(test.Key, test.Colon);
-
-    public static Pair<TKey, TValue> From<TOther>(Pair<TKey, TOther> test, TValue value) => new(test.Key, test.Colon, value);
+    public static Pair<TKey, TValue> From<TOther>(Pair<TKey, TOther> sketch, TValue value)
+        => new(sketch.Key, sketch.Colon, value);
 
 }

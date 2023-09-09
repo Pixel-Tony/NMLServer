@@ -1,4 +1,4 @@
-﻿using LanguageServer.Client;
+using LanguageServer.Client;
 using LanguageServer.Parameters.TextDocument;
 using LanguageServer.Parameters.Window;
 using NMLServer.Lexing.Tokens;
@@ -11,6 +11,8 @@ internal abstract class BaseParser
     protected static int Pointer;
     protected static int Max;
     protected static List<Token> UnexpectedTokens = null!;
+
+    protected static bool areTokensLeft => Pointer < Max;
 
     public static void GetUnexpectedTokensDiagnostics(List<Diagnostic> l, IPositionConverter converter, Proxy a)
     {
@@ -35,7 +37,9 @@ internal abstract class BaseParser
                 range = new Range
                 {
                     start = converter[unexpectedToken.Start],
-                    end = converter[unexpectedToken.Start + 1],
+                    end = converter[unexpectedToken is BaseMulticharToken hasEnd
+                        ? hasEnd.End
+                        : unexpectedToken.Start + 1]
                 }
             });
         }

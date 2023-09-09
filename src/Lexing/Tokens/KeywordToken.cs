@@ -1,4 +1,4 @@
-﻿using static NMLServer.Grammar;
+using static NMLServer.Grammar;
 
 namespace NMLServer.Lexing.Tokens;
 
