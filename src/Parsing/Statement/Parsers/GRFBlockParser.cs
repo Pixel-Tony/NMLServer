@@ -1,5 +1,6 @@
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing.Expression;
+using NMLServer.Parsing.Statement.Models;
 
 namespace NMLServer.Parsing.Statement;
 

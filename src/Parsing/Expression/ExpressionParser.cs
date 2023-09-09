@@ -1,7 +1,8 @@
 using System.Runtime.CompilerServices;
 using NMLServer.Lexing.Tokens;
+using NMLServer.Parsing.Expression;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Parsing;
 
 internal class ExpressionParser : BaseParser
 {
@@ -22,8 +23,8 @@ internal class ExpressionParser : BaseParser
                 return;
         }
         ExpressionAST current = result;
-
         Pointer++;
+
         while (areTokensLeft)
         {
             token = Tokens[Pointer];
@@ -384,7 +385,6 @@ internal class ExpressionParser : BaseParser
         token = null;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ExpressionAST? KeywordTokenToAST(KeywordToken token)
     {
         return token.IsExpressionUsable
@@ -408,10 +408,10 @@ internal class ExpressionParser : BaseParser
             {
                 '(' => new ParentedExpression(null, bracketToken),
                 '[' => new ParentedExpression(null, bracketToken),
-                ')' => null,
+                ')' => new ParentedExpression { ClosingBracket = bracketToken },
+                ']' => new ParentedExpression { ClosingBracket = bracketToken },
                 '{' => null,
                 '}' => null,
-                ']' => null,
                 _ => throw new Exception()
             },
             ColonToken => null,

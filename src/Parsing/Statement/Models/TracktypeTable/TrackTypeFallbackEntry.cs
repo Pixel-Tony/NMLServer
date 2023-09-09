@@ -1,7 +1,7 @@
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing.Expression;
 
-namespace NMLServer.Parsing.Statement.Blocks;
+namespace NMLServer.Parsing.Statement.Models;
 
 internal record struct TrackTypeFallbackEntry(BaseValueToken? Identifier = null, ColonToken? Colon = null,
     ParentedExpression? Fallback = null, BinaryOpToken? Comma = null)

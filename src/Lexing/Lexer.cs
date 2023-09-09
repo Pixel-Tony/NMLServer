@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Lexing;
@@ -105,7 +104,6 @@ internal class Lexer
         return (_tokens.ToArray(), _comments.ToArray());
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Token DecideOperatorType(char c, int start, int end)
     {
         return c switch
@@ -116,7 +114,6 @@ internal class Lexer
         };
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseOperator(char c)
     {
         // ? and : are handled earlier

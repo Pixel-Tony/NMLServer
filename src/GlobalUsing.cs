@@ -4,6 +4,6 @@ global using NMLAttribute = NMLServer.Parsing.Pair<
 >;
 global using NamesAttribute = NMLServer.Parsing.Pair<
     NMLServer.Lexing.Tokens.IdentifierToken,
-    NMLServer.Parsing.Statement.ParameterNames
+    NMLServer.Parsing.Statement.Models.ParameterNames
 >;
 global using Range = LanguageServer.Parameters.Range;
