@@ -1,12 +1,12 @@
-﻿namespace NMLServer.Lexing.Tokens;
+namespace NMLServer.Lexing.Tokens;
 
-internal class BracketToken : Token
+internal class BracketToken : BaseSingleCharacterToken
 {
     public readonly char Bracket;
-    
-    public BracketToken(char bracket)
+
+    public BracketToken(int start) : base(start)
     {
-        Bracket = bracket;
+        Bracket = Input[start];
     }
 
     public override string ToString() => Bracket.ToString();

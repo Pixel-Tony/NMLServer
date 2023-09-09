@@ -1,10 +1,7 @@
-﻿namespace NMLServer.Lexing.Tokens;
+namespace NMLServer.Lexing.Tokens;
 
-internal class CommentToken : BaseRecordingToken
+internal class CommentToken : BaseMulticharToken
 {
-    public CommentToken(string s) : base(s)
-    { }
-
-    public CommentToken(char c) : base(c)
+    public CommentToken(int start, int end) : base(start, end)
     { }
 }

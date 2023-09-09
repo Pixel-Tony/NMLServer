@@ -1,4 +1,7 @@
-﻿namespace NMLServer.Lexing.Tokens;
+namespace NMLServer.Lexing.Tokens;
 
-internal sealed class ColonToken : Token
-{ }
+internal sealed class ColonToken : BaseSingleCharacterToken
+{
+    public ColonToken(int position) : base(position)
+    { }
+}

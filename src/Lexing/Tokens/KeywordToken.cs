@@ -1,7 +1,17 @@
-﻿namespace NMLServer.Lexing.Tokens;
+using static NMLServer.Grammar;
 
-internal class KeywordToken : BaseRecordingToken
+namespace NMLServer.Lexing.Tokens;
+
+internal class KeywordToken : BaseMulticharToken
 {
-    public KeywordToken(BaseRecordingToken other) : base(other)
-    { }
+    public readonly KeywordType Type;
+    public readonly bool IsBlock;
+    public readonly bool IsExpressionUsable;
+
+    public KeywordToken(int start, int end, KeywordType type) : base(start, end)
+    {
+        Type = type;
+        IsBlock = BlockKeywordTypes.Contains(Type);
+        IsExpressionUsable = ExpressionKeywordTypes.Contains(Type);
+    }
 }
