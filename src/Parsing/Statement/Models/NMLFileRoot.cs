@@ -1,4 +1,4 @@
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Parsing.Statement.Models;
 
 internal sealed class NMLFileRoot
 {

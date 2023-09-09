@@ -1,7 +1,7 @@
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing.Expression;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Parsing.Statement.Models;
 
 internal class Assignment : BaseStatement
 {

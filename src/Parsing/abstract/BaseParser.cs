@@ -19,7 +19,9 @@ internal abstract class BaseParser
         a.Window.LogMessage(new LogMessageParams
         {
             message = $"found {UnexpectedTokens.Count} unexpected tokens",
-            type = MessageType.Warning
+            type = UnexpectedTokens.Count == 0
+                ? MessageType.Log
+                : MessageType.Warning
         });
 
         int i = 0;

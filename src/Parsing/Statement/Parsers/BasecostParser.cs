@@ -1,5 +1,5 @@
 using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Statement.Blocks;
+using NMLServer.Parsing.Statement.Models;
 
 namespace NMLServer.Parsing.Statement;
 
@@ -63,10 +63,9 @@ internal class BasecostParser : AttributeParser
         }
 
         end:
-        if (attributes.Count > 0)
-        {
-            result.Body = attributes.ToArray();
-        }
+        result.Body = attributes.Count > 0
+            ? attributes.ToArray()
+            : null;
         return result;
     }
 }

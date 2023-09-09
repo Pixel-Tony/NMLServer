@@ -1,6 +1,6 @@
 using NMLServer.Lexing.Tokens;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Parsing.Statement.Models;
 
 internal class GRFBlock : BaseTitledStatement
 {

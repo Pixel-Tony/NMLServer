@@ -1,10 +1,10 @@
 using NMLServer.Lexing.Tokens;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Parsing.Statement.Models;
 
 internal class FunctionStatement : BaseStatement
 {
-    public StatementHeadingParseResult Heading;
+    public StatementHeading Heading;
     public SemicolonToken? Semicolon;
 
     public FunctionStatement()
@@ -12,10 +12,10 @@ internal class FunctionStatement : BaseStatement
 
     public FunctionStatement(KeywordToken keyword)
     {
-        Heading = new StatementHeadingParseResult(keyword);
+        Heading = new StatementHeading(keyword);
     }
 
-    public FunctionStatement(StatementHeadingParseResult heading)
+    public FunctionStatement(StatementHeading heading)
     {
         Heading = heading;
     }

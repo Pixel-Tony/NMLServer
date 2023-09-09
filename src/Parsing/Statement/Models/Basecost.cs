@@ -1,6 +1,6 @@
 using NMLServer.Lexing.Tokens;
 
-namespace NMLServer.Parsing.Statement.Blocks;
+namespace NMLServer.Parsing.Statement.Models;
 
 internal class Basecost : BaseTitledStatement
 {
