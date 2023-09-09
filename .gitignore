@@ -1,6 +1,7 @@
 ﻿/.**/
 /*.**
 !/*.csproj
+!/*.md
 /bin
 /built
 /obj
