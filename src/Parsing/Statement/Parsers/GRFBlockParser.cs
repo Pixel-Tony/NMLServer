@@ -296,13 +296,14 @@ internal sealed class GRFBlockParser : AttributeParser
                     case KeywordToken { IsExpressionUsable: false }:
                         goto end;
 
-                    case AssignmentToken:
-                    case ColonToken:
-                    case FailedToken:
-                        UnexpectedTokens.Add(current);
-                        break;
 
-                    default:
+                    case UnitToken:
+                    case BracketToken:
+                    case KeywordToken:
+                    case UnaryOpToken:
+                    case BinaryOpToken:
+                    case TernaryOpToken:
+                    case BaseValueToken:
                     {
                         TryParseExpression(out pair.Value, out var finalizer);
                         if (finalizer is SemicolonToken semicolon)
@@ -315,6 +316,10 @@ internal sealed class GRFBlockParser : AttributeParser
                         added = true;
                         continue;
                     }
+
+                    default:
+                        UnexpectedTokens.Add(current);
+                        break;
                 }
                 Pointer++;
             }

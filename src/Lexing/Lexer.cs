@@ -41,6 +41,18 @@ internal class Lexer
                     _tokens.Add(new AssignmentToken(_pos++));
                     continue;
 
+                case '.':
+                    if (_pos == _maxPos)
+                    {
+                        break;
+                    }
+                    _pos++;
+                    _tokens.Add(charPointedAt is '.'
+                        ? new RangeToken(_pos++ - 1)
+                        : new FailedToken(_pos - 1)
+                    );
+                    continue;
+
                 case ';':
                     _tokens.Add(new SemicolonToken(_pos++));
                     continue;

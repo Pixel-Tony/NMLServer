@@ -48,12 +48,12 @@ internal class ExpressionParser : BaseParser
                         case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
                             ternaryOperation.Colon = colonToken;
                             break;
-                        case TernaryOperation:
                         case FunctionCall:
-                        case ParentedExpression:
-                        case BinaryOperation:
                         case UnaryOperation:
+                        case BinaryOperation:
+                        case TernaryOperation:
                         case IHoldsSingleToken:
+                        case ParentedExpression:
                             if (current.Parent is null)
                             {
                                 return;
@@ -84,11 +84,11 @@ internal class ExpressionParser : BaseParser
                             current = ternaryOperation.FalseBranch;
                             break;
 
-                        case UnaryOperation:
-                        case ParentedExpression:
                         case FunctionCall:
-                        case IHoldsSingleToken:
+                        case UnaryOperation:
                         case BinaryOperation binaryOperation when binaryOperation > questionMark:
+                        case IHoldsSingleToken:
+                        case ParentedExpression:
                             if (current.Parent is null)
                             {
                                 current.Parent = new TernaryOperation(null, current, questionMark);
@@ -144,10 +144,6 @@ internal class ExpressionParser : BaseParser
                             current = parentedExpression.Expression;
                             continue;
 
-                        case ParentedExpression:
-                        case FunctionCall:
-                            return;
-
                         case UnaryOperation { Expression: null } unaryOperation:
                         {
                             unaryOperation.Expression = new ParentedExpression(unaryOperation, openingParen);
@@ -175,6 +171,10 @@ internal class ExpressionParser : BaseParser
                             }
                             current = parens;
                             break;
+
+                        case FunctionCall:
+                        case ParentedExpression:
+                            return;
                     }
                     break;
                 }
@@ -189,12 +189,12 @@ internal class ExpressionParser : BaseParser
                             }
                             break;
 
+                        case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
-                        case ParentedExpression:
-                        case FunctionCall:
-                        case IHoldsSingleToken:
                         case TernaryOperation:
+                        case IHoldsSingleToken:
+                        case ParentedExpression:
                             if (current.Parent is null)
                             {
                                 var next = new ParentedExpression(null, null)
@@ -211,11 +211,12 @@ internal class ExpressionParser : BaseParser
                             continue;
                     }
                     break;
-                case AssignmentToken:
+                case RangeToken:
                 case FailedToken:
                 case BracketToken:
-                case SemicolonToken:
                 case KeywordToken { IsExpressionUsable: false }:
+                case SemicolonToken:
+                case AssignmentToken:
                     return;
 
                 case KeywordToken keywordToken:
@@ -247,11 +248,11 @@ internal class ExpressionParser : BaseParser
                             current = ternaryOperation.FalseBranch;
                             break;
 
-                        case ParentedExpression:
+                        case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
                         case IHoldsSingleToken:
-                        case FunctionCall:
+                        case ParentedExpression:
                             return;
                     }
                     break;
@@ -286,10 +287,10 @@ internal class ExpressionParser : BaseParser
                             break;
 
                         case FunctionCall:
-                        case ParentedExpression:
                         case UnaryOperation:
                         case BinaryOperation:
                         case IHoldsSingleToken:
+                        case ParentedExpression:
                             return;
                     }
                     break;
@@ -323,11 +324,11 @@ internal class ExpressionParser : BaseParser
                             current = openParen.Expression;
                             break;
 
-                        case ParentedExpression:
                         case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
                         case IHoldsSingleToken:
+                        case ParentedExpression:
                             return;
                     }
                     break;
@@ -347,12 +348,12 @@ internal class ExpressionParser : BaseParser
                             current = parentedExpression.Expression;
                             break;
 
-                        case ParentedExpression:
-                        case BinaryOperation:
-                        case IHoldsSingleToken:
-                        case UnaryOperation:
                         case FunctionCall:
+                        case UnaryOperation:
+                        case BinaryOperation:
                         case TernaryOperation ternaryOperation when binaryOpToken < ternaryOperation:
+                        case IHoldsSingleToken:
+                        case ParentedExpression:
                             if (current.Parent is null)
                             {
                                 current.Parent = new BinaryOperation(null, current, binaryOpToken);
@@ -385,19 +386,14 @@ internal class ExpressionParser : BaseParser
         token = null;
     }
 
-    private static ExpressionAST? KeywordTokenToAST(KeywordToken token)
-    {
-        return token.IsExpressionUsable
-            ? new FunctionCall(null, token)
-            : null;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ExpressionAST? TokenToAST(Token token)
     {
         return token switch
         {
-            KeywordToken keywordToken => KeywordTokenToAST(keywordToken),
+            KeywordToken keywordToken => keywordToken.IsExpressionUsable
+                ? new FunctionCall(null, keywordToken)
+                : null,
             StringToken stringToken => new LiteralString(null, stringToken),
             NumericToken numericToken => new Number(null, numericToken),
             IdentifierToken literalToken => new Identifier(null, literalToken),
@@ -410,16 +406,10 @@ internal class ExpressionParser : BaseParser
                 '[' => new ParentedExpression(null, bracketToken),
                 ')' => new ParentedExpression { ClosingBracket = bracketToken },
                 ']' => new ParentedExpression { ClosingBracket = bracketToken },
-                '{' => null,
-                '}' => null,
-                _ => throw new Exception()
+                _ => null
             },
-            ColonToken => null,
-            FailedToken => null,
-            SemicolonToken => null,
-            AssignmentToken => null,
             UnitToken unitToken => new UnitTerminatedExpression(null, unitToken),
-            _ => throw new Exception()
+            _ => null
         };
     }
 }
