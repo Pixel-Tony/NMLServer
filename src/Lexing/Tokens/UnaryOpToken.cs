@@ -1,11 +1,11 @@
-﻿namespace NMLServer.Lexing.Tokens;
+namespace NMLServer.Lexing.Tokens;
 
-internal class UnaryOpToken : Token
+internal class UnaryOpToken : BaseSingleCharacterToken
 {
     public readonly char Sign;
 
-    public UnaryOpToken(char token)
+    public UnaryOpToken(int pos) : base(pos)
     {
-        Sign = token;
+        Sign = Input[pos];
     }
 }

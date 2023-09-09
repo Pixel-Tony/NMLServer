@@ -1,7 +1,7 @@
-﻿namespace NMLServer.Lexing.Tokens;
+namespace NMLServer.Lexing.Tokens;
 
-internal sealed class FailedToken : Token
+internal sealed class FailedToken : BaseSingleCharacterToken
 {
-    private readonly char _token;
-    public FailedToken(char c) => _token = c;
+    public FailedToken(int pos) : base(pos)
+    { }
 }
