@@ -8,7 +8,6 @@ using LanguageServer.Parameters.Window;
 using LanguageServer.Parameters.Workspace;
 using NMLServer.Lexing;
 using NMLServer.Parsing;
-using NMLServer.Parsing.Statement;
 
 namespace NMLServer;
 

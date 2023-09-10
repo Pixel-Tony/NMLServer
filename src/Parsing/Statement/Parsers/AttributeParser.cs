@@ -43,6 +43,7 @@ internal class AttributeParser : ExpressionParser
         TryParseExpression(out result.Value, out var expressionEnder);
         if (expressionEnder is not SemicolonToken semicolonToken)
         {
+            result.Semicolon = TryParseSemicolon();
             return result;
         }
         result.Semicolon = semicolonToken;

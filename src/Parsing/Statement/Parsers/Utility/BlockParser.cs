@@ -4,12 +4,12 @@ using NMLServer.Parsing.Statement.Models;
 
 namespace NMLServer.Parsing;
 
-internal class BlockParser : AttributeParser
+internal class BlockParser : HeadingParser
 {
     protected static FunctionStatement ParseFunctionStatement(KeywordToken keyword)
     {
         var result = new FunctionStatement();
-        HeadingParser.Apply(keyword, out result.Heading);
+        ParseHeading(keyword, out result.Heading);
 
         while (areTokensLeft)
         {
@@ -22,7 +22,7 @@ internal class BlockParser : AttributeParser
                     return result;
 
                 case BracketToken:
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
                     return result;
 
                 default:
@@ -54,6 +54,9 @@ internal class BlockParser : AttributeParser
 
             case KeywordType.Template:
                 return TemplateParser.Apply(keyword);
+
+            case KeywordType.Switch:
+                return SwitchParser.Apply(keyword);
 
             default:
                 Pointer = Max;

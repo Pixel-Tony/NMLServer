@@ -6,7 +6,7 @@ namespace NMLServer.Parsing;
 
 internal class HeadingParser : AttributeParser
 {
-    public static void Apply(KeywordToken keyword, out StatementHeading result)
+    protected static void ParseHeading(KeywordToken keyword, out StatementHeading result)
     {
         result = new StatementHeading(keyword);
         Pointer++;
@@ -17,12 +17,12 @@ internal class HeadingParser : AttributeParser
             switch (current)
             {
                 case BracketToken { Bracket: '{' or '}' }:
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
                 case SemicolonToken:
                     return;
 
                 case BracketToken:
-                case KeywordToken:
+                case KeywordToken { Type: not KeywordType.Return }:
                 case UnaryOpToken:
                 case BinaryOpToken:
                 case TernaryOpToken:

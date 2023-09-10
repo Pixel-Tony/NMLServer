@@ -13,17 +13,13 @@ internal class ExpressionSequenceParser : ExpressionParser
             var current = Tokens[Pointer];
             switch (current)
             {
-                case BracketToken { Bracket: '{' }:
-                    goto default;
-
                 case BracketToken { Bracket: '}' }:
-                case KeywordToken { IsExpressionUsable: false }:
-                    return result.Count > 0
-                        ? result.ToArray()
-                        : null;
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                    return result.MaybeToArray();
 
-                case BracketToken:
-                case KeywordToken:
+                case UnitToken:
+                case BracketToken { Bracket: not '{' }:
+                case KeywordToken { Type: not KeywordType.Return }:
                 case UnaryOpToken:
                 case BinaryOpToken:
                 case TernaryOpToken:
@@ -41,8 +37,6 @@ internal class ExpressionSequenceParser : ExpressionParser
             }
             Pointer++;
         }
-        return result.Count > 0
-            ? result.ToArray()
-            : null;
+        return result.MaybeToArray();
     }
 }
