@@ -81,12 +81,8 @@ internal sealed class GRFBlockParser : AttributeParser
         }
 
         end:
-        result.Attributes = attributes.Count > 0
-            ? attributes.ToArray()
-            : null;
-        result.Parameters = parameters.Count > 0
-            ? parameters.ToArray()
-            : null;
+        result.Attributes = attributes.MaybeToArray();
+        result.Parameters = parameters.MaybeToArray();
         return result;
     }
 
@@ -240,7 +236,7 @@ internal sealed class GRFBlockParser : AttributeParser
                     Pointer++;
                     goto end;
 
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
                     goto end;
 
                 default:
@@ -293,25 +289,27 @@ internal sealed class GRFBlockParser : AttributeParser
                         added = true;
                         break;
 
-                    case KeywordToken { IsExpressionUsable: false }:
+                    case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
                         goto end;
-
 
                     case UnitToken:
                     case BracketToken:
-                    case KeywordToken:
+                    case KeywordToken { Type: not KeywordType.Return }:
                     case UnaryOpToken:
                     case BinaryOpToken:
                     case TernaryOpToken:
                     case BaseValueToken:
                     {
                         TryParseExpression(out pair.Value, out var finalizer);
-                        if (finalizer is SemicolonToken semicolon)
+                        if (finalizer is not SemicolonToken semicolon)
+                        {
+                            pair.Semicolon = TryParseSemicolon();
+                        }
+                        else
                         {
                             pair.Semicolon = semicolon;
                             Pointer++;
                         }
-
                         attributes.Add(pair);
                         added = true;
                         continue;
@@ -331,13 +329,8 @@ internal sealed class GRFBlockParser : AttributeParser
         }
 
         end:
-        parameter.Attributes = attributes.Count > 0
-            ? attributes.ToArray()
-            : null;
-
-        parameter.Names = namesAttributes.Count > 0
-            ? namesAttributes.ToArray()
-            : null;
+        parameter.Attributes = attributes.MaybeToArray();
+        parameter.Names = namesAttributes.MaybeToArray();
     }
 
     private static NamesAttribute ParseNamesAttribute(NMLAttribute sketch, BracketToken openingBracket)
@@ -370,9 +363,7 @@ internal sealed class GRFBlockParser : AttributeParser
                     break;
             }
         }
-        result.Value.Items = content.Count > 0
-            ? content.ToArray()
-            : null;
+        result.Value.Items = content.MaybeToArray();
 
         // Parsing closing bracket
         while (result.Value.ClosingBracket is null && areTokensLeft)
@@ -399,6 +390,7 @@ internal sealed class GRFBlockParser : AttributeParser
         }
         if (!areTokensLeft || Tokens[Pointer] is not SemicolonToken semicolon)
         {
+            result.Semicolon = TryParseSemicolon();
             return result;
         }
         result.Semicolon = semicolon;

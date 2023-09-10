@@ -1,5 +1,3 @@
-using NMLServer.Lexing.Tokens;
-
 namespace NMLServer;
 
 internal static class Grammar

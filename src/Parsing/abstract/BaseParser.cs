@@ -54,4 +54,28 @@ internal abstract class BaseParser
         Pointer = 0;
         UnexpectedTokens = new List<Token>();
     }
+
+    protected static SemicolonToken? TryParseSemicolon()
+    {
+        while (areTokensLeft)
+        {
+            var current = Tokens[Pointer];
+            switch (current)
+            {
+                case SemicolonToken semicolon:
+                    Pointer++;
+                    return semicolon;
+
+                case BracketToken { Bracket: '}' }:
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                    return null;
+
+                default:
+                    UnexpectedTokens.Add(current);
+                    break;
+            }
+            Pointer++;
+        }
+        return null;
+    }
 }

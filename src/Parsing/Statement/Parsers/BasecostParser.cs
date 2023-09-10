@@ -63,9 +63,7 @@ internal class BasecostParser : AttributeParser
         }
 
         end:
-        result.Body = attributes.Count > 0
-            ? attributes.ToArray()
-            : null;
+        result.Body = attributes.MaybeToArray();
         return result;
     }
 }

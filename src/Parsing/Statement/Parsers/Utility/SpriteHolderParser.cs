@@ -3,12 +3,12 @@ using NMLServer.Parsing.Statement.Models;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class SpriteHolderParser : ExpressionParser
+internal class SpriteHolderParser : HeadingParser
 {
     public static T Apply<T>(KeywordToken keyword) where T : BaseSpriteHolder, new()
     {
         T result = new();
-        HeadingParser.Apply(keyword, out result.Heading);
+        ParseHeading(keyword, out result.Heading);
 
         while (result.OpeningBracket is null && areTokensLeft)
         {
@@ -45,7 +45,7 @@ internal class SpriteHolderParser : ExpressionParser
                     result.ClosingBracket = closing;
                     break;
 
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
                     return result;
 
                 default:

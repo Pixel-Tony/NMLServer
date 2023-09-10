@@ -31,7 +31,7 @@ internal class AssignmentParser : ExpressionParser
             switch (current)
             {
                 case BracketToken { Bracket: '{' or '}' }:
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
                     return result;
 
                 case AssignmentToken equalsSign:
@@ -77,7 +77,7 @@ internal class AssignmentParser : ExpressionParser
                     return result;
 
                 case null:
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
                 case BracketToken { Bracket: '{' or '}' }:
                     return result;
 
