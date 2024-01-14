@@ -1,3 +1,3 @@
 # NML Intellisense Server
 
-## Made in C# with love
+## Being made with love

@@ -1,8 +1,8 @@
 using NMLServer.Lexing.Tokens;
 
-namespace NMLServer.Parsing.Statement.Models;
+namespace NMLServer.Parsing.Statements.Models;
 
-internal class GRFBlock : BaseTitledStatement
+internal class GRFBlock : TitledStatement
 {
     public BracketToken? OpeningBracket;
     public NMLAttribute[]? Attributes;

@@ -1,9 +1,9 @@
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing.Expression;
 
-namespace NMLServer.Parsing.Statement.Models;
+namespace NMLServer.Parsing.Statements.Models;
 
-internal class Assignment : BaseStatement
+internal class Assignment : Statement
 {
     public ExpressionAST? LeftHandSide;
     public AssignmentToken? EqualsSign;

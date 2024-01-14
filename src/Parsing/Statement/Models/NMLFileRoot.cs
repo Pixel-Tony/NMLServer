@@ -1,6 +1,6 @@
-namespace NMLServer.Parsing.Statement.Models;
+namespace NMLServer.Parsing.Statements.Models;
 
 internal sealed class NMLFileRoot
 {
-    public readonly List<BaseStatement> Children = new();
+    public readonly List<Statement> Children = new();
 }

@@ -1,7 +1,7 @@
 using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Statement.Models;
+using NMLServer.Parsing.Statements.Models;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Parsing.Statements;
 
 internal class SpritesetParser : ExpressionParser
 {

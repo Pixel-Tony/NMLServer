@@ -1,10 +1,9 @@
 using NMLServer.Lexing.Tokens;
 
-namespace NMLServer.Parsing.Statement.Models;
+namespace NMLServer.Parsing.Statements.Models;
 
-internal class FunctionStatement : BaseStatement
+internal class FunctionStatement : StatementWithParameters
 {
-    public StatementHeading Heading;
     public SemicolonToken? Semicolon;
 
     public FunctionStatement()

@@ -1,8 +1,8 @@
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing.Expression;
-using NMLServer.Parsing.Statement.Models;
+using NMLServer.Parsing.Statements.Models;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Parsing.Statements;
 
 using NamesPair = Pair<NumericToken, ExpressionAST>;
 

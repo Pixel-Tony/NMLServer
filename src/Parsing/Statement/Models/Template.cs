@@ -1,4 +1,4 @@
-namespace NMLServer.Parsing.Statement.Models;
+namespace NMLServer.Parsing.Statements.Models;
 
-internal class Template : BaseSpriteHolder
+internal class Template : SpriteHolder
 { }

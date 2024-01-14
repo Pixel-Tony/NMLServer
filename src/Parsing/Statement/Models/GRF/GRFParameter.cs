@@ -1,7 +1,7 @@
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing.Expression;
 
-namespace NMLServer.Parsing.Statement.Models;
+namespace NMLServer.Parsing.Statements.Models;
 
 /*
  * param:

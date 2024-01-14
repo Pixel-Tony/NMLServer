@@ -1,11 +1,6 @@
-using NMLServer.Lexing.Tokens;
+namespace NMLServer.Parsing.Statements.Models;
 
-namespace NMLServer.Parsing.Statement.Models;
-
-internal class Switch : BaseStatement
+internal class Switch : StatementWithParametersAndBody
 {
-    public StatementHeading Heading;
-    public BracketToken? OpeningBracket;
     public SwitchLine[]? Body;
-    public BracketToken? ClosingBracket;
 }

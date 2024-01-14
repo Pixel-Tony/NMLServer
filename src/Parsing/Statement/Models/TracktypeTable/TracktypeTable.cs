@@ -1,8 +1,8 @@
 using NMLServer.Lexing.Tokens;
 
-namespace NMLServer.Parsing.Statement.Models;
+namespace NMLServer.Parsing.Statements.Models;
 
-internal class TracktypeTable : BaseTitledStatement
+internal class TracktypeTable : TitledStatement
 {
     public BracketToken? OpeningBracket;
     public (BaseValueToken? identifier, BinaryOpToken? comma)[]? StandaloneLabels;

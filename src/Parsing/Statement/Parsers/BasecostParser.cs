@@ -1,11 +1,11 @@
 using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Statement.Models;
+using NMLServer.Parsing.Statements.Models;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Parsing.Statements;
 
 internal class BasecostParser : AttributeParser
 {
-    public static BaseStatement Apply(KeywordToken alwaysBasecost)
+    public static Statement Apply(KeywordToken alwaysBasecost)
     {
         Basecost result = new(alwaysBasecost);
         List<NMLAttribute> attributes = new();

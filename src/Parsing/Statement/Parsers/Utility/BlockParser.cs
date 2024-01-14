@@ -1,8 +1,7 @@
 using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Statement;
-using NMLServer.Parsing.Statement.Models;
+using NMLServer.Parsing.Statements.Models;
 
-namespace NMLServer.Parsing;
+namespace NMLServer.Parsing.Statements;
 
 internal class BlockParser : HeadingParser
 {
@@ -34,7 +33,7 @@ internal class BlockParser : HeadingParser
         return result;
     }
 
-    protected static BaseStatement ParseBlockStatement(KeywordToken keyword)
+    protected static Statement ParseBlockStatement(KeywordToken keyword)
     {
         switch (keyword.Type)
         {
@@ -58,6 +57,36 @@ internal class BlockParser : HeadingParser
             case KeywordType.Switch:
                 return SwitchParser.Apply(keyword);
 
+            case KeywordType.Param:
+            case KeywordType.Var:
+            case KeywordType.CargoTable:
+            case KeywordType.If:
+            case KeywordType.Else:
+            case KeywordType.While:
+            case KeywordType.Item:
+            case KeywordType.Property:
+            case KeywordType.Graphics:
+            case KeywordType.LiveryOverride:
+            case KeywordType.SnowLine:
+            case KeywordType.SpriteGroup:
+            case KeywordType.RandomSwitch:
+            case KeywordType.Produce:
+            case KeywordType.Error:
+            case KeywordType.DisableItem:
+            case KeywordType.Replace:
+            case KeywordType.ReplaceNew:
+            case KeywordType.FontGlyph:
+            case KeywordType.Deactivate:
+            case KeywordType.TownNames:
+            case KeywordType.Return:
+            case KeywordType.Exit:
+            case KeywordType.TileLayout:
+            case KeywordType.SpriteLayout:
+            case KeywordType.AlternativeSprites:
+            case KeywordType.BaseGraphics:
+            case KeywordType.RecolourSprite:
+            case KeywordType.EngineOverride:
+            case KeywordType.Sort:
             default:
                 Pointer = Max;
                 return null!;

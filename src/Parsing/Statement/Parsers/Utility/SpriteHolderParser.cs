@@ -1,11 +1,11 @@
 using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Statement.Models;
+using NMLServer.Parsing.Statements.Models;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Parsing.Statements;
 
 internal class SpriteHolderParser : HeadingParser
 {
-    public static T Apply<T>(KeywordToken keyword) where T : BaseSpriteHolder, new()
+    public static T Apply<T>(KeywordToken keyword) where T : SpriteHolder, new()
     {
         T result = new();
         ParseHeading(keyword, out result.Heading);
