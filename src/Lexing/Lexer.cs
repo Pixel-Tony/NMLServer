@@ -3,8 +3,9 @@ using NMLServer.Lexing.Tokens;
 namespace NMLServer.Lexing;
 
 internal class Lexer
+// TODO: fix recognition of unit operators with '/' in them !!
 {
-    private static readonly ISet<char> _opStarts = new HashSet<char>(Grammar.Operators.Select(o => o[0]));
+    private static readonly HashSet<char> _opStarts = new(from op in Grammar.Operators select op[0]);
 
     private readonly string _input;
     private readonly int _maxPos;
@@ -280,79 +281,77 @@ internal class Lexer
             : NumberLexState.Int;
 
         int start = _pos++;
-        while (_pos <= _maxPos)
+        for (; _pos <= _maxPos; ++_pos)
         {
             c = charPointedAt;
             switch (state)
             {
                 case NumberLexState.StartingZero:
-                    if (c == 'x' || c == 'X')
+                    switch (c)
                     {
-                        _pos++;
-                        state = NumberLexState.HexOnX;
-                        continue;
+                        case 'x':
+                        case 'X':
+                            state = NumberLexState.HexOnX;
+                            continue;
+
+                        case '.':
+                            state = NumberLexState.FloatOnDot;
+                            continue;
                     }
                     if (!char.IsDigit(c))
                     {
-                        break;
+                        return new NumericToken(start, _pos);
                     }
-                    _pos++;
                     state = NumberLexState.Int;
                     continue;
 
                 case NumberLexState.Int:
                     if (char.IsDigit(c))
                     {
-                        _pos++;
                         continue;
                     }
-
                     if (c != '.')
                     {
-                        break;
+                        return new NumericToken(start, _pos);
                     }
-                    _pos++;
                     state = NumberLexState.FloatOnDot;
                     continue;
 
                 case NumberLexState.HexOnX:
                     if (!char.IsAsciiHexDigit(c))
                     {
-                        break;
+                        return new NumericToken(start, _pos);
                     }
-                    _pos++;
                     state = NumberLexState.HexAfterX;
                     continue;
 
                 case NumberLexState.HexAfterX:
                     if (!char.IsAsciiHexDigit(c))
                     {
-                        break;
+                        return new NumericToken(start, _pos);
                     }
-                    _pos++;
                     continue;
 
                 case NumberLexState.FloatOnDot:
+                    // range operator
+                    if (c == '.')
+                    {
+                        return new NumericToken(start, --_pos);
+                    }
                     if (!char.IsDigit(c))
                     {
-                        break;
+                        return new NumericToken(start, _pos);
                     }
-                    _pos++;
                     state = NumberLexState.FloatAfterDot;
                     continue;
 
                 case NumberLexState.FloatAfterDot:
                     if (!char.IsDigit(c))
                     {
-                        break;
+                        return new NumericToken(start, _pos);
                     }
-                    _pos++;
                     continue;
-
-                default:
-                    throw new Exception();
             }
-            break;
         }
         return new NumericToken(start, _pos);
     }
