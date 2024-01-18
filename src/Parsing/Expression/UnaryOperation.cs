@@ -12,7 +12,7 @@ internal class UnaryOperation : ExpressionAST
         _operation = operation;
     }
 
-    public override void Replace(ExpressionAST target, ExpressionAST value)
+    protected override void Replace(ExpressionAST target, ExpressionAST value)
     {
         Expression = value;
     }

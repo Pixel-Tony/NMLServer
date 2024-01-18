@@ -2,17 +2,16 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Expression;
 
-internal abstract class ValueNode<T> : ExpressionAST, IHoldsSingleToken where T : BaseMulticharToken
+internal abstract class ValueNode : ExpressionAST
 {
-    private readonly T _token;
-    public BaseMulticharToken token => _token;
+    public readonly ValueToken Token;
 
-    protected ValueNode(ExpressionAST? parent, T recordingToken) : base(parent)
+    protected ValueNode(ExpressionAST? parent, ValueToken recordingToken) : base(parent)
     {
-        _token = recordingToken;
+        Token = recordingToken;
     }
 
-    public sealed override void Replace(ExpressionAST target, ExpressionAST value)
+    protected sealed override void Replace(ExpressionAST target, ExpressionAST value)
     {
         FailReplacement();
     }

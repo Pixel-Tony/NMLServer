@@ -4,12 +4,15 @@ namespace NMLServer.Parsing.Expression;
 
 internal class FunctionCall : ExpressionAST
 {
-    public readonly BaseMulticharToken Function;
+    public readonly MulticharToken Function;
     public ParentedExpression? Arguments;
 
-    public FunctionCall(ExpressionAST? parent, BaseMulticharToken function) : base(parent) => Function = function;
+    public FunctionCall(ExpressionAST? parent, MulticharToken function) : base(parent)
+    {
+        Function = function;
+    }
 
-    public override void Replace(ExpressionAST target, ExpressionAST value)
+    protected override void Replace(ExpressionAST target, ExpressionAST value)
     {
         FailReplacement();
     }

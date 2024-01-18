@@ -2,8 +2,8 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Expression;
 
-internal class Identifier : ValueNode<BaseValueToken>
+internal class Identifier : ValueNode
 {
-    public Identifier(ExpressionAST? parent, BaseValueToken token) : base(parent, token)
+    public Identifier(ExpressionAST? parent, ValueToken token) : base(parent, token)
     { }
 }

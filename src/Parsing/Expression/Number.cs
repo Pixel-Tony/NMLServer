@@ -2,8 +2,8 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Expression;
 
-internal sealed class Number : ValueNode<BaseValueToken>
+internal sealed class Number : ValueNode
 {
-    public Number(ExpressionAST? parent, BaseValueToken token) : base(parent, token)
+    public Number(ExpressionAST? parent, ValueToken token) : base(parent, token)
     { }
 }

@@ -14,7 +14,7 @@ internal class ParentedExpression : ExpressionAST
     public ParentedExpression() : base(null)
     { }
 
-    public override void Replace(ExpressionAST target, ExpressionAST value)
+    protected override void Replace(ExpressionAST target, ExpressionAST value)
     {
         Expression = value;
     }

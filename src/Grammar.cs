@@ -7,7 +7,7 @@ internal static class Grammar
         "grf", "param", "var", "cargotable", "railtypetable", "roadtypetable", "tramtypetable", "if", "else", "while",
         "item", "property", "graphics", "livery_override", "snowline", "basecost", "template", "spriteset", "switch",
         "spritegroup", "random_switch", "produce", "error", "disable_item", "replace", "replacenew", "font_glyph",
-        "deactivate", "town_names", "return", "exit", "tilelayout", "spritelayout", "alternative_sprites",
+        "deactivate", "town_names", "return", "tilelayout", "spritelayout", "alternative_sprites",
         "base_graphics", "recolour_sprite", "engine_override", "sort"
     };
 
@@ -51,7 +51,6 @@ internal static class Grammar
         ["deactivate"] = KeywordType.Deactivate,
         ["town_names"] = KeywordType.TownNames,
         ["return"] = KeywordType.Return,
-        ["exit"] = KeywordType.Exit,
         ["tilelayout"] = KeywordType.TileLayout,
         ["spritelayout"] = KeywordType.SpriteLayout,
         ["alternative_sprites"] = KeywordType.AlternativeSprites,
@@ -63,26 +62,33 @@ internal static class Grammar
 
     private static readonly HashSet<string> _blockKeywords = new()
     {
-        "grf", "param", "cargotable", "railtypetable", "roadtypetable", "tramtypetable", "if", "else", "while", "item",
+        "grf", "cargotable", "railtypetable", "roadtypetable", "tramtypetable", "if", "else", "while", "item",
         "property", "graphics", "livery_override", "snowline", "basecost", "template", "spriteset", "switch",
         "spritegroup", "random_switch", "replace", "replacenew", "font_glyph", "town_names", "tilelayout",
-        "spritelayout", "alternative_sprites", "base_graphics", "recolour_sprite",
+        "spritelayout", "alternative_sprites", "base_graphics", "recolour_sprite", "produce"
     };
 
-    public static readonly HashSet<KeywordType> BlockKeywordTypes
-        = KeywordTypeByString
-            .Where(p => _blockKeywords.Contains(p.Key))
-            .Select(p => p.Value)
-            .ToHashSet();
+    public static readonly HashSet<KeywordType> BlockKeywords = new(
+        from keyword in KeywordTypeByString
+        where _blockKeywords.Contains(keyword.Key)
+        select keyword.Value
+    );
 
-    private static readonly HashSet<string> _expressionKeywords = new()
+    private static readonly HashSet<string> _functionBlockKeywords = new()
     {
-        "param",
-        "var"
+        "error", "disable_item", "deactivate", "engine_override", "sort"
     };
 
-    public static readonly HashSet<KeywordType> ExpressionKeywordTypes =
-        _expressionKeywords.Select(p => KeywordTypeByString[p]).ToHashSet();
+    public static readonly HashSet<KeywordType> FunctionBlockKeywords = new(
+        from keyword in KeywordTypeByString
+        where _functionBlockKeywords.Contains(keyword.Key)
+        select keyword.Value
+    );
+
+    public static readonly HashSet<KeywordType> ExpressionKeywordTypes = new(
+        from keyword in new[] { "param", "var" }
+        select KeywordTypeByString[keyword]
+    );
 
     private static readonly HashSet<string> _featureIdentifiers = new()
     {
@@ -112,7 +118,7 @@ internal static class Grammar
 
     public const int TernaryOperatorPrecedence = 1;
 
-    private static readonly Dictionary<string, int> _operatorPrecedence = new()
+    private static readonly Dictionary<string, uint> _operatorPrecedence = new()
     {
         [","] = 0,
         ["?"] = TernaryOperatorPrecedence,
@@ -143,7 +149,7 @@ internal static class Grammar
         ["kg"] = UnitType.Kg
     };
 
-    private static readonly Dictionary<char, int> _oneCharOperatorPrecedence = _operatorPrecedence
+    private static readonly Dictionary<char, uint> _oneCharOperatorPrecedence = _operatorPrecedence
         .Where(p => p.Key.Length == 1)
         .ToDictionary(kv => kv.Key[0], kv => kv.Value);
 
@@ -196,9 +202,9 @@ internal static class Grammar
         _ => throw new Exception()
     };
 
-    public static int GetOperatorPrecedence(char value) => _oneCharOperatorPrecedence[value];
+    public static uint GetOperatorPrecedence(char value) => _oneCharOperatorPrecedence[value];
 
-    public static int GetOperatorPrecedance(string value) => value switch
+    public static uint GetOperatorPrecedance(string value) => value switch
     {
         "?" or ":" => TernaryOperatorPrecedence,
         _ => _operatorPrecedence[value]

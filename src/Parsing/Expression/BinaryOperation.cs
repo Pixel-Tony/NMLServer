@@ -2,24 +2,26 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Expression;
 
-internal class BinaryOperation : ExpressionAST, IHasPrecedence
+internal class BinaryOperation : ExpressionAST
 {
     private readonly BinaryOpToken _operation;
     private ExpressionAST? _left;
     public ExpressionAST? Right;
 
-    public int precedence => _operation.precedence;
+    public readonly uint Precedence;
 
-    public static bool operator >(BinaryOperation left, IHasPrecedence right) => left.precedence > right.precedence;
-    public static bool operator <(BinaryOperation left, IHasPrecedence right) => left.precedence < right.precedence;
-
-    public BinaryOperation(ExpressionAST? parent, BinaryOpToken binaryOpToken) : base(parent) =>
+    public BinaryOperation(ExpressionAST? parent, BinaryOpToken binaryOpToken) : base(parent)
+    {
         _operation = binaryOpToken;
+        Precedence = binaryOpToken.Precedence;
+    }
 
-    public BinaryOperation(ExpressionAST? parent, ExpressionAST? left, BinaryOpToken op) : this(parent, op) =>
+    public BinaryOperation(ExpressionAST? parent, ExpressionAST? left, BinaryOpToken op) : this(parent, op)
+    {
         _left = left;
+    }
 
-    public override void Replace(ExpressionAST target, ExpressionAST value)
+    protected override void Replace(ExpressionAST target, ExpressionAST value)
     {
         if (_left == target)
         {

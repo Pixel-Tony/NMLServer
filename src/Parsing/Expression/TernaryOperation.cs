@@ -2,7 +2,7 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Expression;
 
-internal class TernaryOperation : ExpressionAST, IHasPrecedence
+internal class TernaryOperation : ExpressionAST
 {
     private ExpressionAST? _condition;
     public ExpressionAST? TrueBranch;
@@ -10,20 +10,20 @@ internal class TernaryOperation : ExpressionAST, IHasPrecedence
     public TernaryOpToken QuestionMark;
     public ColonToken? Colon;
 
-    public int precedence => Grammar.TernaryOperatorPrecedence;
+    public const int Precedence = Grammar.TernaryOperatorPrecedence;
 
     public TernaryOperation(ExpressionAST? parent, TernaryOpToken questionMark) : base(parent)
     {
         QuestionMark = questionMark;
     }
 
-    public TernaryOperation(ExpressionAST? parent, ExpressionAST? condition, TernaryOpToken questionMark) 
+    public TernaryOperation(ExpressionAST? parent, ExpressionAST? condition, TernaryOpToken questionMark)
         : this(parent, questionMark)
     {
         _condition = condition;
     }
 
-    public override void Replace(ExpressionAST target, ExpressionAST value)
+    protected override void Replace(ExpressionAST target, ExpressionAST value)
     {
         if (target == _condition)
         {

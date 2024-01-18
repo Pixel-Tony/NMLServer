@@ -7,18 +7,13 @@ using LanguageServer.Parameters.TextDocument;
 using LanguageServer.Parameters.Window;
 using LanguageServer.Parameters.Workspace;
 using NMLServer.Lexing;
+using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing;
+using NMLServer.Parsing.Statement;
 
 namespace NMLServer;
 
-internal interface IPositionConverter
-{
-    public void SetContext(string text);
-
-    public Position this[int pos] { get; }
-}
-
-public static class G
+public static class Logger
 {
     public static Proxy? A;
 
@@ -32,9 +27,9 @@ public static class G
     }
 }
 
-internal class DocumentManager : IPositionConverter
+internal class DocumentManager
 {
-    private readonly List<TextDocumentItem> _textDocuments = new(3);
+    public readonly List<TextDocumentItem> _textDocuments = new(3);
 
     public void Add(TextDocumentItem document, Proxy a)
     {
@@ -48,17 +43,46 @@ internal class DocumentManager : IPositionConverter
 
     private void Analyze(TextDocumentItem document, Proxy a)
     {
-        (this as IPositionConverter).SetContext(document.text);
-        BaseParser.Use(new Lexer(document.text).Tokenize().tokens);
+        SetContext(document.text);
 
-        var result = NMLParser.Apply();
+        var tokens = new Lexer(document.text).Tokenize().tokens;
+        Logger.Log($"lexed {tokens.Length} items");
+        var state = new ParsingState(tokens);
+
+        var result = new NMLFile(state);
         a.Window.LogMessage(new LogMessageParams
         {
-            message = $"parsed {result.Children.Count} items until the end!",
+            message = $"parsed {result.children.Count()} items until the end!",
             type = MessageType.Log
         });
-        var diagnostics = new List<Diagnostic>(1500);
-        BaseParser.GetUnexpectedTokensDiagnostics(diagnostics, this, a);
+        PublishUnexpectedTokensDiagnostics(document, a, state);
+    }
+
+    private void PublishUnexpectedTokensDiagnostics(TextDocumentItem document, Proxy a, ParsingState state)
+    {
+        var diagnostics = new List<Diagnostic>(400);
+        var tokens = state.unexpectedTokens.Take(..400).ToArray();
+        a.Window.LogMessage(new LogMessageParams
+        {
+            message = $"found {tokens.Length} unexpected tokens",
+            type = tokens.Length == 0
+                ? MessageType.Log
+                : MessageType.Warning
+        });
+
+        foreach (var unexpectedToken in tokens)
+        {
+            diagnostics.Add(new Diagnostic
+            {
+                severity = DiagnosticSeverity.Error,
+                message = "Unexpected token",
+                range = new LanguageServer.Parameters.Range
+                {
+                    start = this[unexpectedToken.Start],
+                    end = this[unexpectedToken is MulticharToken hasEnd ? hasEnd.End : unexpectedToken.Start + 1]
+                }
+            });
+        }
         a.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams
         {
             diagnostics = diagnostics.ToArray(),
@@ -127,14 +151,14 @@ internal class DocumentManager : IPositionConverter
 
 internal class Application : ServiceConnection
 {
-    private readonly DocumentManager _documents = new();
+    public static readonly DocumentManager _documents = new();
 
     public Application(Stream input, Stream output) : base(input, output)
     {
-        G.A = Proxy;
+        Logger.A = Proxy;
     }
 
-    private static void Log(string m) => G.Log(m);
+    private static void Log(string m) => Logger.Log(m);
 
     protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params)
     {

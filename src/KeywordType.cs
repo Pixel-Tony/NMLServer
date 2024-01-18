@@ -32,7 +32,6 @@ internal enum KeywordType : byte
     Deactivate,
     TownNames,
     Return,
-    Exit,
     TileLayout,
     SpriteLayout,
     AlternativeSprites,

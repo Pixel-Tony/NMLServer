@@ -1,8 +1,8 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class TernaryOpToken : BaseSingleCharacterToken, IHasPrecedence
+internal class TernaryOpToken : Token
 {
-    public int precedence => Grammar.TernaryOperatorPrecedence;
+    public const int Precedence = Grammar.TernaryOperatorPrecedence;
 
     public TernaryOpToken(int position) : base(position)
     { }

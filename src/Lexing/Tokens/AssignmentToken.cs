@@ -1,6 +1,6 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class AssignmentToken : BaseSingleCharacterToken
+internal class AssignmentToken : Token
 {
     public AssignmentToken(int position) : base(position)
     { }
