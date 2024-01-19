@@ -26,7 +26,7 @@ internal class TracktypeTable : BaseStatementWithBlock
                     state.Increment();
                     goto label_Ending;
 
-                case BinaryOpToken { Type: OperatorType.Comma } commaToken:
+                case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
                     entries.Add((current, commaToken));
                     current = null;
                     break;

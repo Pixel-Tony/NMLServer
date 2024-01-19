@@ -2,11 +2,11 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class ItemBlock : BaseParametrizedStatementWithBlock
+internal class WhileBlock : BaseParametrizedStatementWithBlock
 {
     private readonly NMLFile _children;
 
-    public ItemBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
+    public WhileBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is not null)
         {

@@ -29,7 +29,7 @@ public static class Logger
 
 internal class DocumentManager
 {
-    public readonly List<TextDocumentItem> _textDocuments = new(3);
+    private readonly List<TextDocumentItem> _textDocuments = new(3);
 
     public void Add(TextDocumentItem document, Proxy a)
     {
@@ -100,7 +100,7 @@ internal class DocumentManager
         {
             target.text = change.text;
         }
-        target.version++;
+        ++target.version;
 
         Analyze(target, a);
     }
@@ -115,14 +115,14 @@ internal class DocumentManager
         _textDocuments.RemoveAt(index);
     }
 
-    public void SetContext(string current)
+    private void SetContext(string current)
     {
         _current = current;
     }
 
     private string? _current;
 
-    public Position this[int start]
+    private Position this[int start]
     {
         get
         {
@@ -144,18 +144,16 @@ internal class DocumentManager
 
 internal class Application : ServiceConnection
 {
-    public static readonly DocumentManager _documents = new();
+    private static readonly DocumentManager _documents = new();
 
     public Application(Stream input, Stream output) : base(input, output)
     {
         Logger.A = Proxy;
     }
 
-    private static void Log(string m) => Logger.Log(m);
-
     protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params)
     {
-        Log("Server is online.");
+        Logger.Log("Server is online.");
         return Result<InitializeResult, ResponseError<InitializeErrorData>>.Success(new InitializeResult
             { capabilities = new ServerCapabilities { textDocumentSync = TextDocumentSyncKind.Full } }
         );
@@ -163,30 +161,30 @@ internal class Application : ServiceConnection
 
     protected override void DidChangeConfiguration(DidChangeConfigurationParams @params)
     {
-        Log("Changed configuration.");
+        Logger.Log("Changed configuration.");
     }
 
     protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params)
     {
-        Log("Changed doc!");
+        Logger.Log("Changed doc!");
         _documents.Change(@params.textDocument, @params.contentChanges, Proxy);
     }
 
     protected override void DidCloseTextDocument(DidCloseTextDocumentParams @params)
     {
-        Log("Closed a document");
+        Logger.Log("Closed a document");
         _documents.Remove(@params.textDocument.uri);
     }
 
     protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params)
     {
-        Log("Opened a new doc.");
+        Logger.Log("Opened a new doc.");
         _documents.Add(@params.textDocument, Proxy);
     }
 
     protected override VoidResult<ResponseError> Shutdown()
     {
-        Log("Language Server is about to shutdown.");
+        Logger.Log("Language Server is about to shutdown.");
         _isOpen = false;
         return VoidResult<ResponseError>.Success();
     }
