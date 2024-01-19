@@ -8,27 +8,6 @@ internal class Switch : BaseParametrizedStatementWithBlock
     private SwitchLine[]? _content;
     private SwitchReturnLine[]? _returnLines;
 
-    private enum ParseFSM
-    {
-        // Start of the line
-        ExpectsAnything,
-
-        // Expression present, can be a "key: value" or a "value;"
-        ExpectsRangeColonSemicolon,
-
-        // Expression and range operator present, expect second half of range
-        ExpectsAfterRange,
-
-        // Expression +unit present
-        ExpectsColonSemicolon,
-
-        // Expression .. Expression (+unit) present, expect colon and value afterwards
-        ExpectsColon,
-
-        // Colon present, expect value
-        ExpectsValue
-    }
-
     public Switch(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is not null)
@@ -209,5 +188,26 @@ internal class Switch : BaseParametrizedStatementWithBlock
         label_Ending:
         _content = switchLines.ToMaybeArray();
         _returnLines = returnLines.ToMaybeArray();
+    }
+
+    private enum ParseFSM
+    {
+        // Start of the line
+        ExpectsAnything,
+
+        // Expression present, can be a "key: value" or a "value;"
+        ExpectsRangeColonSemicolon,
+
+        // Expression and range operator present, expect second half of range
+        ExpectsAfterRange,
+
+        // Expression +unit present
+        ExpectsColonSemicolon,
+
+        // Expression .. Expression (+unit) present, expect colon and value afterwards
+        ExpectsColon,
+
+        // Colon present, expect value
+        ExpectsValue
     }
 }

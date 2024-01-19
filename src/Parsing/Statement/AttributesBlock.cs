@@ -4,7 +4,7 @@ namespace NMLServer.Parsing.Statement;
 
 internal static class AttributesBlock
 {
-    public static NMLAttribute[]? TryParse(ParsingState state, ref BracketToken? expectedClosingBracket)
+    public static NMLAttribute[]? TryParseManyInBlock(ParsingState state, ref BracketToken? expectedClosingBracket)
     {
         List<NMLAttribute> attributes = new();
         for (var token = state.currentToken; token is not null; token = state.currentToken)

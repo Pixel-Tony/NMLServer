@@ -3,42 +3,48 @@ using NMLServer.Lexing.Tokens;
 namespace NMLServer.Parsing.Statement;
 
 /* One ring to rule them all */
-internal sealed class NMLFile
+internal readonly struct NMLFile
 {
     private readonly List<BaseStatement> _children = new();
     public IEnumerable<BaseStatement> children => _children;
 
-    public NMLFile(ParsingState state)
+    public NMLFile(ParsingState state, bool isInner = false)
     {
-        const int maxUnexpectedTokens = 400;
+        const int maxUnexpectedTokens = 100;
 
         for (var token = state.currentToken;
              state.unexpectedTokens.Count() <= maxUnexpectedTokens && token is not null;
              token = state.currentToken)
         {
-            var statement = token switch
+            switch (token)
             {
-                KeywordToken { Type: var type } keywordToken when Grammar.FunctionBlockKeywords.Contains(type)
-                    => new FunctionLikeStatement(state, keywordToken),
+                case BracketToken { Bracket: '}' } when isInner:
+                    return;
 
-                KeywordToken { Type: var type } keywordToken when Grammar.BlockKeywords.Contains(type)
-                    => ParseBlockStatement(state, keywordToken),
+                case IdentifierToken:
+                case KeywordToken { IsExpressionUsable: true }:
+                case BracketToken { Bracket: not ('{' or '}') }:
+                    _children.Add(new Assignment(state));
+                    break;
 
-                IdentifierToken
-                    or KeywordToken { IsExpressionUsable: true }
-                    or BracketToken { Bracket: not ('{' or '}') }
-                    => new Assignment(state),
+                case KeywordToken { Type: var type } keywordToken when Grammar.FunctionBlockKeywords.Contains(type):
+                    _children.Add(new FunctionLikeStatement(state, keywordToken));
+                    break;
 
-                _ => null
-            };
-            if (statement is null)
-            {
-                state.AddUnexpected(token);
-                state.Increment();
-                continue;
+                case KeywordToken keywordToken:
+                    var statement = ParseBlockStatement(state, keywordToken);
+                    if (statement is null)
+                    {
+                        goto default;
+                    }
+                    _children.Add(statement);
+                    break;
+
+                default:
+                    state.AddUnexpected(token);
+                    state.Increment();
+                    break;
             }
-            Logger.Log($"Parsed item of type {statement.GetType()}");
-            _children.Add(statement);
         }
     }
 
@@ -46,17 +52,17 @@ internal sealed class NMLFile
     {
         switch (keyword.Type)
         {
-            case KeywordType.SpriteSet:
-                return new Spriteset(state, keyword);
-
-            case KeywordType.Template:
-                return new Template(state, keyword);
-
             case KeywordType.Grf:
                 return new GRFBlock(state, keyword);
 
             case KeywordType.BaseCost:
                 return new Basecost(state, keyword);
+
+            case KeywordType.SpriteSet:
+                return new Spriteset(state, keyword);
+
+            case KeywordType.Template:
+                return new Template(state, keyword);
 
             case KeywordType.TramTypeTable:
             case KeywordType.RailTypeTable:
@@ -66,17 +72,19 @@ internal sealed class NMLFile
             case KeywordType.Switch:
                 return new Switch(state, keyword);
 
-            // These are not expected at top level
-            case KeywordType.Param:
-            case KeywordType.Var:
-            case KeywordType.Property:
-            case KeywordType.Graphics:
-            case KeywordType.LiveryOverride:
-            case KeywordType.Return:
-                return null;
-
-            // NOT YET IMPLEMENTED
             case KeywordType.Item:
+                return new ItemBlock(state, keyword);
+
+            case KeywordType.Property:
+                return new ItemPropertyBlock(state, keyword);
+
+            case KeywordType.Graphics:
+                return new ItemGraphicsBlock(state, keyword);
+
+            case KeywordType.LiveryOverride:
+                return new ItemLiveryOverrideBlock(state, keyword);
+
+            // Not implemented
             case KeywordType.CargoTable:
             case KeywordType.If:
             case KeywordType.Else:
@@ -96,12 +104,6 @@ internal sealed class NMLFile
             case KeywordType.RecolourSprite:
                 return null;
 
-            // keywords with function-like blocks are already processed
-            case KeywordType.Error:
-            case KeywordType.DisableItem:
-            case KeywordType.Deactivate:
-            case KeywordType.EngineOverride:
-            case KeywordType.Sort:
             default:
                 return null;
         }

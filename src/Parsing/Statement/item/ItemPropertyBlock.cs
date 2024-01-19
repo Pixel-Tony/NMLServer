@@ -2,11 +2,11 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class Basecost : BaseStatementWithBlock
+internal class ItemPropertyBlock : BaseStatementWithBlock
 {
     private NMLAttribute[]? _attributes;
 
-    public Basecost(ParsingState state, KeywordToken keyword) : base(state, keyword)
+    public ItemPropertyBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is null)
         {
