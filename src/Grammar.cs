@@ -60,20 +60,6 @@ internal static class Grammar
         ["sort"] = KeywordType.Sort
     };
 
-    private static readonly HashSet<string> _blockKeywords = new()
-    {
-        "grf", "cargotable", "railtypetable", "roadtypetable", "tramtypetable", "if", "else", "while", "item",
-        "property", "graphics", "livery_override", "snowline", "basecost", "template", "spriteset", "switch",
-        "spritegroup", "random_switch", "replace", "replacenew", "font_glyph", "town_names", "tilelayout",
-        "spritelayout", "alternative_sprites", "base_graphics", "recolour_sprite", "produce"
-    };
-
-    public static readonly HashSet<KeywordType> BlockKeywords = new(
-        from keyword in KeywordTypeByString
-        where _blockKeywords.Contains(keyword.Key)
-        select keyword.Value
-    );
-
     private static readonly HashSet<string> _functionBlockKeywords = new()
     {
         "error", "disable_item", "deactivate", "engine_override", "sort"
@@ -135,7 +121,7 @@ internal static class Grammar
         ["!"] = 11, ["~"] = 11
     };
 
-    public static readonly Dictionary<string, UnitType> Units = new()
+    private static readonly Dictionary<string, UnitType> Units = new()
     {
         ["km/h"] = UnitType.KMPH,
         ["m/s"] = UnitType.MPS,
@@ -149,9 +135,53 @@ internal static class Grammar
         ["kg"] = UnitType.Kg
     };
 
-    private static readonly Dictionary<char, uint> _oneCharOperatorPrecedence = _operatorPrecedence
-        .Where(p => p.Key.Length == 1)
-        .ToDictionary(kv => kv.Key[0], kv => kv.Value);
+    public static bool IsUnit(ReadOnlySpan<char> target, out UnitType type)
+    {
+        switch (target)
+        {
+            case "km/h":
+                type = UnitType.KMPH;
+                return true;
+            case "m/s":
+                type = UnitType.MPS;
+                return true;
+            case "mph":
+                type = UnitType.MPH;
+                return true;
+            case "hp":
+                type = UnitType.HP;
+                return true;
+            case "kW":
+                type = UnitType.KW;
+                return true;
+            case "hpI":
+                type = UnitType.HpI;
+                return true;
+            case "hpM":
+                type = UnitType.HpM;
+                return true;
+            case "tons":
+                type = UnitType.Tons;
+                return true;
+            case "ton":
+                type = UnitType.Ton;
+                return true;
+            case "kg":
+                type = UnitType.Kg;
+                return true;
+        }
+        type = UnitType.Kg;
+        return false;
+    }
+
+    private static readonly Dictionary<char, uint> _oneCharOperatorPrecedence = new(
+        from
+            kvPair in _operatorPrecedence
+        where
+            kvPair.Key.Length is 1
+        select
+            new KeyValuePair<char, uint>(kvPair.Key[0], kvPair.Value)
+    );
 
     public static OperatorType GetOperatorType(string value) => value switch
     {

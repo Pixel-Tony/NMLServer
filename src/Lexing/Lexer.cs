@@ -1,9 +1,9 @@
+using System.Runtime.CompilerServices;
 using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Lexing;
 
 internal class Lexer
-// TODO: fix recognition of unit operators with '/' in them !!
 {
     private static readonly HashSet<char> _opStarts = new(from op in Grammar.Operators select op[0]);
 
@@ -11,7 +11,8 @@ internal class Lexer
     private readonly int _maxPos;
     private int _pos;
 
-    private char charPointedAt => _input[_pos];
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private char GetCurrentChar() => _input[_pos];
 
     public Lexer(string inputString)
     {
@@ -25,12 +26,12 @@ internal class Lexer
     private readonly List<Token> _tokens;
     private readonly List<Token> _comments = new();
 
-    public (Token[] tokens, Token[] comments) Tokenize()
+    public (Token[] tokens, Token[] comments) Process()
     {
         var span = _input.AsSpan();
         while (_pos <= _maxPos)
         {
-            char c = charPointedAt;
+            char c = GetCurrentChar();
             if (char.IsWhiteSpace(c))
             {
                 _pos++;
@@ -39,7 +40,13 @@ internal class Lexer
             switch (c)
             {
                 case '=':
-                    _tokens.Add(new AssignmentToken(_pos++));
+                    if (_pos == _maxPos || _input[_pos + 1] is not '=')
+                    {
+                        _tokens.Add(new AssignmentToken(_pos++));
+                        continue;
+                    }
+                    _tokens.Add(new BinaryOpToken(_pos, ++_pos, "=="));
+                    ++_pos;
                     continue;
 
                 case '.':
@@ -48,7 +55,7 @@ internal class Lexer
                         break;
                     }
                     _pos++;
-                    _tokens.Add(charPointedAt is '.'
+                    _tokens.Add(GetCurrentChar() is '.'
                         ? new RangeToken(_pos++ - 1)
                         : new FailedToken(_pos - 1)
                     );
@@ -81,7 +88,7 @@ internal class Lexer
 
             if (c == '/')
             {
-                ParseFromSlash();
+                ParseFromSlash(span);
                 continue;
             }
 
@@ -140,7 +147,7 @@ internal class Lexer
         }
 
         _pos++;
-        var withNextChar = opChar + charPointedAt;
+        var withNextChar = opChar + GetCurrentChar();
         if (!Grammar.Operators.Contains(withNextChar))
         {
             return DecideOperatorType(c, start, _pos);
@@ -150,8 +157,8 @@ internal class Lexer
             return new BinaryOpToken(start, ++_pos, withNextChar);
         }
         _pos++;
-        return charPointedAt == '>'
-            ? new BinaryOpToken(start, ++_pos, charPointedAt)
+        return GetCurrentChar() == '>'
+            ? new BinaryOpToken(start, ++_pos, GetCurrentChar())
             : new BinaryOpToken(start, _pos, withNextChar);
     }
 
@@ -160,7 +167,7 @@ internal class Lexer
         int start = _pos++;
         while (_pos <= _maxPos)
         {
-            char c = charPointedAt;
+            char c = GetCurrentChar();
             if (c == '\n')
             {
                 break;
@@ -170,14 +177,16 @@ internal class Lexer
         return new CommentToken(start, _pos);
     }
 
-    private void ParseFromSlash()
+    private void ParseFromSlash(ReadOnlySpan<char> span)
     {
         int start = _pos++;
-        switch (charPointedAt)
+        switch (GetCurrentChar())
         {
+            // TODO: use buffering for checking equality of last two characters to "*/" sequence
             case '*':
                 _pos++;
-                while (_pos <= _maxPos && !(_pos - start > 3 && _input[(_pos - 2).._pos].EndsWith("*/")))
+                while (_pos <= _maxPos
+                       && (_pos - start <= 3 || !span[(_pos - 2).._pos].Equals("*/", StringComparison.Ordinal)))
                 {
                     _pos++;
                 }
@@ -188,7 +197,7 @@ internal class Lexer
                 _pos++;
                 while (_pos <= _maxPos)
                 {
-                    var c = charPointedAt;
+                    var c = GetCurrentChar();
                     _pos++;
                     if (c == '\n')
                     {
@@ -210,7 +219,7 @@ internal class Lexer
         int start = _pos++;
         while (_pos <= _maxPos)
         {
-            char c = charPointedAt;
+            char c = GetCurrentChar();
             _pos++;
             if (c == openingQuote)
             {
@@ -221,53 +230,59 @@ internal class Lexer
         return new StringToken(start, _pos);
     }
 
-    private Token ParseIdentifier(char first, ReadOnlySpan<char> span)
+    private Token ParseIdentifier(char first, ReadOnlySpan<char> view)
     {
         int start = _pos++;
-        char c = '\0';
-        while (_pos <= _maxPos)
+        for (; _pos <= _maxPos; ++_pos)
         {
-            c = charPointedAt;
-            if (!IsValidIdentifierCharacter(c))
+            if (!IsValidIdentifierCharacter(GetCurrentChar()))
             {
                 break;
             }
-            _pos++;
         }
-        switch (_pos - start)
+        if (GetCurrentChar() is '/')
         {
-            case 1 when c == 'm':
-                switch (_maxPos - _pos)
-                {
-                    case 2 when span[_pos..(_pos + 2)] == "/s":
-                    case > 2 when span[_pos..(_pos + 2)] == "/s" && !IsValidIdentifierCharacter(span[_pos + 2]):
+            switch (_maxPos - _pos)
+            {
+                case 2:
+                    switch (_pos - start)
                     {
-                        _pos += 2;
-                        return new UnitToken(start, UnitType.MPS);
-                    }
-                }
-                break;
+                        case 1 when first is 'm' && _input[_pos + 1] is 's':
+                            _pos += 2;
+                            return new UnitToken(start, UnitType.MPS);
 
-            case 2 when span[start] == 'k' && c == 'm':
-            {
-                switch (_maxPos - _pos)
-                {
-                    case 2 when span[_pos..(_pos + 2)] == "/h":
-                    case > 2 when span[_pos..(_pos + 2)] == "/h" && !IsValidIdentifierCharacter(span[_pos + 2]):
-                    {
-                        _pos += 2;
-                        return new UnitToken(start, UnitType.KMPH);
+                        case 2 when first is 'k' && _input[_pos - 1] is 'm' && _input[_pos + 1] is 'h':
+                            _pos += 2;
+                            return new UnitToken(start, UnitType.KMPH);
                     }
-                }
-                break;
+                    break;
+
+                case >= 2:
+                    switch (_pos - start)
+                    {
+                        case 1 when first is 'm' && _input[_pos + 1] is 's'
+                                                 && !IsValidIdentifierCharacter(_input[_pos + 2]):
+                            _pos += 2;
+                            return new UnitToken(start, UnitType.MPS);
+
+                        case 2 when first is 'k' && _input[_pos - 1] is 'm' && _input[_pos + 1] is 'h'
+                                    && !IsValidIdentifierCharacter(_input[_pos + 2]):
+
+                            _pos += 2;
+                            return new UnitToken(start, UnitType.KMPH);
+                    }
+                    break;
             }
         }
-        var value = _input[start.._pos];
-        if (Grammar.Units.ContainsKey(value))
+
+        Span<char> value = stackalloc char[_pos - start];
+        view[start.._pos].CopyTo(value);
+
+        if (_pos - start <= 4 && Grammar.IsUnit(value, out var type))
         {
-            return new UnitToken(start, value);
+            return new UnitToken(start, type);
         }
-        if (Grammar.KeywordTypeByString.TryGetValue(value, out var keywordType))
+        if (Grammar.KeywordTypeByString.TryGetValue(new string(value), out var keywordType))
         {
             return new KeywordToken(start, _pos, keywordType);
         }
@@ -283,7 +298,7 @@ internal class Lexer
         int start = _pos++;
         for (; _pos <= _maxPos; ++_pos)
         {
-            c = charPointedAt;
+            c = GetCurrentChar();
             switch (state)
             {
                 case NumberLexState.StartingZero:

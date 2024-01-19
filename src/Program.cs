@@ -45,8 +45,9 @@ internal class DocumentManager
     {
         SetContext(document.text);
 
-        var tokens = new Lexer(document.text).Tokenize().tokens;
+        var tokens = new Lexer(document.text).Process().tokens;
         Logger.Log($"lexed {tokens.Length} items");
+
         var state = new ParsingState(tokens);
 
         var result = new NMLFile(state);
@@ -60,32 +61,24 @@ internal class DocumentManager
 
     private void PublishUnexpectedTokensDiagnostics(TextDocumentItem document, Proxy a, ParsingState state)
     {
-        var diagnostics = new List<Diagnostic>(400);
-        var tokens = state.unexpectedTokens.Take(..400).ToArray();
-        a.Window.LogMessage(new LogMessageParams
+        var diagnostics = state.unexpectedTokens.Take(..100).Select(token => new Diagnostic
         {
-            message = $"found {tokens.Length} unexpected tokens",
-            type = tokens.Length == 0
-                ? MessageType.Log
-                : MessageType.Warning
-        });
-
-        foreach (var unexpectedToken in tokens)
-        {
-            diagnostics.Add(new Diagnostic
+            severity = DiagnosticSeverity.Error,
+            message = "Unexpected token",
+            range = new LanguageServer.Parameters.Range
             {
-                severity = DiagnosticSeverity.Error,
-                message = "Unexpected token",
-                range = new LanguageServer.Parameters.Range
-                {
-                    start = this[unexpectedToken.Start],
-                    end = this[unexpectedToken is MulticharToken hasEnd ? hasEnd.End : unexpectedToken.Start + 1]
-                }
-            });
-        }
+                start = this[token.Start],
+                end = this[token is MulticharToken hasEnd
+                    ? hasEnd.End
+                    : token.Start + 1]
+            }
+        }).ToArray();
+
+        Logger.Log($"found {diagnostics.Length} unexpected tokens");
+
         a.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams
         {
-            diagnostics = diagnostics.ToArray(),
+            diagnostics = diagnostics,
             uri = document.uri
         });
     }
