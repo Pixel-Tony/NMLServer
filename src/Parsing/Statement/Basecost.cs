@@ -10,7 +10,7 @@ internal class Basecost : BaseStatementWithBlock
     {
         if (ClosingBracket is null)
         {
-            _attributes = AttributesBlock.TryParseManyInBlock(state, ref ClosingBracket);
+            _attributes = NMLAttribute.TryParseManyInBlock(state, ref ClosingBracket);
         }
     }
 }
