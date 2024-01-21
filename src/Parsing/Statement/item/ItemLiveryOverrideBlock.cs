@@ -2,7 +2,7 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class ItemLiveryOverrideBlock : BaseParametrizedStatementWithBlock
+internal class ItemLiveryOverrideBlock : BaseStatementWithBlock
 {
     private ItemGraphicsAttribute[]? _attributes;
 

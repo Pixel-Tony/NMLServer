@@ -3,7 +3,7 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal abstract class BaseSpriteHolder : BaseParametrizedStatementWithBlock
+internal abstract class BaseSpriteHolder : BaseStatementWithBlock
 {
     protected ExpressionAST[]? Content;
 

@@ -3,7 +3,7 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class Switch : BaseParametrizedStatementWithBlock
+internal class Switch : BaseStatementWithBlock
 {
     private SwitchLine[]? _content;
     private SwitchReturnLine[]? _returnLines;

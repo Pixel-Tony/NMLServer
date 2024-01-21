@@ -2,11 +2,11 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal abstract class BaseParametrizedBlockWithChildren : BaseParametrizedStatementWithBlock
+internal abstract class BaseBlockWithChildren : BaseStatementWithBlock
 {
     protected readonly NMLFile Children;
 
-    protected BaseParametrizedBlockWithChildren(ParsingState state, KeywordToken keyword) : base(state, keyword)
+    protected BaseBlockWithChildren(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is not null)
         {

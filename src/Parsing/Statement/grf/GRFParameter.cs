@@ -3,7 +3,7 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class GRFParameter : BaseParametrizedStatementWithBlock
+internal class GRFParameter : BaseStatementWithBlock
 {
     private readonly IdentifierToken? _name;
     private readonly BracketToken? _innerOpeningBracket;
