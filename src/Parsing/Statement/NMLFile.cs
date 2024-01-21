@@ -150,14 +150,22 @@ internal readonly struct NMLFile
             case KeywordType.AlternativeSprites:
                 return new AlternativeSprites(state, keyword);
 
+            case KeywordType.SpriteGroup:
+                return new SpriteGroup(state, keyword);
+
+            case KeywordType.RandomSwitch:
+                return new RandomSwitch(state, keyword);
+
+            case KeywordType.SpriteLayout:
+                return new SpriteLayout(state, keyword);
+
+            case KeywordType.TileLayout:
+                return new TileLayout(state, keyword);
+
             // Not implemented
             case KeywordType.SnowLine:
-            case KeywordType.SpriteGroup:
-            case KeywordType.RandomSwitch:
             case KeywordType.Produce:
             case KeywordType.TownNames:
-            case KeywordType.TileLayout:
-            case KeywordType.SpriteLayout:
             case KeywordType.RecolourSprite:
                 return null;
 

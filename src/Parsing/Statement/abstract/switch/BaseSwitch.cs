@@ -3,12 +3,12 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class Switch : BaseStatementWithBlock
+internal abstract class BaseSwitch : BaseStatementWithBlock
 {
-    private SwitchLine[]? _content;
-    private SwitchReturnLine[]? _returnLines;
+    public readonly SwitchLine[]? Content;
+    public readonly SwitchReturnLine[]? ReturnLines;
 
-    public Switch(ParsingState state, KeywordToken keyword) : base(state, keyword)
+    protected BaseSwitch(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is not null)
         {
@@ -186,8 +186,8 @@ internal class Switch : BaseStatementWithBlock
         }
 
         label_Ending:
-        _content = switchLines.ToMaybeArray();
-        _returnLines = returnLines.ToMaybeArray();
+        Content = switchLines.ToMaybeArray();
+        ReturnLines = returnLines.ToMaybeArray();
     }
 
     private enum ParseFSM
