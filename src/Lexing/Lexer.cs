@@ -88,7 +88,7 @@ internal class Lexer
 
             if (c == '/')
             {
-                ParseFromSlash(span);
+                ParseFromSlash();
                 continue;
             }
 
@@ -162,7 +162,7 @@ internal class Lexer
             : new BinaryOpToken(start, _pos, withNextChar);
     }
 
-    private Token ParseHashtagComment()
+    private CommentToken ParseHashtagComment()
     {
         int start = _pos++;
         while (_pos <= _maxPos)
@@ -177,35 +177,43 @@ internal class Lexer
         return new CommentToken(start, _pos);
     }
 
-    private void ParseFromSlash(ReadOnlySpan<char> span)
+    private void ParseFromSlash()
     {
         int start = _pos++;
-        switch (GetCurrentChar())
+        switch (_pos <= _maxPos ? GetCurrentChar() : 0)
         {
-            // TODO: use buffering for checking equality of last two characters to "*/" sequence
             case '*':
-                _pos++;
-                while (_pos <= _maxPos
-                       && (_pos - start <= 3 || !span[(_pos - 2).._pos].Equals("*/", StringComparison.Ordinal)))
+                ++_pos;
+                while (_pos <= _maxPos && _pos - start < 3)
                 {
-                    _pos++;
+                    ++_pos;
                 }
-                _comments.Add(new CommentToken(start, _pos));
+                char prev = _input[_pos - 1];
+                while (_pos <= _maxPos)
+                {
+                    var current = GetCurrentChar();
+                    if (prev is '*' && current is '/')
+                    {
+                        break;
+                    }
+                    prev = current;
+                    ++_pos;
+                }
+                _comments.Add(new CommentToken(start, ++_pos));
                 break;
 
             case '/':
-                _pos++;
+                ++_pos;
                 while (_pos <= _maxPos)
                 {
                     var c = GetCurrentChar();
-                    _pos++;
                     if (c == '\n')
                     {
                         break;
                     }
+                    ++_pos;
                 }
-
-                _comments.Add(new CommentToken(start, _pos));
+                _comments.Add(new CommentToken(start, ++_pos));
                 break;
 
             default:
@@ -233,52 +241,37 @@ internal class Lexer
     private Token ParseIdentifier(char first, ReadOnlySpan<char> view)
     {
         int start = _pos++;
+        char current = '\0';
         for (; _pos <= _maxPos; ++_pos)
         {
-            if (!IsValidIdentifierCharacter(GetCurrentChar()))
+            current = GetCurrentChar();
+            if (!IsValidIdentifierCharacter(current))
             {
                 break;
             }
         }
-        if (GetCurrentChar() is '/')
+        if (current is '/'
+            && (_maxPos - _pos == 1 || (_maxPos - _pos > 1 && !IsValidIdentifierCharacter(_input[_pos + 2]))))
         {
-            switch (_maxPos - _pos)
+            switch (_pos - start)
             {
-                case 2:
-                    switch (_pos - start)
-                    {
-                        case 1 when first is 'm' && _input[_pos + 1] is 's':
-                            _pos += 2;
-                            return new UnitToken(start, UnitType.MPS);
+                case 1 when first is 'm' && _input[_pos + 1] is 's':
+                    _pos += 2;
+                    return new UnitToken(start, UnitType.MPS);
 
-                        case 2 when first is 'k' && _input[_pos - 1] is 'm' && _input[_pos + 1] is 'h':
-                            _pos += 2;
-                            return new UnitToken(start, UnitType.KMPH);
-                    }
-                    break;
-
-                case >= 2:
-                    switch (_pos - start)
-                    {
-                        case 1 when first is 'm' && _input[_pos + 1] is 's'
-                                                 && !IsValidIdentifierCharacter(_input[_pos + 2]):
-                            _pos += 2;
-                            return new UnitToken(start, UnitType.MPS);
-
-                        case 2 when first is 'k' && _input[_pos - 1] is 'm' && _input[_pos + 1] is 'h'
-                                    && !IsValidIdentifierCharacter(_input[_pos + 2]):
-
-                            _pos += 2;
-                            return new UnitToken(start, UnitType.KMPH);
-                    }
-                    break;
+                case 2 when first is 'k' && _input[_pos - 1] is 'm' && _input[_pos + 1] is 'h':
+                    _pos += 2;
+                    return new UnitToken(start, UnitType.KMPH);
             }
         }
+        var value = view[start.._pos];
+        if (current is '%' && _pos - start == 4 && value.Equals("snow", StringComparison.Ordinal))
+        {
+            _pos += 1;
+            return new UnitToken(start, UnitType.Snow);
+        }
 
-        Span<char> value = stackalloc char[_pos - start];
-        view[start.._pos].CopyTo(value);
-
-        if (_pos - start <= 4 && Grammar.IsUnit(value, out var type))
+        if (_pos - start <= 4 && IsLiteralUnit(value, out var type))
         {
             return new UnitToken(start, type);
         }
@@ -374,6 +367,48 @@ internal class Lexer
     private static bool IsValidIdentifierCharacter(char c) => c == '_' || char.IsLetterOrDigit(c);
 
     private static bool IsValidIdStartCharacter(char c) => c == '_' || char.IsLetter(c);
+
+    private static bool IsLiteralUnit(ReadOnlySpan<char> target, out UnitType type)
+    {
+        switch (target)
+        {
+            case "mph":
+                type = UnitType.MPH;
+                return true;
+
+            case "hp":
+                type = UnitType.HP;
+                return true;
+
+            case "kW":
+                type = UnitType.KW;
+                return true;
+
+            case "hpI":
+                type = UnitType.HpI;
+                return true;
+
+            case "hpM":
+                type = UnitType.HpM;
+                return true;
+
+            case "tons":
+                type = UnitType.Tons;
+                return true;
+
+            case "ton":
+                type = UnitType.Ton;
+                return true;
+
+            case "kg":
+                type = UnitType.Kg;
+                return true;
+
+            default:
+                type = UnitType.Kg;
+                return false;
+        }
+    }
 
     private enum NumberLexState
     {

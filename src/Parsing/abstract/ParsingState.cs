@@ -93,7 +93,7 @@ internal class ParsingState
                     Increment();
                     return closingBracket;
 
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
                 case BracketToken { Bracket: '{' }:
                     return null;
 

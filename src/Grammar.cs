@@ -121,59 +121,6 @@ internal static class Grammar
         ["!"] = 11, ["~"] = 11
     };
 
-    private static readonly Dictionary<string, UnitType> Units = new()
-    {
-        ["km/h"] = UnitType.KMPH,
-        ["m/s"] = UnitType.MPS,
-        ["mph"] = UnitType.MPH,
-        ["hp"] = UnitType.HP,
-        ["kW"] = UnitType.KW,
-        ["hpI"] = UnitType.HpI,
-        ["hpM"] = UnitType.HpM,
-        ["tons"] = UnitType.Tons,
-        ["ton"] = UnitType.Ton,
-        ["kg"] = UnitType.Kg
-    };
-
-    public static bool IsUnit(ReadOnlySpan<char> target, out UnitType type)
-    {
-        switch (target)
-        {
-            case "km/h":
-                type = UnitType.KMPH;
-                return true;
-            case "m/s":
-                type = UnitType.MPS;
-                return true;
-            case "mph":
-                type = UnitType.MPH;
-                return true;
-            case "hp":
-                type = UnitType.HP;
-                return true;
-            case "kW":
-                type = UnitType.KW;
-                return true;
-            case "hpI":
-                type = UnitType.HpI;
-                return true;
-            case "hpM":
-                type = UnitType.HpM;
-                return true;
-            case "tons":
-                type = UnitType.Tons;
-                return true;
-            case "ton":
-                type = UnitType.Ton;
-                return true;
-            case "kg":
-                type = UnitType.Kg;
-                return true;
-        }
-        type = UnitType.Kg;
-        return false;
-    }
-
     private static readonly Dictionary<char, uint> _oneCharOperatorPrecedence = new(
         from
             kvPair in _operatorPrecedence

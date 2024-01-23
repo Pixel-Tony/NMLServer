@@ -11,5 +11,6 @@ public enum UnitType
     HpM,
     Tons,
     Ton,
-    Kg
+    Kg,
+    Snow
 }
