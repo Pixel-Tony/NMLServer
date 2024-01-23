@@ -162,11 +162,14 @@ internal readonly struct NMLFile
             case KeywordType.TileLayout:
                 return new TileLayout(state, keyword);
 
-            // Not implemented
             case KeywordType.SnowLine:
+                return new SnowLine(state, keyword);
+
+            // Not implemented
             case KeywordType.Produce:
             case KeywordType.TownNames:
             case KeywordType.RecolourSprite:
+                // TODO
                 return null;
 
             default:
