@@ -22,7 +22,7 @@ public static class Logger
         A?.Window.LogMessage(new LogMessageParams
         {
             type = MessageType.Log,
-            message = message
+            message = "[info] " + message
         });
     }
 }
@@ -49,41 +49,38 @@ internal class DocumentManager
         Logger.Log($"lexed {tokens.Length} items");
 
         var state = new ParsingState(tokens);
-
         var result = new NMLFile(state);
-        a.Window.LogMessage(new LogMessageParams
+        Logger.Log($"parsed {result.children.Count()} items until the end!");
+
+        var unexpectedTokens = state.unexpectedTokens.Take(100).ToArray();
+
+        List<Diagnostic> diagnostics = new(200);
+        foreach (var unexpectedToken in unexpectedTokens)
         {
-            message = $"parsed {result.children.Count()} items until the end!",
-            type = MessageType.Log
-        });
-        PublishUnexpectedTokensDiagnostics(document, a, state);
-    }
-
-    private void PublishUnexpectedTokensDiagnostics(TextDocumentItem document, Proxy a, ParsingState state)
-    {
-        var diagnostics = state.unexpectedTokens.Take(..100).Select(token => new Diagnostic
-        {
-            severity = DiagnosticSeverity.Error,
-            message = "Unexpected token",
-            range = new LanguageServer.Parameters.Range
-            {
-                start = this[token.Start],
-                end = this[token is MulticharToken hasEnd
-                    ? hasEnd.End
-                    : token.Start + 1]
-            }
-        }).ToArray();
-
-        Logger.Log($"found {diagnostics.Length} unexpected tokens");
-
+            diagnostics.Add(
+                new Diagnostic
+                {
+                    severity = DiagnosticSeverity.Error,
+                    message = "Unexpected token",
+                    range = new LanguageServer.Parameters.Range
+                    {
+                        start = this[unexpectedToken.Start],
+                        end = this[unexpectedToken is MulticharToken hasEnd
+                            ? hasEnd.End
+                            : unexpectedToken.Start + 1]
+                    }
+                }
+            );
+        }
         a.TextDocument.PublishDiagnostics(new PublishDiagnosticsParams
         {
-            diagnostics = diagnostics,
+            diagnostics = diagnostics.ToArray(),
             uri = document.uri
         });
     }
 
-    public void Change(VersionedTextDocumentIdentifier document, TextDocumentContentChangeEvent[] events, Proxy a)
+    public void Change(VersionedTextDocumentIdentifier document, IEnumerable<TextDocumentContentChangeEvent> events,
+        Proxy a)
     {
         var target = _textDocuments.Find(d => d.uri == document.uri);
         if (target is null)
@@ -155,7 +152,13 @@ internal class Application : ServiceConnection
     {
         Logger.Log("Server is online.");
         return Result<InitializeResult, ResponseError<InitializeErrorData>>.Success(new InitializeResult
-            { capabilities = new ServerCapabilities { textDocumentSync = TextDocumentSyncKind.Full } }
+            {
+                capabilities = new ServerCapabilities
+                {
+                    textDocumentSync = TextDocumentSyncKind.Full,
+                    colorProvider = true
+                }
+            }
         );
     }
 
@@ -172,7 +175,7 @@ internal class Application : ServiceConnection
 
     protected override void DidCloseTextDocument(DidCloseTextDocumentParams @params)
     {
-        Logger.Log("Closed a document");
+        Logger.Log("Closed a document.");
         _documents.Remove(@params.textDocument.uri);
     }
 

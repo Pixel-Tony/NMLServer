@@ -24,9 +24,9 @@ internal class Lexer
     }
 
     private readonly List<Token> _tokens;
-    private readonly List<Token> _comments = new();
+    private readonly List<CommentToken> _comments = new();
 
-    public (Token[] tokens, Token[] comments) Process()
+    public (Token[] tokens, CommentToken[] comments) Process()
     {
         var span = _input.AsSpan();
         while (_pos <= _maxPos)
