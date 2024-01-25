@@ -4,8 +4,8 @@ internal sealed class UnaryOpToken : Token
 {
     public readonly char Sign;
 
-    public UnaryOpToken(int pos) : base(pos)
+    public UnaryOpToken(int pos, char sign) : base(pos)
     {
-        Sign = Input[pos];
+        Sign = sign;
     }
 }

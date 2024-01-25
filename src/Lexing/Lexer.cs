@@ -5,7 +5,12 @@ namespace NMLServer.Lexing;
 
 internal class Lexer
 {
-    private static readonly HashSet<char> _opStarts = new(from op in Grammar.Operators select op[0]);
+    private static readonly HashSet<char> _opStarts = new(
+        from
+            op in Grammar.Operators
+        select
+            op[0]
+    );
 
     private readonly string _input;
     private readonly int _maxPos;
@@ -17,9 +22,7 @@ internal class Lexer
     public Lexer(string inputString)
     {
         _input = inputString;
-        Token.UpdateSourceInput(_input);
         _maxPos = inputString.Length - 1;
-        // Tenth part of input string seems to be a good lower-bound estimate for a number of tokens
         _tokens = new List<Token>(inputString.Length / 10);
     }
 
@@ -54,7 +57,7 @@ internal class Lexer
                     {
                         break;
                     }
-                    _pos++;
+                    ++_pos;
                     _tokens.Add(GetCurrentChar() is '.'
                         ? new RangeToken(_pos++ - 1)
                         : new FailedToken(_pos - 1)
@@ -94,7 +97,7 @@ internal class Lexer
 
             if (Grammar.Brackets.Contains(c))
             {
-                _tokens.Add(new BracketToken(_pos++));
+                _tokens.Add(new BracketToken(_pos++, c));
                 continue;
             }
 
@@ -116,20 +119,19 @@ internal class Lexer
                     break;
 
                 default:
-                    _tokens.Add(new FailedToken(_pos));
-                    _pos++;
+                    _tokens.Add(new FailedToken(_pos++));
                     break;
             }
         }
         return (_tokens.ToArray(), _comments.ToArray());
     }
 
-    private static Token DecideOperatorType(char c, int start, int end)
+    private static Token DecideSingleCharacterOperatorType(char c, int start, int end)
     {
         return c switch
         {
             '=' => new FailedToken(start),
-            '!' or '~' => new UnaryOpToken(start),
+            '!' or '~' => new UnaryOpToken(start, c),
             _ => new BinaryOpToken(start, end, c)
         };
     }
@@ -141,24 +143,24 @@ internal class Lexer
         int start = _pos;
         if (_pos == _maxPos)
         {
-            Token token = DecideOperatorType(c, start, _pos);
-            _pos++;
+            Token token = DecideSingleCharacterOperatorType(c, start, _pos);
+            ++_pos;
             return token;
         }
 
-        _pos++;
+        ++_pos;
         var withNextChar = opChar + GetCurrentChar();
         if (!Grammar.Operators.Contains(withNextChar))
         {
-            return DecideOperatorType(c, start, _pos);
+            return DecideSingleCharacterOperatorType(c, start, _pos);
         }
         if (withNextChar != ">>" || _pos >= _maxPos)
         {
             return new BinaryOpToken(start, ++_pos, withNextChar);
         }
-        _pos++;
-        return GetCurrentChar() == '>'
-            ? new BinaryOpToken(start, ++_pos, GetCurrentChar())
+        ++_pos;
+        return GetCurrentChar() is '>'
+            ? new BinaryOpToken(start, ++_pos, '>')
             : new BinaryOpToken(start, _pos, withNextChar);
     }
 
@@ -180,7 +182,12 @@ internal class Lexer
     private void ParseFromSlash()
     {
         int start = _pos++;
-        switch (_pos <= _maxPos ? GetCurrentChar() : 0)
+        if (_pos > _maxPos)
+        {
+            _tokens.Add(new BinaryOpToken(start, _pos, '/'));
+            return;
+        }
+        switch (GetCurrentChar())
         {
             case '*':
                 ++_pos;
@@ -234,7 +241,6 @@ internal class Lexer
                 break;
             }
         }
-
         return new StringToken(start, _pos);
     }
 
@@ -257,23 +263,23 @@ internal class Lexer
             {
                 case 1 when first is 'm' && _input[_pos + 1] is 's':
                     _pos += 2;
-                    return new UnitToken(start, UnitType.MPS);
+                    return new UnitToken(start, UnitType.MPS, 3);
 
                 case 2 when first is 'k' && _input[_pos - 1] is 'm' && _input[_pos + 1] is 'h':
                     _pos += 2;
-                    return new UnitToken(start, UnitType.KMPH);
+                    return new UnitToken(start, UnitType.KMPH, 4);
             }
         }
         var value = view[start.._pos];
         if (current is '%' && _pos - start == 4 && value.Equals("snow", StringComparison.Ordinal))
         {
             _pos += 1;
-            return new UnitToken(start, UnitType.Snow);
+            return new UnitToken(start, UnitType.Snow, 5);
         }
 
-        if (_pos - start <= 4 && IsLiteralUnit(value, out var type))
+        if (_pos - start <= 4 && UnitToken.IsLiteralUnit(value, out var result))
         {
-            return new UnitToken(start, type);
+            return new UnitToken(start, result.type, result.length);
         }
         if (Grammar.KeywordTypeByString.TryGetValue(new string(value), out var keywordType))
         {
@@ -367,48 +373,6 @@ internal class Lexer
     private static bool IsValidIdentifierCharacter(char c) => c == '_' || char.IsLetterOrDigit(c);
 
     private static bool IsValidIdStartCharacter(char c) => c == '_' || char.IsLetter(c);
-
-    private static bool IsLiteralUnit(ReadOnlySpan<char> target, out UnitType type)
-    {
-        switch (target)
-        {
-            case "mph":
-                type = UnitType.MPH;
-                return true;
-
-            case "hp":
-                type = UnitType.HP;
-                return true;
-
-            case "kW":
-                type = UnitType.KW;
-                return true;
-
-            case "hpI":
-                type = UnitType.HpI;
-                return true;
-
-            case "hpM":
-                type = UnitType.HpM;
-                return true;
-
-            case "tons":
-                type = UnitType.Tons;
-                return true;
-
-            case "ton":
-                type = UnitType.Ton;
-                return true;
-
-            case "kg":
-                type = UnitType.Kg;
-                return true;
-
-            default:
-                type = UnitType.Kg;
-                return false;
-        }
-    }
 
     private enum NumberLexState
     {

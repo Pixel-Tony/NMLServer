@@ -4,9 +4,9 @@ internal sealed class BracketToken : Token
 {
     public readonly char Bracket;
 
-    public BracketToken(int pos) : base(pos)
+    public BracketToken(int pos, char bracket) : base(pos)
     {
-        Bracket = Input[pos];
+        Bracket = bracket;
     }
 
     public override string ToString() => Bracket.ToString();
