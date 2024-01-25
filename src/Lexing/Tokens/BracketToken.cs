@@ -1,6 +1,6 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class BracketToken : Token
+internal sealed class BracketToken : Token
 {
     public readonly char Bracket;
 

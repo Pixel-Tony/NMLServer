@@ -1,6 +1,6 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class UnitToken : Token
+internal sealed class UnitToken : Token
 {
     private UnitType _unit;
 

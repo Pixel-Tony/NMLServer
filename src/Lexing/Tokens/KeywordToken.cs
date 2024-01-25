@@ -2,7 +2,7 @@ using static NMLServer.Grammar;
 
 namespace NMLServer.Lexing.Tokens;
 
-internal class KeywordToken : MulticharToken
+internal sealed class KeywordToken : MulticharToken
 {
     public readonly KeywordType Type;
     public readonly bool IsExpressionUsable;

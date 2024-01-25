@@ -1,6 +1,6 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class RangeToken : Token
+internal sealed class RangeToken : Token
 {
     public RangeToken(int start) : base(start)
     { }

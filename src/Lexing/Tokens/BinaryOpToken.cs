@@ -1,6 +1,6 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class BinaryOpToken : MulticharToken
+internal sealed class BinaryOpToken : MulticharToken
 {
     public readonly uint Precedence;
     public readonly OperatorType Type;

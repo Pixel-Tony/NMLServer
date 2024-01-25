@@ -1,6 +1,6 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class IdentifierToken : ValueToken
+internal sealed class IdentifierToken : ValueToken
 {
     public IdentifierToken(int start, int end) : base(start, end)
     { }

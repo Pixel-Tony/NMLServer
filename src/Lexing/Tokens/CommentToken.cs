@@ -1,6 +1,6 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class CommentToken : MulticharToken
+internal sealed class CommentToken : MulticharToken
 {
     public CommentToken(int start, int end) : base(start, end)
     { }

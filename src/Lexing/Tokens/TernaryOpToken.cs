@@ -1,6 +1,6 @@
 namespace NMLServer.Lexing.Tokens;
 
-internal class TernaryOpToken : Token
+internal sealed class TernaryOpToken : Token
 {
     public const int Precedence = Grammar.TernaryOperatorPrecedence;
 
