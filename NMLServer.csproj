@@ -9,7 +9,11 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <OutputPath>built</OutputPath>
+        <OutputPath>built\Release</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <OutputPath>built\Debug\</OutputPath>
     </PropertyGroup>
 
     <ItemGroup>
@@ -27,9 +31,11 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="LanguageServerProtocol">
-            <Version>7.0.0</Version>
+        <PackageReference Include="OmniSharp.Extensions.LanguageProtocol">
+          <Version>0.19.9</Version>
+        </PackageReference>
+        <PackageReference Include="OmniSharp.Extensions.LanguageServer">
+          <Version>0.19.9</Version>
         </PackageReference>
     </ItemGroup>
-
 </Project>

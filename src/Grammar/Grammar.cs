@@ -76,7 +76,7 @@ internal static class Grammar
         select KeywordTypeByString[keyword]
     );
 
-    private static readonly HashSet<string> _featureIdentifiers = new()
+    public static readonly HashSet<string> FeatureIdentifiers = new()
     {
         "FEAT_TRAINS", "FEAT_ROADVEHS", "FEAT_SHIPS", "FEAT_AIRCRAFT", "FEAT_STATIONS", "FEAT_CANALS", "FEAT_BRIDGES",
         "FEAT_HOUSES", "FEAT_GLOBALVARS", "FEAT_INDUSTRYTILES", "FEAT_INDUSTRIES", "FEAT_CARGOS", "FEAT_SOUNDEFFECTS",
@@ -186,32 +186,14 @@ internal static class Grammar
         "?" or ":" => TernaryOperatorPrecedence,
         _ => _operatorPrecedence[value]
     };
-}
 
-internal enum OperatorType : byte
-{
-    Comma,
-    QuestionMark,
-    Colon,
-    LogicalOr,
-    LogicalAnd,
-    BinaryOr,
-    BinaryXor,
-    BinaryAnd,
-    Eq,
-    Ne,
-    Le,
-    Ge,
-    Lt,
-    Gt,
-    ShiftLeft,
-    ShiftRight,
-    ShiftRightFunky,
-    Plus,
-    Minus,
-    Multiply,
-    Divide,
-    Modula,
-    LogicalNot,
-    BinaryNot,
+    public static readonly HashSet<string> FunctionIdentifiers = new()
+    {
+        "string", "STORE_TEMP", "STORE_PERM", "LOAD_TEMP", "LOAD_PERM"
+    };
+
+    public static readonly HashSet<string> Constants = new()
+    {
+        "SELF", "PARENT"
+    };
 }

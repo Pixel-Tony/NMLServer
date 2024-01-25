@@ -9,7 +9,7 @@ internal class ParsingState
     private int _pointer;
     private readonly List<Token> _unexpectedTokens = new();
 
-    public IEnumerable<Token> unexpectedTokens => _unexpectedTokens;
+    public IReadOnlyList<Token> unexpectedTokens => _unexpectedTokens;
 
     public void AddUnexpected(Token? token)
     {

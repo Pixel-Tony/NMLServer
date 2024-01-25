@@ -6,14 +6,13 @@ namespace NMLServer.Parsing.Statement;
 internal readonly struct NMLFile
 {
     private readonly List<BaseStatement> _children = new();
-    public IEnumerable<BaseStatement> children => _children;
 
     public NMLFile(ParsingState state)
     {
         const int maxUnexpectedTokens = 100;
 
         for (var token = state.currentToken;
-             state.unexpectedTokens.Count() <= maxUnexpectedTokens && token is not null;
+             state.unexpectedTokens.Count <= maxUnexpectedTokens && token is not null;
              token = state.currentToken)
         {
             switch (token)
@@ -48,9 +47,10 @@ internal readonly struct NMLFile
     public NMLFile(ParsingState state, ref BracketToken? expectedClosingBracket)
     {
         const int maxUnexpectedTokens = 100;
+        var unexpectedTokens = state.unexpectedTokens;
 
         for (var token = state.currentToken;
-             state.unexpectedTokens.Count() <= maxUnexpectedTokens && token is not null;
+             token is not null && unexpectedTokens.Count <= maxUnexpectedTokens;
              token = state.currentToken)
         {
             switch (token)
