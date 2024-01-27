@@ -29,10 +29,8 @@ internal ref struct Lexer
     public (IReadOnlyList<Token> tokens, List<int> lineLengths) Process()
     {
         List<Token> tokens = new();
-
-        int lineStart = 0;
         List<int> lineLengths = new();
-
+        int lineStart = 0;
         while (_pos <= _maxPos)
         {
             char c = GetCurrentChar();
@@ -98,7 +96,7 @@ internal ref struct Lexer
 
             if (c == '/')
             {
-                tokens.Add(ParseFromSlash());
+                tokens.Add(ParseFromSlash(lineLengths, ref lineStart));
                 continue;
             }
 
@@ -187,7 +185,7 @@ internal ref struct Lexer
         return new CommentToken(start, _pos);
     }
 
-    private Token ParseFromSlash()
+    private Token ParseFromSlash(ICollection<int> lineLengths, ref int lineStart)
     {
         int start = _pos++;
         if (_pos > _maxPos)
@@ -200,12 +198,25 @@ internal ref struct Lexer
                 ++_pos;
                 while (_pos <= _maxPos && _pos - start < 3)
                 {
+                    if (_context[_pos] is '\n')
+                    {
+                        lineLengths.Add(_pos - lineStart);
+                        lineStart = ++_pos;
+                        continue;
+                    }
                     ++_pos;
                 }
                 char prev = _context[_pos - 1];
                 while (_pos <= _maxPos)
                 {
                     var current = GetCurrentChar();
+                    if (current is '\n')
+                    {
+                        prev = '\n';
+                        lineLengths.Add(_pos - lineStart);
+                        lineStart = ++_pos;
+                        continue;
+                    }
                     if (prev is '*' && current is '/')
                     {
                         break;
@@ -219,8 +230,7 @@ internal ref struct Lexer
                 ++_pos;
                 while (_pos <= _maxPos)
                 {
-                    var c = GetCurrentChar();
-                    if (c == '\n')
+                    if (GetCurrentChar() is '\n')
                     {
                         break;
                     }
