@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing;
@@ -36,7 +37,7 @@ internal class ParsingState
         ? _tokens[_pointer]
         : null;
 
-    public SemicolonToken? ExpectSemicolonAfterExpression()
+    public SemicolonToken? ExpectSemicolon()
     {
         for (var token = currentToken; token is not null; token = nextToken)
         {
@@ -58,31 +59,7 @@ internal class ParsingState
         return null;
     }
 
-    public (bool isClosingInstead, BracketToken? token) ExpectOpeningCurlyBracket()
-    {
-        for (var token = currentToken; token is not null; token = nextToken)
-        {
-            switch (token)
-            {
-                case BracketToken { Bracket: '{' } openingBracket:
-                    Increment();
-                    return (false, openingBracket);
-
-                case BracketToken { Bracket: '}' } closingBracket:
-                    Increment();
-                    return (true, closingBracket);
-
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
-                    return (false, null);
-
-                default:
-                    AddUnexpected(token);
-                    break;
-            }
-        }
-        return (false, null);
-    }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public BracketToken? ExpectClosingCurlyBracket()
     {
         for (var token = currentToken; token is not null; token = nextToken)

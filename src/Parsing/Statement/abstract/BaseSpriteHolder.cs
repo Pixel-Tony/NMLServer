@@ -13,7 +13,17 @@ internal abstract class BaseSpriteHolder : BaseStatementWithBlock
         {
             return;
         }
-        Content = ExpressionAST.TryParseSequence(state);
+        var expression = ExpressionAST.TryParse(state);
+        if (expression is not null)
+        {
+            List<ExpressionAST> result = new();
+            while (expression is not null)
+            {
+                result.Add(expression);
+                expression = ExpressionAST.TryParse(state);
+            }
+            Content = result.ToArray();
+        }
         ClosingBracket = state.ExpectClosingCurlyBracket();
     }
 }

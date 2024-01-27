@@ -25,8 +25,7 @@ internal record struct NMLAttribute
 
         state.Increment();
         _value = ExpressionAST.TryParse(state);
-
-        _semicolon = state.ExpectSemicolonAfterExpression();
+        _semicolon = state.ExpectSemicolon();
     }
 
     public NMLAttribute(ParsingState state, MulticharToken key)

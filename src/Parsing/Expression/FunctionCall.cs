@@ -11,9 +11,4 @@ internal class FunctionCall : ExpressionAST
     {
         Function = function;
     }
-
-    protected override void Replace(ExpressionAST target, ExpressionAST value)
-    {
-        FailReplacement();
-    }
 }

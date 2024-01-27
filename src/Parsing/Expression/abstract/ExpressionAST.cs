@@ -8,14 +8,18 @@ internal abstract class ExpressionAST
 
     protected ExpressionAST(ExpressionAST? parent) => _parent = parent;
 
-    protected abstract void Replace(ExpressionAST target, ExpressionAST value);
-
-    protected void FailReplacement() => throw new ReplaceAttemptException(this);
+    protected virtual void Replace(ExpressionAST target, ExpressionAST value)
+    {
+        throw new Exception($"Cannot replace child: {GetType()} is a bottom-level node");
+    }
 
     /// <summary>
-    /// Try to parse an NML expression; includes maximum one unit token afterwards.
+    /// Try to parse an NML expression.
+    /// NML expression can only contain ONE unit token. If expression contains one, it is always the last token,
+    /// and corresponding <see cref="UnitTerminatedExpression"/> node is the root of result.
     /// </summary>
-    /// <returns>The first token after expression.</returns>
+    /// <param name="state">The current parsing state.</param>
+    /// <returns>Parsed expression root, if any, null otherwise.</returns>
     public static ExpressionAST? TryParse(ParsingState state)
     {
         var token = state.currentToken;
@@ -41,12 +45,9 @@ internal abstract class ExpressionAST
             switch (token)
             {
                 case UnitToken unitToken:
-                    if (current._parent != null)
-                    {
-                        return result;
-                    }
+                    result._parent = new UnitTerminatedExpression(result, unitToken);
                     state.Increment();
-                    return result._parent = new UnitTerminatedExpression(result, unitToken);
+                    return result;
 
                 case ColonToken colonToken:
                     switch (current)
@@ -217,6 +218,7 @@ internal abstract class ExpressionAST
                             continue;
                     }
                     break;
+
                 case RangeToken:
                 case FailedToken:
                 case BracketToken:
@@ -383,30 +385,10 @@ internal abstract class ExpressionAST
                             break;
                     }
                     break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(token), "Unexpected token type");
             }
             state.Increment();
         }
         return null;
-    }
-
-    public static ExpressionAST[]? TryParseSequence(ParsingState state)
-    {
-        var expression = TryParse(state);
-        if (expression is null)
-        {
-            return null;
-        }
-
-        List<ExpressionAST> result = new();
-        while (expression is not null)
-        {
-            result.Add(expression);
-            expression = TryParse(state);
-        }
-        return result.ToArray();
     }
 
     private static ExpressionAST? TokenToAST(Token token)

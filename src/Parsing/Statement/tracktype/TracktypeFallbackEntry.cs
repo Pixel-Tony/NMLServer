@@ -25,7 +25,8 @@ internal readonly struct TracktypeFallbackEntry
             switch (token)
             {
                 case BracketToken { Bracket: '}' }:
-                    goto label_Ending;
+                    _fallback = fallbacks.ToMaybeArray();
+                    return;
 
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken:
                     fallbacks.Add((current, commaToken));
@@ -48,7 +49,8 @@ internal readonly struct TracktypeFallbackEntry
                     break;
 
                 case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
-                    goto label_Ending;
+                    _fallback = fallbacks.ToMaybeArray();
+                    return;
 
                 default:
                     state.AddUnexpected(token);
@@ -61,7 +63,8 @@ internal readonly struct TracktypeFallbackEntry
             {
                 case BracketToken { Bracket: '}' }:
                 case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
-                    goto label_Ending;
+                    _fallback = fallbacks.ToMaybeArray();
+                    return;
 
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken:
                     _comma = commaToken;
@@ -72,7 +75,6 @@ internal readonly struct TracktypeFallbackEntry
                     break;
             }
         }
-        label_Ending:
         _fallback = fallbacks.ToMaybeArray();
     }
 }

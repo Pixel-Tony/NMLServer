@@ -10,9 +10,4 @@ internal abstract class ValueNode : ExpressionAST
     {
         Token = recordingToken;
     }
-
-    protected sealed override void Replace(ExpressionAST target, ExpressionAST value)
-    {
-        FailReplacement();
-    }
 }

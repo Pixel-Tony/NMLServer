@@ -62,7 +62,7 @@ internal readonly record struct ItemGraphicsAttribute
                         state.Increment();
                     }
                     _value = ExpressionAST.TryParse(state);
-                    _semicolon = state.ExpectSemicolonAfterExpression();
+                    _semicolon = state.ExpectSemicolon();
                     return;
 
                 case KeywordToken:
@@ -85,6 +85,6 @@ internal readonly record struct ItemGraphicsAttribute
         _colon = colon;
         state.Increment();
         _value = ExpressionAST.TryParse(state);
-        _semicolon = state.ExpectSemicolonAfterExpression();
+        _semicolon = state.ExpectSemicolon();
     }
 }

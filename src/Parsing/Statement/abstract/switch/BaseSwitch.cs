@@ -56,7 +56,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                             returnLines.Add(new SwitchReturnLine(
                                     returnKeyword,
                                     ExpressionAST.TryParse(state),
-                                    state.ExpectSemicolonAfterExpression()
+                                    state.ExpectSemicolon()
                                 )
                             );
                             innerState = ParseFSM.ExpectsAnything;
@@ -68,7 +68,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                             state.Increment();
 
                             currentLine.ReturnLine.Value = ExpressionAST.TryParse(state);
-                            currentLine.ReturnLine.Semicolon = state.ExpectSemicolonAfterExpression();
+                            currentLine.ReturnLine.Semicolon = state.ExpectSemicolon();
                             switchLines.Add(currentLine);
                             currentLine = new SwitchLine();
                             innerState = ParseFSM.ExpectsAnything;
@@ -104,7 +104,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
 
                         case ParseFSM.ExpectsValue:
                             currentLine.ReturnLine.Value = ExpressionAST.TryParse(state);
-                            currentLine.ReturnLine.Semicolon = state.ExpectSemicolonAfterExpression();
+                            currentLine.ReturnLine.Semicolon = state.ExpectSemicolon();
                             switchLines.Add(currentLine);
                             currentLine = new SwitchLine();
                             innerState = ParseFSM.ExpectsAnything;

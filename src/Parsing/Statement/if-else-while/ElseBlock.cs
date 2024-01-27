@@ -15,7 +15,6 @@ internal class ElseBlock : BaseStatement
     public ElseBlock(ParsingState state, KeywordToken keyword)
     {
         _elseKeyword = keyword;
-
         var token = state.nextToken;
         for (; token is not null; token = state.nextToken)
         {
@@ -44,7 +43,6 @@ internal class ElseBlock : BaseStatement
                     break;
             }
         }
-
         label_parsingElseIfCondition:
         for (; token is not null; token = state.nextToken)
         {
@@ -77,7 +75,6 @@ internal class ElseBlock : BaseStatement
                     break;
             }
         }
-
         label_parsingOpeningBracket:
         for (; token is not null; token = state.nextToken)
         {
@@ -101,7 +98,6 @@ internal class ElseBlock : BaseStatement
                     break;
             }
         }
-
         label_parsingBody:
         _contents = new NMLFile(state, ref _closingBracket);
     }

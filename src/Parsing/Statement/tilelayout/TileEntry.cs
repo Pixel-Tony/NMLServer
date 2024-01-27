@@ -93,6 +93,6 @@ internal readonly struct TileEntry
         }
         label_ParsingValue:
         _value = ExpressionAST.TryParse(state);
-        _semicolon = state.ExpectSemicolonAfterExpression();
+        _semicolon = state.ExpectSemicolon();
     }
 }

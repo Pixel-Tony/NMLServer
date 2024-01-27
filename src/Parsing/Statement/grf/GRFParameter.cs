@@ -120,7 +120,7 @@ internal class GRFParameter : BaseStatementWithBlock
                         case ValueToken:
                         case BinaryOpToken:
                             var expr = ExpressionAST.TryParse(state);
-                            var semicolon = state.ExpectSemicolonAfterExpression();
+                            var semicolon = state.ExpectSemicolon();
                             attributes.Add(new NMLAttribute(identifier, colon, expr, semicolon));
                             identifier = null;
                             colon = null;
@@ -155,9 +155,6 @@ internal class GRFParameter : BaseStatementWithBlock
                             break;
                     }
                     break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(innerState), "Unexpected state");
             }
             token = state.nextToken;
         }

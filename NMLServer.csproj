@@ -13,7 +13,11 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <OutputPath>built\Debug\</OutputPath>
+      <OutputPath>built\Debug</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PublishAot>true</PublishAot>
     </PropertyGroup>
 
     <ItemGroup>

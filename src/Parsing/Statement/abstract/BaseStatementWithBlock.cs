@@ -15,14 +15,27 @@ internal abstract class BaseStatementWithBlock : BaseStatement
         Keyword = keyword;
         state.Increment();
         Parameters = ExpressionAST.TryParse(state);
-        var (isClosingInstead, bracket) = state.ExpectOpeningCurlyBracket();
-        if (isClosingInstead)
+        for (var token = state.currentToken; token is not null; token = state.nextToken)
         {
-            ClosingBracket = bracket;
-        }
-        else
-        {
-            OpeningBracket = bracket;
+            switch (token)
+            {
+                case BracketToken { Bracket: '{' } openingBracket:
+                    OpeningBracket = openingBracket;
+                    state.IncrementSkippingComments();
+                    return;
+
+                case BracketToken { Bracket: '}' } closingBracket:
+                    ClosingBracket = closingBracket;
+                    state.IncrementSkippingComments();
+                    return;
+
+                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                    return;
+
+                default:
+                    state.AddUnexpected(token);
+                    break;
+            }
         }
     }
 }

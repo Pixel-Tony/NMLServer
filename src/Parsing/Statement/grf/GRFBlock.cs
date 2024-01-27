@@ -32,9 +32,16 @@ internal class GRFBlock : BaseStatementWithBlock
                     parameters.Add(new GRFParameter(state, paramToken));
                     break;
 
+                case KeywordToken { IsExpressionUsable: false }:
+                    _attributes = attributes.ToMaybeArray();
+                    _parameters = parameters.ToMaybeArray();
+                    return;
+
                 case BracketToken { Bracket: '}' } closingBracket:
                     ClosingBracket = closingBracket;
                     state.Increment();
+                    _attributes = attributes.ToMaybeArray();
+                    _parameters = parameters.ToMaybeArray();
                     return;
 
                 default:

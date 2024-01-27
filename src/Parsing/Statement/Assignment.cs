@@ -13,16 +13,6 @@ internal class Assignment : BaseStatement
     public Assignment(ParsingState state)
     {
         _leftHandSide = ExpressionAST.TryParse(state);
-        switch (state.currentToken)
-        {
-            case null:
-                return;
-
-            case AssignmentToken equalsSign:
-                _equalsSign = equalsSign;
-                state.Increment();
-                break;
-        }
 
         for (var token = state.currentToken;
              _equalsSign is null && token is not null;
@@ -48,8 +38,7 @@ internal class Assignment : BaseStatement
                     break;
             }
         }
-
         _righHandSide = ExpressionAST.TryParse(state);
-        _semicolon = state.ExpectSemicolonAfterExpression();
+        _semicolon = state.ExpectSemicolon();
     }
 }

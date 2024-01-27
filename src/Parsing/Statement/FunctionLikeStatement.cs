@@ -14,6 +14,6 @@ internal class FunctionLikeStatement : BaseStatement
         _keyword = keyword;
         state.Increment();
         Parameters = ExpressionAST.TryParse(state);
-        _semicolon = state.ExpectSemicolonAfterExpression();
+        _semicolon = state.ExpectSemicolon();
     }
 }
