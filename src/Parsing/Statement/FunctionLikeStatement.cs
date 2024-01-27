@@ -12,7 +12,7 @@ internal class FunctionLikeStatement : BaseStatement
     public FunctionLikeStatement(ParsingState state, KeywordToken keyword)
     {
         _keyword = keyword;
-        state.Increment();
+        state.IncrementSkippingComments();
         Parameters = ExpressionAST.TryParse(state);
         _semicolon = state.ExpectSemicolon();
     }

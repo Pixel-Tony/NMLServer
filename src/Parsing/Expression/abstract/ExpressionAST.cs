@@ -44,6 +44,9 @@ internal abstract class ExpressionAST
         {
             switch (token)
             {
+                case CommentToken:
+                    break;
+
                 case UnitToken unitToken:
                     result._parent = new UnitTerminatedExpression(result, unitToken);
                     state.Increment();

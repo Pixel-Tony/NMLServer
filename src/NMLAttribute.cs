@@ -22,8 +22,7 @@ internal record struct NMLAttribute
     {
         _key = null;
         _colon = colon;
-
-        state.Increment();
+        state.IncrementSkippingComments();
         _value = ExpressionAST.TryParse(state);
         _semicolon = state.ExpectSemicolon();
     }
@@ -31,14 +30,16 @@ internal record struct NMLAttribute
     public NMLAttribute(ParsingState state, MulticharToken key)
     {
         _key = key;
-
-        for (var token = state.nextToken; token is not null && _colon is null; token = state.nextToken)
+        for (var token = state.nextToken; token is not null; token = state.nextToken)
         {
             switch (token)
             {
                 case ColonToken colonToken:
                     _colon = colonToken;
-                    break;
+                    state.IncrementSkippingComments();
+                    _value = ExpressionAST.TryParse(state);
+                    _semicolon = state.ExpectSemicolon();
+                    return;
 
                 case SemicolonToken semicolonToken:
                     _semicolon = semicolonToken;
@@ -54,9 +55,6 @@ internal record struct NMLAttribute
                     break;
             }
         }
-
-        _value = ExpressionAST.TryParse(state);
-        _semicolon = state.ExpectSemicolonAfterExpression();
     }
 
     public static NMLAttribute[]? TryParseManyInBlock(ParsingState state, ref BracketToken? expectedClosingBracket)

@@ -55,11 +55,12 @@ internal readonly record struct ItemGraphicsAttribute
 
                 case ColonToken colonToken:
                     _colon = colonToken;
-                    token = state.nextToken;
+                    state.IncrementSkippingComments();
+                    token = state.currentToken;
                     if (token is KeywordToken { Type: KeywordType.Return } returnKeyword)
                     {
                         _returnKeyword = returnKeyword;
-                        state.Increment();
+                        state.IncrementSkippingComments();
                     }
                     _value = ExpressionAST.TryParse(state);
                     _semicolon = state.ExpectSemicolon();
@@ -83,7 +84,7 @@ internal readonly record struct ItemGraphicsAttribute
     private ItemGraphicsAttribute(ParsingState state, ColonToken colon)
     {
         _colon = colon;
-        state.Increment();
+        state.IncrementSkippingComments();
         _value = ExpressionAST.TryParse(state);
         _semicolon = state.ExpectSemicolon();
     }

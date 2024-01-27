@@ -3,7 +3,7 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Lexing;
 
-internal class Lexer
+internal ref struct Lexer
 {
     private static readonly HashSet<char> _opStarts = new(
         from
@@ -11,44 +11,51 @@ internal class Lexer
         select
             op[0]
     );
-
-    private readonly string _input;
+    private readonly ReadOnlySpan<char> _context;
     private readonly int _maxPos;
     private int _pos;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private char GetCurrentChar() => _input[_pos];
-
-    public Lexer(string inputString)
+    public Lexer(ReadOnlySpan<char> input)
     {
-        _input = inputString;
-        _maxPos = inputString.Length - 1;
-        _tokens = new List<Token>(inputString.Length / 10);
+        _context = input;
+        _maxPos = input.Length - 1;
     }
 
-    private readonly List<Token> _tokens;
-    private readonly List<CommentToken> _comments = new();
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ref readonly char GetCurrentChar() => ref _context[_pos];
 
-    public (Token[] tokens, CommentToken[] comments) Process()
+
+
+    public (IReadOnlyList<Token> tokens, List<int> lineLengths) Process()
     {
-        var span = _input.AsSpan();
+        List<Token> tokens = new();
+
+        int lineStart = 0;
+        List<int> lineLengths = new();
+
         while (_pos <= _maxPos)
         {
             char c = GetCurrentChar();
+            if (c is '\n')
+            {
+                lineLengths.Add(_pos - lineStart);
+                lineStart = ++_pos;
+                continue;
+            }
             if (char.IsWhiteSpace(c))
             {
-                _pos++;
+                ++_pos;
                 continue;
             }
             switch (c)
             {
                 case '=':
-                    if (_pos == _maxPos || _input[_pos + 1] is not '=')
+                    if (_pos == _maxPos || _context[_pos + 1] is not '=')
                     {
-                        _tokens.Add(new AssignmentToken(_pos++));
+                        tokens.Add(new AssignmentToken(_pos++));
                         continue;
                     }
-                    _tokens.Add(new BinaryOpToken(_pos, ++_pos, "=="));
+                    tokens.Add(new BinaryOpToken(_pos, ++_pos, "=="));
                     ++_pos;
                     continue;
 
@@ -58,52 +65,52 @@ internal class Lexer
                         break;
                     }
                     ++_pos;
-                    _tokens.Add(GetCurrentChar() is '.'
+                    tokens.Add(GetCurrentChar() is '.'
                         ? new RangeToken(_pos++ - 1)
                         : new FailedToken(_pos - 1)
                     );
                     continue;
 
                 case ';':
-                    _tokens.Add(new SemicolonToken(_pos++));
+                    tokens.Add(new SemicolonToken(_pos++));
                     continue;
 
                 case ':':
-                    _tokens.Add(new ColonToken(_pos++));
+                    tokens.Add(new ColonToken(_pos++));
                     continue;
 
                 case '?':
-                    _tokens.Add(new TernaryOpToken(_pos++));
+                    tokens.Add(new TernaryOpToken(_pos++));
                     continue;
             }
 
             if (IsValidIdStartCharacter(c))
             {
-                _tokens.Add(ParseIdentifier(c, span));
+                tokens.Add(ParseIdentifier(c));
                 continue;
             }
 
             if (char.IsDigit(c))
             {
-                _tokens.Add(ParseNumber(c));
+                tokens.Add(ParseNumber(c));
                 continue;
             }
 
             if (c == '/')
             {
-                ParseFromSlash();
+                tokens.Add(ParseFromSlash());
                 continue;
             }
 
             if (Grammar.Brackets.Contains(c))
             {
-                _tokens.Add(new BracketToken(_pos++, c));
+                tokens.Add(new BracketToken(_pos++, c));
                 continue;
             }
 
             if (_opStarts.Contains(c))
             {
-                _tokens.Add(ParseOperator(c));
+                tokens.Add(ParseOperator(c));
                 continue;
             }
 
@@ -111,19 +118,20 @@ internal class Lexer
             {
                 case '\'':
                 case '"':
-                    _tokens.Add(ParseLiteralString(c));
+                    tokens.Add(ParseLiteralString(c));
                     break;
 
                 case '#':
-                    _comments.Add(ParseHashtagComment());
+                    tokens.Add(ParseHashtagComment());
                     break;
 
                 default:
-                    _tokens.Add(new FailedToken(_pos++));
+                    tokens.Add(new FailedToken(_pos++));
                     break;
             }
         }
-        return (_tokens.ToArray(), _comments.ToArray());
+        lineLengths.Add(_pos - lineStart);
+        return (tokens.ToArray(), lineLengths);
     }
 
     private static Token DecideSingleCharacterOperatorType(char c, int start, int end)
@@ -179,13 +187,12 @@ internal class Lexer
         return new CommentToken(start, _pos);
     }
 
-    private void ParseFromSlash()
+    private Token ParseFromSlash()
     {
         int start = _pos++;
         if (_pos > _maxPos)
         {
-            _tokens.Add(new BinaryOpToken(start, _pos, '/'));
-            return;
+            return new BinaryOpToken(start, _pos, '/');
         }
         switch (GetCurrentChar())
         {
@@ -195,7 +202,7 @@ internal class Lexer
                 {
                     ++_pos;
                 }
-                char prev = _input[_pos - 1];
+                char prev = _context[_pos - 1];
                 while (_pos <= _maxPos)
                 {
                     var current = GetCurrentChar();
@@ -206,8 +213,7 @@ internal class Lexer
                     prev = current;
                     ++_pos;
                 }
-                _comments.Add(new CommentToken(start, ++_pos));
-                break;
+                return new CommentToken(start, ++_pos);
 
             case '/':
                 ++_pos;
@@ -220,12 +226,10 @@ internal class Lexer
                     }
                     ++_pos;
                 }
-                _comments.Add(new CommentToken(start, ++_pos));
-                break;
+                return new CommentToken(start, ++_pos);
 
             default:
-                _tokens.Add(new BinaryOpToken(start, _pos, '/'));
-                break;
+                return new BinaryOpToken(start, _pos, '/');
         }
     }
 
@@ -235,8 +239,8 @@ internal class Lexer
         while (_pos <= _maxPos)
         {
             char c = GetCurrentChar();
-            _pos++;
-            if (c == openingQuote)
+            ++_pos;
+            if (c == openingQuote || c is '\n')
             {
                 break;
             }
@@ -244,7 +248,7 @@ internal class Lexer
         return new StringToken(start, _pos);
     }
 
-    private Token ParseIdentifier(char first, ReadOnlySpan<char> view)
+    private Token ParseIdentifier(char first)
     {
         int start = _pos++;
         char current = '\0';
@@ -257,20 +261,20 @@ internal class Lexer
             }
         }
         if (current is '/'
-            && (_maxPos - _pos == 1 || (_maxPos - _pos > 1 && !IsValidIdentifierCharacter(_input[_pos + 2]))))
+            && (_maxPos - _pos == 1 || (_maxPos - _pos > 1 && !IsValidIdentifierCharacter(_context[_pos + 2]))))
         {
             switch (_pos - start)
             {
-                case 1 when first is 'm' && _input[_pos + 1] is 's':
+                case 1 when first is 'm' && _context[_pos + 1] is 's':
                     _pos += 2;
                     return new UnitToken(start, UnitType.MPS, 3);
 
-                case 2 when first is 'k' && _input[_pos - 1] is 'm' && _input[_pos + 1] is 'h':
+                case 2 when first is 'k' && _context[_pos - 1] is 'm' && _context[_pos + 1] is 'h':
                     _pos += 2;
                     return new UnitToken(start, UnitType.KMPH, 4);
             }
         }
-        var value = view[start.._pos];
+        var value = _context[start.._pos];
         if (current is '%' && _pos - start == 4 && value.Equals("snow", StringComparison.Ordinal))
         {
             _pos += 1;

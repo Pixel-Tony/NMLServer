@@ -14,7 +14,7 @@ internal class ParsingState
 
     public void AddUnexpected(Token? token)
     {
-        if (token is not null)
+        if (token is not (null or CommentToken))
         {
             _unexpectedTokens.Add(token);
         }
@@ -80,5 +80,14 @@ internal class ParsingState
             }
         }
         return null;
+    }
+
+    public void IncrementSkippingComments()
+    {
+        Increment();
+        while (currentToken is CommentToken)
+        {
+            Increment();
+        }
     }
 }

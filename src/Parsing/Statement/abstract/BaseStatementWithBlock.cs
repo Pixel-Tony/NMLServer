@@ -13,7 +13,7 @@ internal abstract class BaseStatementWithBlock : BaseStatement
     protected BaseStatementWithBlock(ParsingState state, KeywordToken keyword)
     {
         Keyword = keyword;
-        state.Increment();
+        state.IncrementSkippingComments();
         Parameters = ExpressionAST.TryParse(state);
         for (var token = state.currentToken; token is not null; token = state.nextToken)
         {

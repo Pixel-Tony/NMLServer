@@ -30,7 +30,7 @@ internal readonly struct TileEntry
 
                 case ColonToken colon:
                     _colon = colon;
-                    state.Increment();
+                    state.IncrementSkippingComments();
                     goto label_ParsingValue;
 
                 case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
@@ -52,7 +52,7 @@ internal readonly struct TileEntry
 
                 case ColonToken colon:
                     _colon = colon;
-                    state.Increment();
+                    state.IncrementSkippingComments();
                     goto label_ParsingValue;
 
                 case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
@@ -79,7 +79,7 @@ internal readonly struct TileEntry
 
                 case ColonToken colon:
                     _colon = colon;
-                    state.Increment();
+                    state.IncrementSkippingComments();
                     goto label_ParsingValue;
 
                 case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
