@@ -2,6 +2,7 @@ using NMLServer.Lexing;
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing;
 using NMLServer.Parsing.Statement;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
@@ -10,34 +11,114 @@ namespace NMLServer.Analysis;
 
 internal class Document
 {
-    public TextDocumentItem Item;
-
-    private DocumentPositionConverter _converter;
-
-    // TODO: propagate semantic resolution to NMLFile and BaseStatement
-    public NMLFile Context;
-    private readonly List<Diagnostic> _diagnostics = new();
     private ParsingState _state;
-    private (Token[] tokens, CommentToken[] comments) _lexed;
-    private bool isActualVersionOfDiagnostics { get; set; }
+    public readonly DocumentUri Uri;
+    private string _source;
+    private IReadOnlyList<Token> _tokens;
+    private List<int> _lineLengths;
+    private readonly List<Diagnostic> _diagnostics = new();
+
+    public string languageId { get; }
+
+    // TODO: propagate analysis to NMLFile and BaseStatement
+    private NMLFile _file;
+    private int _version;
+    private bool _isActualVersionOfDiagnostics;
 
     public IEnumerable<Diagnostic> diagnostics => Analyze();
 
     public Document(TextDocumentItem item)
     {
-        Item = item;
-        var source = item.Text;
-        _converter = new DocumentPositionConverter(source);
-        var lexer = new Lexer(source);
-        _lexed = lexer.Process();
-        _state = new ParsingState(_lexed.tokens);
-        Context = new NMLFile(_state);
+        Uri = item.Uri;
+        _version = item.Version ?? 0;
+        languageId = item.LanguageId;
+
+        _source = item.Text;
+
+        var lexer = new Lexer(_source);
+        (_tokens, _lineLengths) = lexer.Process();
+
+        _state = new ParsingState(_tokens);
+        _file = new NMLFile(_state);
+    }
+
+    public void UpdateFrom(DidChangeTextDocumentParams request)
+    {
+        if (_version >= request.TextDocument.Version)
+        {
+            return;
+        }
+
+        foreach (var change in request.ContentChanges)
+        {
+            if (change.Range is null)
+            {
+                _source = change.Text;
+                ++_version;
+                continue;
+            }
+
+            var line = change.Range.Start.Line;
+            if (line > _lineLengths.Count - 1)
+            {
+                _lineLengths.EnsureCapacity(line + 1);
+            }
+            _lineLengths[line] = _source.Length - change.RangeLength + change.Text.Length;
+            _source = _source[..change.Range.Start.Character] + change.Text + _source[change.Range.End.Character..];
+            ++_version;
+        }
+        var lexer = new Lexer(_source);
+        (_tokens, _lineLengths) = lexer.Process();
+        _state = new ParsingState(_tokens);
+        _file = new NMLFile(_state);
+        _isActualVersionOfDiagnostics = false;
         Analyze();
+    }
+
+    private IEnumerable<Range> this[int start, int end]
+    {
+        // TODO: incorporate into semantic tokens method with keeping line/char numbers for faster finding
+        // TODO  OR cache them here in case semantic tokens wouldn't be a single place to use this method
+        get
+        {
+            /* Getting coordinates of starting position */
+            int line = 0;
+            int length = _lineLengths[line] + 1;
+            while (start >= length)
+            {
+                start -= length;
+                length = _lineLengths[++line] + 1;
+            }
+            var startLine = line;
+
+            /* Getting coordinates of ending position */
+            end -= start;
+            while (end >= length)
+            {
+                end -= length;
+                length = _lineLengths[++line] + 1;
+            }
+            var endChar = end;
+
+            /* If on the same line */
+            if (startLine == line)
+            {
+                yield return new Range(line, start, line, endChar);
+                yield break;
+            }
+
+            yield return new Range(startLine, start, startLine, _lineLengths[startLine] - 1);
+            for (var lineNum = startLine + 1; lineNum < line; ++lineNum)
+            {
+                yield return new Range(lineNum, 0, lineNum, _lineLengths[lineNum] - 1);
+            }
+            yield return new Range(line, 0, line, endChar);
+        }
     }
 
     private IEnumerable<Diagnostic> Analyze()
     {
-        if (isActualVersionOfDiagnostics)
+        if (_isActualVersionOfDiagnostics)
         {
             return _diagnostics;
         }
@@ -52,70 +133,32 @@ internal class Document
                 {
                     Severity = DiagnosticSeverity.Error,
                     Message = "Unexpected token",
-                    Range = new Range
-                    {
-                        Start = _converter[unexpectedToken.Start],
-                        End = _converter[unexpectedToken is MulticharToken hasEnd
+                    Range = this[
+                        unexpectedToken.Start,
+                        unexpectedToken is MulticharToken hasEnd
                             ? hasEnd.End
-                            : unexpectedToken.Start + 1]
-                    }
+                            : unexpectedToken.Start + 1
+                    ].First() // TODO
                 }
             );
         }
-        isActualVersionOfDiagnostics = true;
+        _isActualVersionOfDiagnostics = true;
         return _diagnostics;
-    }
-
-    public void ApplyChanges(DidChangeTextDocumentParams request)
-    {
-        if (Item.Version >= request.TextDocument.Version)
-        {
-            return;
-        }
-        string source = Item.Text;
-        int version = Item.Version ?? 0;
-        foreach (var change in request.ContentChanges)
-        {
-            source = change.Text;
-            ++version;
-        }
-        Item = new TextDocumentItem
-        {
-            Text = source,
-            Uri = Item.Uri,
-            Version = version,
-            LanguageId = Item.LanguageId
-        };
-
-        _converter = new DocumentPositionConverter(source);
-        var lexer = new Lexer(source);
-        _lexed = lexer.Process();
-        _state = new ParsingState(_lexed.tokens);
-        Context = new NMLFile(_state);
-
-        isActualVersionOfDiagnostics = false;
-        Analyze();
     }
 
     public void ProvideSemanticTokens(SemanticTokensBuilder builder)
     {
-        string context = Item.Text;
-
-        var tokens = _lexed.tokens.ToList();
-        tokens.AddRange(_lexed.comments);
-        tokens.Sort((left, right) => left.Start.CompareTo(right.Start));
-
-        foreach (var token in tokens)
+        foreach (var token in _tokens)
         {
-            var (type, length) = GetTokenTypeAndLength(token, context);
-            foreach (var range in _converter[_converter[token.Start], _converter[token.Start + length]])
+            var (type, length) = GetTokenTypeAndLength(token);
+            foreach (var range in this[token.Start, token.Start + length])
             {
                 builder.Push(range, type);
             }
         }
     }
 
-    private static (SemanticTokenType? type, int length) GetTokenTypeAndLength(Token token, string context)
+    private (SemanticTokenType? type, int length) GetTokenTypeAndLength(Token token)
     {
         var type = token switch
         {
@@ -125,7 +168,7 @@ internal class Document
             ColonToken => SemanticTokenType.Operator,
             CommentToken => SemanticTokenType.Comment,
             FailedToken => null as SemanticTokenType?,
-            IdentifierToken id => DecideTokenType(id, context),
+            IdentifierToken id => DecideTokenType(id),
             KeywordToken => SemanticTokenType.Keyword,
             NumericToken => SemanticTokenType.Number,
             StringToken => SemanticTokenType.String,
@@ -147,11 +190,10 @@ internal class Document
         return (type, length);
     }
 
-    // TODO: add initial token type for known identifiers at lexing state to avoid leaking dependencies
-    private static SemanticTokenType DecideTokenType(MulticharToken token, string context)
+    // TODO: in future, add initial token type for known identifiers at lexing state
+    private SemanticTokenType DecideTokenType(MulticharToken token)
     {
-
-        var s = context[token.Start..token.End];
+        var s = _source[token.Start..token.End];
         if (Grammar.FeatureIdentifiers.Contains(s))
         {
             return SemanticTokenType.Type;

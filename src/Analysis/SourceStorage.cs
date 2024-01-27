@@ -12,7 +12,7 @@ internal class SourceStorage
 
     private readonly Dictionary<DocumentUri, Document> _documents = new();
 
-    public TextDocumentAttributes this[DocumentUri uri] => new(uri, _documents[uri].Item.LanguageId);
+    public TextDocumentAttributes this[DocumentUri uri] => new(uri, _documents[uri].languageId);
 
     public void Add(TextDocumentItem target)
     {
@@ -29,7 +29,7 @@ internal class SourceStorage
     {
         ShouldPublishDiagnostics?.Invoke(new PublishDiagnosticsParams
         {
-            Uri = document.Item.Uri,
+            Uri = document.Uri,
             Diagnostics = new Container<Diagnostic>(document.diagnostics)
         });
     }
@@ -46,7 +46,7 @@ internal class SourceStorage
     public void ApplyChanges(DidChangeTextDocumentParams request)
     {
         var target = _documents[request.TextDocument.Uri];
-        target.ApplyChanges(request);
+        target.UpdateFrom(request);
         Analyze(target);
     }
 
