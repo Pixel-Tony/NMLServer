@@ -53,7 +53,7 @@ internal class SourceStorage
         _documents[identifier.Uri].ProvideSemanticTokens(builder);
     }
 
-    public IEnumerable<Diagnostic> GetActualDiagnostics(TextDocumentIdentifier identifier)
+    public IEnumerable<Diagnostic> GetDiagnostics(TextDocumentIdentifier identifier)
     {
         return _documents[identifier.Uri].diagnostics;
     }

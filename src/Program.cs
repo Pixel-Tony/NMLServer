@@ -19,7 +19,9 @@ internal class Program
                 .WithInput(Console.OpenStandardInput())
                 .WithOutput(Console.OpenStandardOutput())
                 .WithServices(services => services.AddSingleton(storage))
-                // .AddHandler<SemanticTokensHandler>()
+                .AddHandler<TextDocumentSyncHandler>()
+                .AddHandler<DocumentDiagnosticHandler>()
+                .AddHandler<SemanticTokensHandler>()
         ).ConfigureAwait(false);
 
         storage.ShouldPublishDiagnostics += Server.PublishDiagnostics;

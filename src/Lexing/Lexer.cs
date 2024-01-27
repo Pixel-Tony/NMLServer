@@ -362,7 +362,7 @@ internal ref struct Lexer
 
                 case NumberLexState.FloatOnDot:
                     // range operator
-                    if (c == '.')
+                    if (c is '.')
                     {
                         return new NumericToken(start, --_pos);
                     }
