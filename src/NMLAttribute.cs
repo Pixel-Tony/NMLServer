@@ -75,7 +75,7 @@ internal record struct NMLAttribute
                 case BracketToken { Bracket: '}' } closingBracket:
                     expectedClosingBracket = closingBracket;
                     state.Increment();
-                    return attributes.ToMaybeArray();
+                    return attributes.ToArrayOrNull();
 
                 case KeywordToken { IsExpressionUsable: false }:
                     break;
@@ -86,6 +86,6 @@ internal record struct NMLAttribute
                     break;
             }
         }
-        return attributes.ToMaybeArray();
+        return attributes.ToArrayOrNull();
     }
 }

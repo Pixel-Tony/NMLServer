@@ -24,7 +24,7 @@ internal class SpriteLayout : BaseStatementWithBlock
                 case BracketToken { Bracket: '}' } closingBracket:
                     ClosingBracket = closingBracket;
                     state.Increment();
-                    _entries = entries.ToMaybeArray();
+                    _entries = entries.ToArrayOrNull();
                     return;
 
                 case IdentifierToken identifierToken:
@@ -32,7 +32,7 @@ internal class SpriteLayout : BaseStatementWithBlock
                     break;
 
                 case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
-                    _entries = entries.ToMaybeArray();
+                    _entries = entries.ToArrayOrNull();
                     return;
 
                 default:
@@ -41,6 +41,6 @@ internal class SpriteLayout : BaseStatementWithBlock
                     break;
             }
         }
-        _entries = entries.ToMaybeArray();
+        _entries = entries.ToArrayOrNull();
     }
 }

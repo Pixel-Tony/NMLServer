@@ -33,16 +33,12 @@ internal class GRFBlock : BaseStatementWithBlock
                     break;
 
                 case KeywordToken { IsExpressionUsable: false }:
-                    _attributes = attributes.ToMaybeArray();
-                    _parameters = parameters.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 case BracketToken { Bracket: '}' } closingBracket:
                     ClosingBracket = closingBracket;
                     state.Increment();
-                    _attributes = attributes.ToMaybeArray();
-                    _parameters = parameters.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 default:
                     state.AddUnexpected(token);
@@ -50,7 +46,8 @@ internal class GRFBlock : BaseStatementWithBlock
                     break;
             }
         }
-        _attributes = attributes.ToMaybeArray();
-        _parameters = parameters.ToMaybeArray();
+        label_End:
+        _attributes = attributes.ToArrayOrNull();
+        _parameters = parameters.ToArrayOrNull();
     }
 }

@@ -75,7 +75,7 @@ internal class GRFParameter : BaseStatementWithBlock
                             break;
 
                         case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
-                            goto ending;
+                            goto label_End;
 
                         default:
                             state.AddUnexpected(token);
@@ -96,7 +96,7 @@ internal class GRFParameter : BaseStatementWithBlock
                             break;
 
                         case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
-                            goto ending;
+                            goto label_End;
 
                         case SemicolonToken semicolonToken:
                             attributes.Add(new NMLAttribute(identifier, null, null, semicolonToken));
@@ -141,7 +141,7 @@ internal class GRFParameter : BaseStatementWithBlock
                             break;
 
                         case KeywordToken { Type: not KeywordType.Return }:
-                            goto ending;
+                            goto label_End;
 
                         case SemicolonToken semicolonToken:
                             attributes.Add(new NMLAttribute(identifier, colon, null, semicolonToken));
@@ -162,10 +162,9 @@ internal class GRFParameter : BaseStatementWithBlock
         {
             ClosingBracket = state.ExpectClosingCurlyBracket();
         }
-
-        ending:
-        _attributes = attributes.ToMaybeArray();
-        _names = names.ToMaybeArray();
+        label_End:
+        _attributes = attributes.ToArrayOrNull();
+        _names = names.ToArrayOrNull();
     }
 
     private enum InnerState

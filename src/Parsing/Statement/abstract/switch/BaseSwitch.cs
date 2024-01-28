@@ -186,8 +186,8 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
         }
 
         label_Ending:
-        Content = switchLines.ToMaybeArray();
-        ReturnLines = returnLines.ToMaybeArray();
+        Content = switchLines.ToArrayOrNull();
+        ReturnLines = returnLines.ToArrayOrNull();
     }
 
     private enum ParseFSM

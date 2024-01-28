@@ -3,7 +3,7 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal readonly struct TileEntry
+internal readonly record struct TileEntry
 {
     private readonly NumericToken? _x;
     private readonly BinaryOpToken? _comma;

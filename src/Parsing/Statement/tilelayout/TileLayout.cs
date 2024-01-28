@@ -26,19 +26,14 @@ internal class TileLayout : BaseStatementWithBlock
                 case BracketToken { Bracket: '}' } closingBracket:
                     ClosingBracket = closingBracket;
                     state.Increment();
-
-                    _attributes = attributes.ToMaybeArray();
-                    _entries = entries.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 case IdentifierToken identifier:
                     attributes.Add(new NMLAttribute(state, identifier));
                     break;
 
                 case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
-                    _attributes = attributes.ToMaybeArray();
-                    _entries = entries.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 case NumericToken numericToken:
                     entries.Add(new TileEntry(state, numericToken));
@@ -50,7 +45,8 @@ internal class TileLayout : BaseStatementWithBlock
                     break;
             }
         }
-        _attributes = attributes.ToMaybeArray();
-        _entries = entries.ToMaybeArray();
+        label_End:
+        _attributes = attributes.ToArrayOrNull();
+        _entries = entries.ToArrayOrNull();
     }
 }

@@ -31,13 +31,13 @@ internal readonly record struct GRFParameterNames
 
                 case BracketToken { Bracket: '}' } closingBracket:
                     _closingBracket = closingBracket;
-                    _items = attributes.ToMaybeArray();
+                    _items = attributes.ToArrayOrNull();
                     state.Increment();
                     _semicolon = state.ExpectSemicolon();
                     return;
 
                 case KeywordToken:
-                    _items = attributes.ToMaybeArray();
+                    _items = attributes.ToArrayOrNull();
                     return;
 
                 default:
@@ -46,7 +46,7 @@ internal readonly record struct GRFParameterNames
                     break;
             }
         }
-        _items = attributes.ToMaybeArray();
+        _items = attributes.ToArrayOrNull();
         _semicolon = state.ExpectSemicolon();
     }
 }

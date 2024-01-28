@@ -2,7 +2,7 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal readonly struct ProduceCargoList
+internal readonly record struct ProduceCargoList
 {
     private readonly BracketToken? _openingBracket;
     private readonly NMLAttribute[]? _content;
@@ -25,7 +25,7 @@ internal readonly struct ProduceCargoList
                     _closingBracket = closingBracket;
                     state.Increment();
 
-                    _content = content.ToMaybeArray();
+                    _content = content.ToArrayOrNull();
                     return;
 
                 case ColonToken colonToken:
@@ -37,7 +37,7 @@ internal readonly struct ProduceCargoList
                     break;
 
                 case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
-                    _content = content.ToMaybeArray();
+                    _content = content.ToArrayOrNull();
                     return;
 
                 default:
@@ -45,6 +45,6 @@ internal readonly struct ProduceCargoList
                     break;
             }
         }
-        _content = content.ToMaybeArray();
+        _content = content.ToArrayOrNull();
     }
 }

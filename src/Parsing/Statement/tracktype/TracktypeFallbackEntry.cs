@@ -2,7 +2,7 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal readonly struct TracktypeFallbackEntry
+internal readonly record struct TracktypeFallbackEntry
 {
     public readonly ValueToken? Identifier;
     public readonly ColonToken? Colon;
@@ -25,8 +25,7 @@ internal readonly struct TracktypeFallbackEntry
             switch (token)
             {
                 case BracketToken { Bracket: '}' }:
-                    _fallback = fallbacks.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken:
                     fallbacks.Add((current, commaToken));
@@ -49,8 +48,7 @@ internal readonly struct TracktypeFallbackEntry
                     break;
 
                 case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
-                    _fallback = fallbacks.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 default:
                     state.AddUnexpected(token);
@@ -63,8 +61,7 @@ internal readonly struct TracktypeFallbackEntry
             {
                 case BracketToken { Bracket: '}' }:
                 case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
-                    _fallback = fallbacks.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken:
                     _comma = commaToken;
@@ -75,6 +72,7 @@ internal readonly struct TracktypeFallbackEntry
                     break;
             }
         }
-        _fallback = fallbacks.ToMaybeArray();
+        label_End:
+        _fallback = fallbacks.ToArrayOrNull();
     }
 }

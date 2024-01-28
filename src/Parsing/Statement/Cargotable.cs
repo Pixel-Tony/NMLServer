@@ -30,18 +30,17 @@ internal class Cargotable : BaseStatementWithBlock
                 case BracketToken { Bracket: '}' } closingBracket:
                     ClosingBracket = closingBracket;
                     state.Increment();
-                    _content = content.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
-                    _content = content.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 default:
                     state.AddUnexpected(token);
                     break;
             }
         }
-        _content = content.ToMaybeArray();
+        label_End:
+        _content = content.ToArrayOrNull();
     }
 }

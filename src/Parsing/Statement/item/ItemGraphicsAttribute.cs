@@ -21,7 +21,7 @@ internal readonly record struct ItemGraphicsAttribute
                 case BracketToken { Bracket: '}' } closingBracket:
                     expectedClosingBracket = closingBracket;
                     state.Increment();
-                    return attributes.ToMaybeArray();
+                    return attributes.ToArrayOrNull();
 
                 case ColonToken colonToken:
                     attributes.Add(new ItemGraphicsAttribute(state, colonToken));
@@ -32,7 +32,7 @@ internal readonly record struct ItemGraphicsAttribute
                     break;
 
                 case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
-                    return attributes.ToMaybeArray();
+                    return attributes.ToArrayOrNull();
 
                 default:
                     state.AddUnexpected(token);
@@ -40,7 +40,7 @@ internal readonly record struct ItemGraphicsAttribute
                     break;
             }
         }
-        return attributes.ToMaybeArray();
+        return attributes.ToArrayOrNull();
     }
 
     private ItemGraphicsAttribute(ParsingState state, IdentifierToken identifier)

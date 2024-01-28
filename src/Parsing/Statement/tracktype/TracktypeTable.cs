@@ -24,9 +24,7 @@ internal class TracktypeTable : BaseStatementWithBlock
                 case BracketToken { Bracket: '}' } closingBracket:
                     ClosingBracket = closingBracket;
                     state.Increment();
-                    _entries = entries.ToMaybeArray();
-                    _fallbackEntries = fallbacks.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
                     entries.Add((current, commaToken));
@@ -44,9 +42,7 @@ internal class TracktypeTable : BaseStatementWithBlock
                     break;
 
                 case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
-                    _entries = entries.ToMaybeArray();
-                    _fallbackEntries = fallbacks.ToMaybeArray();
-                    return;
+                    goto label_End;
 
                 default:
                     state.AddUnexpected(token);
@@ -54,7 +50,8 @@ internal class TracktypeTable : BaseStatementWithBlock
             }
             token = state.nextToken;
         }
-        _entries = entries.ToMaybeArray();
-        _fallbackEntries = fallbacks.ToMaybeArray();
+        label_End:
+        _entries = entries.ToArrayOrNull();
+        _fallbackEntries = fallbacks.ToArrayOrNull();
     }
 }
