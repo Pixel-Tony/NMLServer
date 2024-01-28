@@ -129,6 +129,7 @@ internal ref struct Lexer
             }
         }
         lineLengths.Add(_pos - lineStart);
+        tokens.TrimExcess();
         return (tokens.ToArray(), lineLengths);
     }
 

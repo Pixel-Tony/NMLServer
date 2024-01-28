@@ -165,8 +165,10 @@ internal readonly struct NMLFile
             case KeywordType.SnowLine:
                 return new SnowLine(state, keyword);
 
-            // TODO
             case KeywordType.Produce:
+                return new Produce(state, keyword);
+
+            // TODO
             case KeywordType.TownNames:
             case KeywordType.RecolourSprite:
                 return null;
