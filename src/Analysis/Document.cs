@@ -1,3 +1,4 @@
+using System.Text;
 using NMLServer.Lexing;
 using NMLServer.Lexing.Tokens;
 using NMLServer.Parsing;
@@ -30,6 +31,11 @@ internal class Document
 
     public IEnumerable<Diagnostic> diagnostics => Analyze();
 
+    private static string ProcessSource(string source)
+    {
+        return Encoding.UTF8.GetString(Encoding.Default.GetBytes(source));
+    }
+
     public Document(TextDocumentItem item)
     {
         Uri = item.Uri;
@@ -38,7 +44,7 @@ internal class Document
 
         _source = item.Text;
 
-        var lexer = new Lexer(_source);
+        var lexer = new Lexer(ProcessSource(_source));
         (_tokens, _lineLengths) = lexer.Process();
 
         _state = new ParsingState(_tokens);
@@ -70,7 +76,7 @@ internal class Document
             _source = _source[..startIndex] + change.Text + _source[endIndex..];
             ++_version;
         }
-        var lexer = new Lexer(_source);
+        var lexer = new Lexer(ProcessSource(_source));
         (_tokens, _lineLengths) = lexer.Process();
         _state = new ParsingState(_tokens);
         _file = new NMLFile(_state);
