@@ -80,12 +80,12 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                     }
 
                 case UnitToken:
-                case ValueToken:
+                case BaseValueToken:
                 case UnaryOpToken:
                 case BinaryOpToken:
                 case TernaryOpToken:
                 case BracketToken { Bracket: not '{' }:
-                case KeywordToken { IsExpressionUsable: true }:
+                case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
                     switch (innerState)
                     {
                         case ParseFSM.ExpectsAnything:

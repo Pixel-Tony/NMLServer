@@ -32,7 +32,7 @@ internal class GRFBlock : BaseStatementWithBlock
                     parameters.Add(new GRFParameter(state, paramToken));
                     break;
 
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     goto label_End;
 
                 case BracketToken { Bracket: '}' } closingBracket:

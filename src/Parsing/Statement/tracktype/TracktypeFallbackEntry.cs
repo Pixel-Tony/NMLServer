@@ -4,20 +4,20 @@ namespace NMLServer.Parsing.Statement;
 
 internal readonly record struct TracktypeFallbackEntry
 {
-    public readonly ValueToken? Identifier;
+    public readonly BaseValueToken? Identifier;
     public readonly ColonToken? Colon;
     private readonly BracketToken? _openingBracket;
-    private readonly (ValueToken? identifier, BinaryOpToken? comma)[]? _fallback;
+    private readonly (BaseValueToken? identifier, BinaryOpToken? comma)[]? _fallback;
     private readonly BracketToken? _closingBracket;
     private readonly BinaryOpToken? _comma;
 
-    public TracktypeFallbackEntry(ParsingState state, ValueToken? identifier, ColonToken colon)
+    public TracktypeFallbackEntry(ParsingState state, BaseValueToken? identifier, ColonToken colon)
     {
         Identifier = identifier;
         Colon = colon;
 
-        List<(ValueToken? identifier, BinaryOpToken? comma)> fallbacks = new();
-        ValueToken? current = null;
+        List<(BaseValueToken? identifier, BinaryOpToken? comma)> fallbacks = new();
+        BaseValueToken? current = null;
 
         var token = state.nextToken;
         for (; _closingBracket is null && token is not null; token = state.nextToken)
@@ -43,11 +43,11 @@ internal readonly record struct TracktypeFallbackEntry
                 case NumericToken:
                     goto default;
 
-                case ValueToken valueToken when current is null:
+                case BaseValueToken valueToken when current is null:
                     current = valueToken;
                     break;
 
-                case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     goto label_End;
 
                 default:
@@ -60,7 +60,7 @@ internal readonly record struct TracktypeFallbackEntry
             switch (token)
             {
                 case BracketToken { Bracket: '}' }:
-                case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     goto label_End;
 
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken:

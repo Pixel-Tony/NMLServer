@@ -31,7 +31,7 @@ internal readonly record struct ItemGraphicsAttribute
                     attributes.Add(new ItemGraphicsAttribute(state, identifierToken));
                     break;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return attributes.ToArrayOrNull();
 
                 default:

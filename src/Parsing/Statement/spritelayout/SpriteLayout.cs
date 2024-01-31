@@ -31,7 +31,7 @@ internal class SpriteLayout : BaseStatementWithBlock
                     entries.Add(new SpriteLayoutEntry(state, identifierToken));
                     break;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     _entries = entries.ToArrayOrNull();
                     return;
 

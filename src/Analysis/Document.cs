@@ -237,7 +237,7 @@ internal class Document
         };
         var length = token switch
         {
-            MulticharToken multichar => multichar.End - multichar.Start,
+            BaseMulticharToken multichar => multichar.End - multichar.Start,
             UnitToken unitToken => unitToken.length,
             RangeToken => 2,
             _ => 1
@@ -247,7 +247,7 @@ internal class Document
     }
 
     // TODO: in future, add initial token type for known identifiers at lexing state
-    private SemanticTokenType DecideTokenType(MulticharToken token)
+    private SemanticTokenType DecideTokenType(BaseMulticharToken token)
     {
         var s = _source[token.Start..token.End];
         if (Grammar.FeatureIdentifiers.Contains(s))

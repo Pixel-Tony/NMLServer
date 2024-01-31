@@ -2,8 +2,8 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Expression;
 
-internal class LiteralString : ValueNode
+internal class LiteralString : BaseValueNode
 {
-    public LiteralString(ExpressionAST? parent, ValueToken token) : base(parent, token)
+    public LiteralString(ExpressionAST? parent, StringToken token) : base(parent, token)
     { }
 }

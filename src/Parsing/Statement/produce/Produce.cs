@@ -38,7 +38,7 @@ internal sealed class Produce : BaseStatement
         {
             switch (token)
             {
-                case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 case BracketToken { Bracket: '(' } openingBracket when localState is ParseFSM.OpeningBracket:
@@ -89,24 +89,20 @@ internal sealed class Produce : BaseStatement
                     localState = ParseFSM.FirstComma;
                     break;
 
-                case (
-                    BracketToken { Bracket: '(' }
-                    or KeywordToken { IsExpressionUsable: true }
-                    or ValueToken
+                case BracketToken { Bracket: '(' }
+                    or KeywordToken { Kind: KeywordKind.ExpressionUsable }
+                    or BaseValueToken
                     or UnaryOpToken
                     or BinaryOpToken
                     or TernaryOpToken
-                    ) when localState is ParseFSM.RunAgain:
+                    when localState is ParseFSM.RunAgain:
+
                     _runAgain = ExpressionAST.TryParse(state);
                     /* Expression parser will consume final ')' paren as part of expression, we have to undo this */
-                    if (_runAgain is ParentedExpression
-                        {
-                            ClosingBracket: { Bracket: ')' } bracket,
-                            Expression: var inner
-                        })
+                    if (_runAgain is ParentedExpression parented)
                     {
-                        _runAgain = inner;
-                        _closingBracket = bracket;
+                        _runAgain = parented.Expression;
+                        _closingBracket = parented.ClosingBracket;
                         state.Increment();
                         return;
                     }

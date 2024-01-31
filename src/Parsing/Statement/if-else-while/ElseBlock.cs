@@ -28,14 +28,15 @@ internal class ElseBlock : BaseStatement
                 case BracketToken { Bracket: '{' } openingBracket:
                     _openingBracket = openingBracket;
                     state.Increment();
-                    goto label_parsingBody;
+                    _contents = new NMLFile(state, ref _closingBracket);
+                    return;
 
                 case BracketToken { Bracket: '}' } closingBracket:
                     _closingBracket = closingBracket;
                     state.Increment();
                     return;
 
-                case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 default:
@@ -51,17 +52,18 @@ internal class ElseBlock : BaseStatement
                 case BracketToken { Bracket: '{' } openingBracket:
                     _openingBracket = openingBracket;
                     state.Increment();
-                    goto label_parsingBody;
+                    _contents = new NMLFile(state, ref _closingBracket);
+                    return;
 
                 case BracketToken { Bracket: '}' } closingBracket:
                     _closingBracket = closingBracket;
                     state.Increment();
                     return;
 
-                case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
-                case ValueToken:
+                case BaseValueToken:
                 case BracketToken:
                 case UnaryOpToken:
                 case BinaryOpToken:
@@ -83,14 +85,15 @@ internal class ElseBlock : BaseStatement
                 case BracketToken { Bracket: '{' } openingBracket:
                     _openingBracket = openingBracket;
                     state.Increment();
-                    goto label_parsingBody;
+                    _contents = new NMLFile(state, ref _closingBracket);
+                    return;
 
                 case BracketToken { Bracket: '}' } closingBracket:
                     _closingBracket = closingBracket;
                     state.Increment();
                     return;
 
-                case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 default:
@@ -98,7 +101,6 @@ internal class ElseBlock : BaseStatement
                     break;
             }
         }
-        label_parsingBody:
         _contents = new NMLFile(state, ref _closingBracket);
     }
 }

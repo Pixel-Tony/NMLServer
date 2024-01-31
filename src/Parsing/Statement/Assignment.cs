@@ -21,7 +21,7 @@ internal class Assignment : BaseStatement
             switch (token)
             {
                 case BracketToken { Bracket: '{' or '}' }:
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 case AssignmentToken equalsSign:

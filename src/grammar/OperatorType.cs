@@ -2,6 +2,7 @@ namespace NMLServer;
 
 internal enum OperatorType : byte
 {
+    None = 0,
     Comma,
     QuestionMark,
     Colon,

@@ -4,7 +4,7 @@ namespace NMLServer.Parsing.Expression;
 
 internal static class ValueNodeFactory
 {
-    public static ValueNode Make(ExpressionAST? parent, ValueToken token)
+    public static BaseValueNode Make(ExpressionAST? parent, BaseValueToken token)
     {
         return token switch
         {

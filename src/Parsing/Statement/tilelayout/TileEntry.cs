@@ -33,7 +33,7 @@ internal readonly record struct TileEntry
                     state.IncrementSkippingComments();
                     goto label_ParsingValue;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 default:
@@ -55,7 +55,7 @@ internal readonly record struct TileEntry
                     state.IncrementSkippingComments();
                     goto label_ParsingValue;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 case NumericToken y:
@@ -82,7 +82,7 @@ internal readonly record struct TileEntry
                     state.IncrementSkippingComments();
                     goto label_ParsingValue;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 default:

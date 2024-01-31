@@ -32,7 +32,7 @@ internal abstract class ExpressionAST
         switch (result)
         {
             case null:
-                return result;
+                return null;
 
             case UnitTerminatedExpression:
                 state.Increment();
@@ -45,7 +45,8 @@ internal abstract class ExpressionAST
             switch (token)
             {
                 case CommentToken:
-                    break;
+                    state.Increment();
+                    continue;
 
                 case UnitToken unitToken:
                     result._parent = new UnitTerminatedExpression(result, unitToken);
@@ -62,7 +63,7 @@ internal abstract class ExpressionAST
                         case UnaryOperation:
                         case BinaryOperation:
                         case TernaryOperation:
-                        case ValueNode:
+                        case BaseValueNode:
                         case ParentedExpression:
                             if (current._parent is null)
                             {
@@ -97,7 +98,7 @@ internal abstract class ExpressionAST
                         case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation { Precedence: > TernaryOpToken.Precedence }:
-                        case ValueNode:
+                        case BaseValueNode:
                         case ParentedExpression:
                             if (current._parent is null)
                             {
@@ -167,7 +168,7 @@ internal abstract class ExpressionAST
                             continue;
                         }
 
-                        case ValueNode valueNode:
+                        case BaseValueNode valueNode:
                             var call = new FunctionCall(current._parent, valueNode.Token);
                             var parens = new ParentedExpression(call, openingParen);
                             call.Arguments = parens;
@@ -199,7 +200,7 @@ internal abstract class ExpressionAST
                             }
                             break;
 
-                        case ValueNode:
+                        case BaseValueNode:
                         case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
@@ -225,7 +226,7 @@ internal abstract class ExpressionAST
                 case RangeToken:
                 case FailedToken:
                 case BracketToken:
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                 case SemicolonToken:
                 case AssignmentToken:
                     return result;
@@ -259,7 +260,7 @@ internal abstract class ExpressionAST
                             current = ternaryOperation.FalseBranch;
                             break;
 
-                        case ValueNode:
+                        case BaseValueNode:
                         case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
@@ -297,7 +298,7 @@ internal abstract class ExpressionAST
                             current = ternaryOperation.FalseBranch;
                             break;
 
-                        case ValueNode:
+                        case BaseValueNode:
                         case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
@@ -306,7 +307,7 @@ internal abstract class ExpressionAST
                     }
                     break;
 
-                case ValueToken valueToken:
+                case BaseValueToken valueToken:
                     switch (current)
                     {
                         case UnaryOperation { Expression: null } unaryOperation:
@@ -319,7 +320,7 @@ internal abstract class ExpressionAST
                             current = binaryOperation.Right;
                             break;
 
-                        // ValueToken pulls down, on TernaryExpression level => TrueBranch/FalseBranch is null
+                        // BaseValueToken pulls down, on TernaryExpression level => TrueBranch/FalseBranch is null
                         case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
                             ternaryOperation.TrueBranch = ValueNodeFactory.Make(ternaryOperation, valueToken);
                             current = ternaryOperation.TrueBranch;
@@ -335,7 +336,7 @@ internal abstract class ExpressionAST
                             current = openParen.Expression;
                             break;
 
-                        case ValueNode:
+                        case BaseValueNode:
                         case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
@@ -359,7 +360,7 @@ internal abstract class ExpressionAST
                             current = parentedExpression.Expression;
                             break;
 
-                        case ValueNode:
+                        case BaseValueNode:
                         case FunctionCall:
                         case UnaryOperation:
                         case BinaryOperation:
@@ -398,7 +399,7 @@ internal abstract class ExpressionAST
     {
         return token switch
         {
-            KeywordToken keywordToken => keywordToken.IsExpressionUsable
+            KeywordToken keywordToken => keywordToken.Kind is KeywordKind.ExpressionUsable
                 ? new FunctionCall(null, keywordToken)
                 : null,
             StringToken stringToken => new LiteralString(null, stringToken),
@@ -411,8 +412,8 @@ internal abstract class ExpressionAST
             {
                 '(' => new ParentedExpression(null, bracketToken),
                 '[' => new ParentedExpression(null, bracketToken),
-                ')' => new ParentedExpression { ClosingBracket = bracketToken },
-                ']' => new ParentedExpression { ClosingBracket = bracketToken },
+                ')' => new ParentedExpression(bracketToken),
+                ']' => new ParentedExpression(bracketToken),
                 _ => null
             },
             UnitToken unitToken => new UnitTerminatedExpression(null, unitToken),

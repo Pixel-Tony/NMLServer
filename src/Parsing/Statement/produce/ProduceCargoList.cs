@@ -36,7 +36,7 @@ internal readonly record struct ProduceCargoList
                     content.Add(new NMLAttribute(state, identifierToken));
                     break;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     _content = content.ToArrayOrNull();
                     return;
 

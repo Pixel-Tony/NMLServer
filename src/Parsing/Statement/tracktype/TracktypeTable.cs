@@ -4,7 +4,7 @@ namespace NMLServer.Parsing.Statement;
 
 internal class TracktypeTable : BaseStatementWithBlock
 {
-    private (ValueToken? identifier, BinaryOpToken? comma)[]? _entries;
+    private (BaseValueToken? identifier, BinaryOpToken? comma)[]? _entries;
     private TracktypeFallbackEntry[]? _fallbackEntries;
 
     public TracktypeTable(ParsingState state, KeywordToken keyword) : base(state, keyword)
@@ -13,7 +13,7 @@ internal class TracktypeTable : BaseStatementWithBlock
         {
             return;
         }
-        List<(ValueToken? identifier, BinaryOpToken? comma)> entries = new();
+        List<(BaseValueToken? identifier, BinaryOpToken? comma)> entries = new();
         List<TracktypeFallbackEntry> fallbacks = new();
 
         IdentifierToken? current = null;
@@ -41,7 +41,7 @@ internal class TracktypeTable : BaseStatementWithBlock
                     current = identifierToken;
                     break;
 
-                case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     goto label_End;
 
                 default:

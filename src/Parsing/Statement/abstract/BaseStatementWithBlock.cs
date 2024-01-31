@@ -29,7 +29,7 @@ internal abstract class BaseStatementWithBlock : BaseStatement
                     state.IncrementSkippingComments();
                     return;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 default:

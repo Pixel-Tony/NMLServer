@@ -32,7 +32,7 @@ internal class Cargotable : BaseStatementWithBlock
                     state.Increment();
                     goto label_End;
 
-                case KeywordToken { Type: not KeywordType.Return, IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     goto label_End;
 
                 default:

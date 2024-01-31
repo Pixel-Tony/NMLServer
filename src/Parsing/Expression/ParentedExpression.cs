@@ -11,7 +11,7 @@ internal class ParentedExpression : ExpressionAST
     public ParentedExpression(ExpressionAST? parent, BracketToken? openingBracket) : base(parent)
         => _openingBracket = openingBracket;
 
-    public ParentedExpression() : base(null)
+    public ParentedExpression(BracketToken? closingBracket) : base(null)
     { }
 
     protected override void Replace(ExpressionAST target, ExpressionAST value)
@@ -26,7 +26,7 @@ internal class ParentedExpression : ExpressionAST
             '(' => ')',
             '[' => ']',
             '{' => '}',
-            _ => throw new Exception()
+            _ => '\0'
         };
     }
 }

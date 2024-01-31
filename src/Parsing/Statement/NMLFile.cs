@@ -18,16 +18,16 @@ internal readonly struct NMLFile
             switch (token)
             {
                 case IdentifierToken:
-                case KeywordToken { IsExpressionUsable: true }:
+                case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
                 case BracketToken { Bracket: not ('{' or '}') }:
                     _children.Add(new Assignment(state));
                     break;
 
-                case KeywordToken { Type: var type } keywordToken when Grammar.FunctionBlockKeywords.Contains(type):
+                case KeywordToken { Kind: KeywordKind.FunctionBlockDefining } keywordToken:
                     _children.Add(new FunctionLikeStatement(state, keywordToken));
                     break;
 
-                case KeywordToken keywordToken:
+                case KeywordToken { Kind: KeywordKind.BlockDefining } keywordToken:
                     var statement = ParseBlockStatement(state, keywordToken);
                     if (statement is null)
                     {
@@ -61,12 +61,12 @@ internal readonly struct NMLFile
                     return;
 
                 case IdentifierToken:
-                case KeywordToken { IsExpressionUsable: true }:
+                case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
                 case BracketToken { Bracket: not ('{' or '}') }:
                     _children.Add(new Assignment(state));
                     break;
 
-                case KeywordToken { Type: var type } keywordToken when Grammar.FunctionBlockKeywords.Contains(type):
+                case KeywordToken { Kind: KeywordKind.FunctionBlockDefining } keywordToken:
                     _children.Add(new FunctionLikeStatement(state, keywordToken));
                     break;
 

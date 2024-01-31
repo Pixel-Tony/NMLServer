@@ -1,16 +1,17 @@
 namespace NMLServer;
 
-public enum UnitType
+public enum UnitType : byte
 {
-    MPH,
-    KMPH,
-    MPS,
+    None,
+    Kg,
     HP,
     KW,
+    MPH,
+    MPS,
+    Ton,
     HpI,
     HpM,
+    KMPH,
     Tons,
-    Ton,
-    Kg,
     Snow
 }

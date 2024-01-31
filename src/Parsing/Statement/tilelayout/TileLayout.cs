@@ -32,7 +32,7 @@ internal class TileLayout : BaseStatementWithBlock
                     attributes.Add(new NMLAttribute(state, identifier));
                     break;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     goto label_End;
 
                 case NumericToken numericToken:

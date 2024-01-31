@@ -48,7 +48,7 @@ internal class ParsingState
                     return semicolon;
 
                 case BracketToken { Bracket: '}' }:
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return null;
 
                 default:
@@ -70,7 +70,7 @@ internal class ParsingState
                     Increment();
                     return closingBracket;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                 case BracketToken { Bracket: '{' }:
                     return null;
 

@@ -5,12 +5,6 @@ namespace NMLServer.Lexing;
 
 internal ref struct Lexer
 {
-    private static readonly HashSet<char> _opStarts = new(
-        from
-            op in Grammar.Operators
-        select
-            op[0]
-    );
     private readonly ReadOnlySpan<char> _context;
     private readonly int _maxPos;
     private int _pos;
@@ -23,8 +17,6 @@ internal ref struct Lexer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ref readonly char GetCurrentChar() => ref _context[_pos];
-
-
 
     public (IReadOnlyList<Token> tokens, List<int> lineLengths) Process()
     {
@@ -45,17 +37,26 @@ internal ref struct Lexer
                 ++_pos;
                 continue;
             }
+            if (c is '_' || char.IsLetter(c))
+            {
+                tokens.Add(ParseIdentifier());
+                continue;
+            }
             switch (c)
             {
+                case >= '0' and <= '9':
+                    tokens.Add(ParseNumber(c));
+                    break;
+
                 case '=':
                     if (_pos == _maxPos || _context[_pos + 1] is not '=')
                     {
                         tokens.Add(new AssignmentToken(_pos++));
                         continue;
                     }
-                    tokens.Add(new BinaryOpToken(_pos, ++_pos, "=="));
+                    tokens.Add(new BinaryOpToken(_pos, ++_pos, OperatorType.Eq));
                     ++_pos;
-                    continue;
+                    break;
 
                 case '.':
                     if (_pos == _maxPos)
@@ -67,55 +68,29 @@ internal ref struct Lexer
                         ? new RangeToken(_pos++ - 1)
                         : new FailedToken(_pos - 1)
                     );
-                    continue;
+                    break;
 
                 case ';':
                     tokens.Add(new SemicolonToken(_pos++));
-                    continue;
+                    break;
 
                 case ':':
                     tokens.Add(new ColonToken(_pos++));
-                    continue;
+                    break;
 
                 case '?':
                     tokens.Add(new TernaryOpToken(_pos++));
-                    continue;
-            }
+                    break;
 
-            if (IsValidIdStartCharacter(c))
-            {
-                tokens.Add(ParseIdentifier(c));
-                continue;
-            }
+                case '/':
+                    tokens.Add(ParseFromSlash(lineLengths, ref lineStart));
+                    break;
 
-            if (char.IsDigit(c))
-            {
-                tokens.Add(ParseNumber(c));
-                continue;
-            }
+                case '[' or ']' or '(' or ')' or '{' or '}':
+                    tokens.Add(new BracketToken(_pos++, c));
+                    break;
 
-            if (c == '/')
-            {
-                tokens.Add(ParseFromSlash(lineLengths, ref lineStart));
-                continue;
-            }
-
-            if (Grammar.Brackets.Contains(c))
-            {
-                tokens.Add(new BracketToken(_pos++, c));
-                continue;
-            }
-
-            if (_opStarts.Contains(c))
-            {
-                tokens.Add(ParseOperator(c));
-                continue;
-            }
-
-            switch (c)
-            {
-                case '\'':
-                case '"':
+                case '\'' or '"':
                     tokens.Add(ParseLiteralString(c));
                     break;
 
@@ -124,51 +99,51 @@ internal ref struct Lexer
                     break;
 
                 default:
-                    tokens.Add(new FailedToken(_pos++));
+                    var type = Grammar.GetOperatorType(c);
+                    tokens.Add(
+                        type is not OperatorType.None
+                            ? ParseOperator(c, type)
+                            : new FailedToken(_pos++)
+                    );
                     break;
             }
         }
         lineLengths.Add(_pos - lineStart);
-        tokens.TrimExcess();
-        return (tokens.ToArray(), lineLengths);
+        return (tokens, lineLengths);
     }
 
-    private static Token DecideSingleCharacterOperatorType(char c, int start, int end)
+    private Token ParseOperator(char c, OperatorType type)
     {
+        int start = _pos++;
+        if (_pos == _maxPos)
+        {
+            return c switch
+            {
+                '=' => new FailedToken(start),
+                '!' or '~' => new UnaryOpToken(start, c),
+                _ => new BinaryOpToken(start, _pos, type)
+            };
+        }
+        ReadOnlySpan<char> needle = stackalloc char[2] { c, GetCurrentChar() };
+
+        for (var opTokenType = Grammar.GetOperatorType(needle);
+             opTokenType is not OperatorType.None;)
+        {
+            if (opTokenType is not OperatorType.ShiftRight || _pos >= _maxPos)
+            {
+                return new BinaryOpToken(start, ++_pos, opTokenType);
+            }
+            ++_pos;
+            return GetCurrentChar() is '>'
+                ? new BinaryOpToken(start, _pos++, OperatorType.ShiftRightFunky)
+                : new BinaryOpToken(start, _pos, opTokenType);
+        }
         return c switch
         {
             '=' => new FailedToken(start),
             '!' or '~' => new UnaryOpToken(start, c),
-            _ => new BinaryOpToken(start, end, c)
+            _ => new BinaryOpToken(start, _pos, type)
         };
-    }
-
-    private Token ParseOperator(char c)
-    {
-        // ? and : are handled earlier
-        string opChar = c.ToString();
-        int start = _pos;
-        if (_pos == _maxPos)
-        {
-            Token token = DecideSingleCharacterOperatorType(c, start, _pos);
-            ++_pos;
-            return token;
-        }
-
-        ++_pos;
-        var withNextChar = opChar + GetCurrentChar();
-        if (!Grammar.Operators.Contains(withNextChar))
-        {
-            return DecideSingleCharacterOperatorType(c, start, _pos);
-        }
-        if (withNextChar != ">>" || _pos >= _maxPos)
-        {
-            return new BinaryOpToken(start, ++_pos, withNextChar);
-        }
-        ++_pos;
-        return GetCurrentChar() is '>'
-            ? new BinaryOpToken(start, ++_pos, '>')
-            : new BinaryOpToken(start, _pos, withNextChar);
     }
 
     private CommentToken ParseHashtagComment()
@@ -191,7 +166,7 @@ internal ref struct Lexer
         int start = _pos++;
         if (_pos > _maxPos)
         {
-            return new BinaryOpToken(start, _pos, '/');
+            return new BinaryOpToken(start, _pos, OperatorType.Divide);
         }
         switch (GetCurrentChar())
         {
@@ -240,7 +215,7 @@ internal ref struct Lexer
                 return new CommentToken(start, ++_pos);
 
             default:
-                return new BinaryOpToken(start, _pos, '/');
+                return new BinaryOpToken(start, _pos, OperatorType.Divide);
         }
     }
 
@@ -259,10 +234,10 @@ internal ref struct Lexer
         return new StringToken(start, _pos);
     }
 
-    private Token ParseIdentifier(char first)
+    private Token ParseIdentifier()
     {
         int start = _pos++;
-        char current = '\0';
+        char current = default;
         for (; _pos <= _maxPos; ++_pos)
         {
             current = GetCurrentChar();
@@ -271,41 +246,41 @@ internal ref struct Lexer
                 break;
             }
         }
-        if (current is '/'
-            && (_maxPos - _pos == 1 || (_maxPos - _pos > 1 && !IsValidIdentifierCharacter(_context[_pos + 2]))))
-        {
-            switch (_pos - start)
-            {
-                case 1 when first is 'm' && _context[_pos + 1] is 's':
-                    _pos += 2;
-                    return new UnitToken(start, UnitType.MPS, 3);
-
-                case 2 when first is 'k' && _context[_pos - 1] is 'm' && _context[_pos + 1] is 'h':
-                    _pos += 2;
-                    return new UnitToken(start, UnitType.KMPH, 4);
-            }
-        }
         var value = _context[start.._pos];
-        if (current is '%' && _pos - start == 4 && value.Equals("snow", StringComparison.Ordinal))
+        switch (current)
         {
-            _pos += 1;
-            return new UnitToken(start, UnitType.Snow, 5);
-        }
+            case '/' when _maxPos - _pos == 1:
+            case '/' when _maxPos - _pos > 1 && !IsValidIdentifierCharacter(_context[_pos + 2]):
+                switch (_pos - start)
+                {
+                    case 1 when value is "m" && _context[_pos + 1] is 's':
+                        _pos += 2;
+                        return new UnitToken(start, UnitType.MPS, 3);
 
-        if (_pos - start <= 4 && UnitToken.IsLiteralUnit(value, out var result))
-        {
-            return new UnitToken(start, result.type, result.length);
+                    case 2 when value is "km" && _context[_pos + 1] is 'h':
+                        _pos += 2;
+                        return new UnitToken(start, UnitType.KMPH, 4);
+                }
+                break;
+
+            case '%' when value is "snow":
+                ++_pos;
+                return new UnitToken(start, UnitType.Snow, 5);
         }
-        if (Grammar.KeywordTypeByString.TryGetValue(new string(value), out var keywordType))
+        for (UnitType unitType = CheckLiteralUnit(value); unitType is not UnitType.None;)
         {
-            return new KeywordToken(start, _pos, keywordType);
+            return new UnitToken(start, unitType, value.Length);
+        }
+        for (var (keywordType, kind) = CheckKeyword(value); keywordType is not KeywordType.None;)
+        {
+            return new KeywordToken(start, _pos, keywordType, kind);
         }
         return new IdentifierToken(start, _pos);
     }
 
     private Token ParseNumber(char c)
     {
-        var state = c == '0'
+        var state = c is '0'
             ? NumberLexState.StartingZero
             : NumberLexState.Int;
 
@@ -339,7 +314,7 @@ internal ref struct Lexer
                     {
                         continue;
                     }
-                    if (c != '.')
+                    if (c is not '.')
                     {
                         return new NumericToken(start, _pos);
                     }
@@ -362,7 +337,6 @@ internal ref struct Lexer
                     continue;
 
                 case NumberLexState.FloatOnDot:
-                    // range operator
                     if (c is '.')
                     {
                         return new NumericToken(start, --_pos);
@@ -385,11 +359,9 @@ internal ref struct Lexer
         return new NumericToken(start, _pos);
     }
 
-    private static bool IsValidIdentifierCharacter(char c) => c == '_' || char.IsLetterOrDigit(c);
+    private static bool IsValidIdentifierCharacter(char c) => c is '_' || char.IsLetterOrDigit(c);
 
-    private static bool IsValidIdStartCharacter(char c) => c == '_' || char.IsLetter(c);
-
-    private enum NumberLexState
+    private enum NumberLexState : byte
     {
         StartingZero,
         Int,
@@ -398,4 +370,61 @@ internal ref struct Lexer
         FloatOnDot,
         FloatAfterDot
     }
+
+    private static UnitType CheckLiteralUnit(ReadOnlySpan<char> target)
+        => target switch
+        {
+            "kg" => UnitType.Kg,
+            "hp" => UnitType.HP,
+            "kW" => UnitType.KW,
+            "mph" => UnitType.MPH,
+            "ton" => UnitType.Ton,
+            "hpI" => UnitType.HpI,
+            "hpM" => UnitType.HpM,
+            "tons" => UnitType.Tons,
+            _ => UnitType.None
+        };
+
+    private static (KeywordType type, KeywordKind kind) CheckKeyword(ReadOnlySpan<char> needle)
+        => needle switch
+        {
+            "if" => (KeywordType.If, KeywordKind.BlockDefining),
+            "grf" => (KeywordType.Grf, KeywordKind.BlockDefining),
+            "var" => (KeywordType.Var, KeywordKind.ExpressionUsable),
+            "else" => (KeywordType.Else, KeywordKind.BlockDefining),
+            "item" => (KeywordType.Item, KeywordKind.BlockDefining),
+            "sort" => (KeywordType.Sort, KeywordKind.FunctionBlockDefining),
+            "error" => (KeywordType.Error, KeywordKind.FunctionBlockDefining),
+            "param" => (KeywordType.Param, KeywordKind.ExpressionUsable),
+            "while" => (KeywordType.While, KeywordKind.BlockDefining),
+            "return" => (KeywordType.Return, KeywordKind.ReturnKeyword),
+            "switch" => (KeywordType.Switch, KeywordKind.BlockDefining),
+            "produce" => (KeywordType.Produce, KeywordKind.BlockDefining),
+            "replace" => (KeywordType.Replace, KeywordKind.BlockDefining),
+            "basecost" => (KeywordType.BaseCost, KeywordKind.BlockDefining),
+            "graphics" => (KeywordType.Graphics, KeywordKind.BlockDefining),
+            "property" => (KeywordType.Property, KeywordKind.BlockDefining),
+            "snowline" => (KeywordType.SnowLine, KeywordKind.BlockDefining),
+            "template" => (KeywordType.Template, KeywordKind.BlockDefining),
+            "spriteset" => (KeywordType.SpriteSet, KeywordKind.BlockDefining),
+            "cargotable" => (KeywordType.CargoTable, KeywordKind.BlockDefining),
+            "deactivate" => (KeywordType.Deactivate, KeywordKind.FunctionBlockDefining),
+            "font_glyph" => (KeywordType.FontGlyph, KeywordKind.BlockDefining),
+            "replacenew" => (KeywordType.ReplaceNew, KeywordKind.BlockDefining),
+            "tilelayout" => (KeywordType.TileLayout, KeywordKind.BlockDefining),
+            "town_names" => (KeywordType.TownNames, KeywordKind.BlockDefining),
+            "spritegroup" => (KeywordType.SpriteGroup, KeywordKind.BlockDefining),
+            "disable_item" => (KeywordType.DisableItem, KeywordKind.FunctionBlockDefining),
+            "spritelayout" => (KeywordType.SpriteLayout, KeywordKind.BlockDefining),
+            "base_graphics" => (KeywordType.BaseGraphics, KeywordKind.BlockDefining),
+            "railtypetable" => (KeywordType.RailTypeTable, KeywordKind.BlockDefining),
+            "random_switch" => (KeywordType.RandomSwitch, KeywordKind.BlockDefining),
+            "roadtypetable" => (KeywordType.RoadTypeTable, KeywordKind.BlockDefining),
+            "tramtypetable" => (KeywordType.TramTypeTable, KeywordKind.BlockDefining),
+            "engine_override" => (KeywordType.EngineOverride, KeywordKind.FunctionBlockDefining),
+            "livery_override" => (KeywordType.LiveryOverride, KeywordKind.BlockDefining),
+            "recolour_sprite" => (KeywordType.RecolourSprite, KeywordKind.BlockDefining),
+            "alternative_sprites" => (KeywordType.AlternativeSprites, KeywordKind.BlockDefining),
+            _ => (KeywordType.None, KeywordKind.None)
+        };
 }

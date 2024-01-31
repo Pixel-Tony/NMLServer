@@ -37,7 +37,7 @@ internal class GRFParameter : BaseStatementWithBlock
                     inside = true;
                     break;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 default:
@@ -74,7 +74,7 @@ internal class GRFParameter : BaseStatementWithBlock
                             innerState = InnerState.ExpectingColon;
                             break;
 
-                        case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                        case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                             goto label_End;
 
                         default:
@@ -95,7 +95,7 @@ internal class GRFParameter : BaseStatementWithBlock
                             innerState = InnerState.ExpectingBody;
                             break;
 
-                        case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                        case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                             goto label_End;
 
                         case SemicolonToken semicolonToken:
@@ -114,10 +114,10 @@ internal class GRFParameter : BaseStatementWithBlock
                     switch (token)
                     {
                         case UnitToken:
-                        case KeywordToken { IsExpressionUsable: true }:
+                        case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
                         case TernaryOpToken:
                         case UnaryOpToken:
-                        case ValueToken:
+                        case BaseValueToken:
                         case BinaryOpToken:
                             var expr = ExpressionAST.TryParse(state);
                             var semicolon = state.ExpectSemicolon();

@@ -34,7 +34,7 @@ internal readonly struct SpriteLayoutEntry
                     state.Increment();
                     return;
 
-                case KeywordToken { IsExpressionUsable: false, Type: not KeywordType.Return }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 default:

@@ -5,12 +5,12 @@ namespace NMLServer.Parsing;
 
 internal record struct NMLAttribute
 {
-    private readonly MulticharToken? _key;
+    private readonly BaseMulticharToken? _key;
     private readonly ColonToken? _colon;
     private ExpressionAST? _value;
     private SemicolonToken? _semicolon;
 
-    public NMLAttribute(MulticharToken? key, ColonToken? colon, ExpressionAST? value, SemicolonToken? semicolon)
+    public NMLAttribute(BaseMulticharToken? key, ColonToken? colon, ExpressionAST? value, SemicolonToken? semicolon)
     {
         _key = key;
         _colon = colon;
@@ -27,7 +27,7 @@ internal record struct NMLAttribute
         _semicolon = state.ExpectSemicolon();
     }
 
-    public NMLAttribute(ParsingState state, MulticharToken key)
+    public NMLAttribute(ParsingState state, BaseMulticharToken key)
     {
         _key = key;
         for (var token = state.nextToken; token is not null; token = state.nextToken)
@@ -47,7 +47,7 @@ internal record struct NMLAttribute
                     return;
 
                 case BracketToken { Bracket: '{' or '}' }:
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
                 default:
@@ -77,7 +77,7 @@ internal record struct NMLAttribute
                     state.Increment();
                     return attributes.ToArrayOrNull();
 
-                case KeywordToken { IsExpressionUsable: false }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     break;
 
                 default:
