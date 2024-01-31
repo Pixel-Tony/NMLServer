@@ -168,8 +168,10 @@ internal readonly struct NMLFile
             case KeywordType.Produce:
                 return new Produce(state, keyword);
 
-            // TODO
             case KeywordType.TownNames:
+                return new TownNames(state, keyword);
+
+            // TODO
             case KeywordType.RecolourSprite:
                 return null;
 
