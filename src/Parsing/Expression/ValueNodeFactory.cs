@@ -11,7 +11,7 @@ internal static class ValueNodeFactory
             IdentifierToken tok => new Identifier(parent, tok),
             NumericToken tok => new Number(parent, tok),
             StringToken tok => new LiteralString(parent, tok),
-            _ => throw new ArgumentOutOfRangeException(nameof(token), "Unexpected token tyep")
+            _ => throw new ArgumentOutOfRangeException(nameof(token), "Unexpected token type")
         };
     }
 }

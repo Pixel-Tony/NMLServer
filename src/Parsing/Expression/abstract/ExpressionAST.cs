@@ -14,16 +14,17 @@ internal abstract class ExpressionAST
     }
 
     /// <summary>
-    /// Try to parse an NML expression.
-    /// NML expression can only contain ONE unit token. If expression contains one, it is always the last token,
+    /// <para>Try to parse an NML expression.</para>
+    /// NML expression can only contain ONE unit token. If if does, it is always the last token,
     /// and corresponding <see cref="UnitTerminatedExpression"/> node is the root of result.
     /// </summary>
     /// <param name="state">The current parsing state.</param>
-    /// <returns>Parsed expression root, if any, null otherwise.</returns>
-    public static ExpressionAST? TryParse(ParsingState state)
+    /// <param name="parseUntilOuterComma">The flag to stop parsing if top-level comma is encountered.</param>
+    /// <returns>The root of parsed expression, if any; null otherwise.</returns>
+    public static ExpressionAST? TryParse(ParsingState state, bool parseUntilOuterComma = false)
     {
         var token = state.currentToken;
-        if (token is null)
+        if (token is null || parseUntilOuterComma && token is BinaryOpToken { Type: OperatorType.Comma })
         {
             return null;
         }
@@ -189,6 +190,7 @@ internal abstract class ExpressionAST
                     }
                     break;
                 }
+
                 case BracketToken { Bracket: ')' or ']' } closingParen:
                     switch (current)
                     {
@@ -368,6 +370,10 @@ internal abstract class ExpressionAST
                         case ParentedExpression:
                             if (current._parent is null)
                             {
+                                if (parseUntilOuterComma && binaryOpToken.Type is OperatorType.Comma)
+                                {
+                                    return result;
+                                }
                                 current._parent = new BinaryOperation(null, current, binaryOpToken);
                                 current = current._parent;
                                 result = current;

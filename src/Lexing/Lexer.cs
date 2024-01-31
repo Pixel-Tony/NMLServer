@@ -212,7 +212,7 @@ internal ref struct Lexer
                     }
                     ++_pos;
                 }
-                return new CommentToken(start, ++_pos);
+                return new CommentToken(start, _pos);
 
             default:
                 return new BinaryOpToken(start, _pos, OperatorType.Divide);
