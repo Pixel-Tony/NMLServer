@@ -3,17 +3,17 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class FunctionLikeStatement : BaseStatement
+internal sealed class FunctionLikeStatement : BaseStatement
 {
     private readonly KeywordToken _keyword;
-    protected readonly ExpressionAST? Parameters;
-    private SemicolonToken? _semicolon;
+    private readonly ExpressionAST? _parameters;
+    private readonly SemicolonToken? _semicolon;
 
     public FunctionLikeStatement(ParsingState state, KeywordToken keyword)
     {
         _keyword = keyword;
         state.IncrementSkippingComments();
-        Parameters = ExpressionAST.TryParse(state);
+        _parameters = ExpressionAST.TryParse(state);
         _semicolon = state.ExpectSemicolon();
     }
 }

@@ -22,8 +22,6 @@ internal class Document
     private List<int> _lineLengths;
     private readonly List<Diagnostic> _diagnostics = new();
 
-    public string languageId { get; }
-
     // TODO: propagate analysis to NMLFile and BaseStatement
     private NMLFile _file;
     private int _version;
@@ -40,7 +38,6 @@ internal class Document
     {
         Uri = item.Uri;
         _version = item.Version ?? 0;
-        languageId = item.LanguageId;
 
         _source = item.Text;
 
@@ -85,18 +82,12 @@ internal class Document
     }
 
     /// <summary>
-    /// Convert two edge positions of token to Range, assuming that given token spans over single line.
+    /// Convert start position of token to position in file, assuming that given token spans over single line.
     /// </summary>
     /// <param name="start">The index of first token symbol.</param>
-    /// <param name="end">The index of symbol after the token.</param>
-    /// <remarks>Given coordinates are such that <c>tokenContent = source[start..end]</c>.</remarks>
-    /// <returns>The Range representation of passed source span.</returns>
-    private Range GetRange(int start, int end)
+    /// <returns>The two-coordinate representation of passed source position.</returns>
+    private (int line, int @char) GetPosition(int start)
     {
-        /* Get relative position of end to start; end now contains length of the token. */
-        end -= start;
-
-        /* Getting coordinates of starting position */
         int line = 0;
         int length = _lineLengths[line] + 1;
         while (start >= length)
@@ -104,7 +95,7 @@ internal class Document
             start -= length;
             length = _lineLengths[++line] + 1;
         }
-        return new Range(line, start, line, end + start);
+        return (line, start);
     }
 
     // TODO: incorporate into semantic tokens method with keeping line/char numbers for faster finding
@@ -112,63 +103,60 @@ internal class Document
     //
     // TODO: Optimise _lineLengths indexing
     /// <summary>
-    /// Convert two edge positions of token to enumerable of Ranges, suitable for passing to LSP methods.
+    /// For given token, convert its absolute position to sequence of ranges (line, character, length), that cover it.
     /// </summary>
-    /// <param name="start">The index of first token symbol.</param>
-    /// <param name="end">The index of symbol after the token.</param>
-    /// <remarks>Given coordinates are such that <c>tokenContent = source[start..end]</c>.</remarks>
-    private IEnumerable<Range> GetRanges(int start, int end)
+    /// <param name="start">The index of first symbol of the token.</param>
+    /// <param name="length">The length of the token.</param>
+    /// <remarks>Given coordinates are such that <c>tokenContent = source[start..start + length]</c>.</remarks>
+    private IEnumerable<(int, int, int)> GetRanges(int start, int length)
     {
-        /* Get relative position of end to start; end now contains length of the token. */
-        end -= start;
-
         /* Getting coordinates of starting position */
         int line = 0;
-        int length = _lineLengths[line] + 1;
-        while (start >= length)
+        int lineLength = _lineLengths[line] + 1;
+        while (start >= lineLength)
         {
-            start -= length;
-            length = _lineLengths[++line] + 1;
+            start -= lineLength;
+            lineLength = _lineLengths[++line] + 1;
         }
         var startLine = line;
-
-        /* end now contains shift from current 'character' of first position */
-        end += start;
-
+        /* length now contains shift from current 'character' of first position */
+        length += start;
+        /* If on the same line - return only one coordinates */
+        if (length < lineLength)
+        {
+            return new[] { (line, start, length - start) };
+        }
+        /* Otherwise - return 'end piece' of first line, whole middle lines and 'start piece' of last line */
         /* Getting coordinates of ending position */
-        while (end >= length)
+        while (length >= lineLength)
         {
-            end -= length;
-            length = _lineLengths[++line] + 1;
+            length -= lineLength;
+            lineLength = _lineLengths[++line] + 1;
         }
+        var result = new (int, int, int)[line - startLine + 1];
 
-        /* If on the same line - yield only one Range */
-        if (startLine == line)
-        {
-            yield return new Range(line, start, line, end);
-            yield break;
-        }
-
-        /* Otherwise - yield 'end piece' of first line, whole middle lines, 'start piece' of last line */
-        yield return new Range(startLine, start, startLine, _lineLengths[startLine]);
+        int i = 0;
+        result[i++] = (startLine, start, _lineLengths[startLine] - start);
         for (var lineNum = startLine + 1; lineNum < line; ++lineNum)
         {
-            yield return new Range(lineNum, 0, lineNum, _lineLengths[lineNum]);
+            result[i++] = (lineNum, 0, _lineLengths[lineNum]);
         }
-        yield return new Range(line, 0, line, end);
+        result[i] = (line, 0, length);
+        return result;
     }
 
     private (int start, int end) GetCoordinates(Range range)
     {
         var start = 0;
-        for (int i = 0; i < range.Start.Line; ++i)
+        int i = 0;
+        while (i < range.Start.Line)
         {
-            start += _lineLengths[i] + 1;
+            start += _lineLengths[i++] + 1;
         }
         var end = start;
-        for (int i = range.Start.Line; i < range.End.Line; ++i)
+        while (i < range.End.Line)
         {
-            end += _lineLengths[i] + 1;
+            end += _lineLengths[i++] + 1;
         }
         return (start + range.Start.Character, end + range.End.Character);
     }
@@ -186,17 +174,18 @@ internal class Document
         foreach (var unexpectedToken in unexpectedTokens)
         {
             var start = unexpectedToken.Start;
-            var end = start + GetTokenTypeAndLength(unexpectedToken).length;
-
-            _diagnostics.Add(
-                new Diagnostic
-                {
-                    Severity = DiagnosticSeverity.Error,
-                    Message = "Unexpected token",
-                    Range = GetRange(start, end)
-                }
-            );
+            var length = GetTokenLength(unexpectedToken);
+            var (line, @char) = GetPosition(start);
+            _diagnostics.Add(new Diagnostic
+            {
+                Severity = DiagnosticSeverity.Error,
+                Message = "Unexpected token",
+                Range = new Range(line, @char, line, @char + length),
+            });
         }
+
+        // _file.ProvideDiagnostics(_diagnostics);
+
         _isActualVersionOfDiagnostics = true;
         return _diagnostics;
     }
@@ -205,67 +194,54 @@ internal class Document
     {
         foreach (var token in _tokens)
         {
-            var (type, length) = GetTokenTypeAndLength(token);
+            var type = GetTokenType(token);
+            var tokenLength = GetTokenLength(token);
+
             if (token is CommentToken)
             {
-                foreach (var range in GetRanges(token.Start, token.Start + length))
+                foreach (var (line, @char, length) in GetRanges(token.Start, tokenLength))
                 {
-                    builder.Push(range, type);
+                    builder.Push(line, @char, length, type);
                 }
+                continue;
             }
-            else
             {
-                builder.Push(GetRange(token.Start, token.Start + length), type);
+                var (line, @char) = GetPosition(token.Start);
+                builder.Push(line, @char, tokenLength, type);
             }
         }
     }
 
-    private (SemanticTokenType? type, int length) GetTokenTypeAndLength(Token token)
+    private static SemanticTokenType? GetTokenType(Token token)
     {
-        var type = token switch
+        return token switch
         {
-            AssignmentToken => SemanticTokenType.Operator,
-            BinaryOpToken => SemanticTokenType.Operator,
-            BracketToken => SemanticTokenType.Operator,
-            ColonToken => SemanticTokenType.Operator,
             CommentToken => SemanticTokenType.Comment,
-            FailedToken => null as SemanticTokenType?,
-            IdentifierToken id => DecideTokenType(id),
+            IdentifierToken id => id.semanticType.ToGeneralTokenType(),
+            UnitToken => SemanticTokenType.Keyword,
             KeywordToken => SemanticTokenType.Keyword,
             NumericToken => SemanticTokenType.Number,
             StringToken => SemanticTokenType.String,
+            ColonToken => SemanticTokenType.Operator,
             RangeToken => SemanticTokenType.Operator,
+            BracketToken => SemanticTokenType.Operator,
             SemicolonToken => SemanticTokenType.Operator,
+            BinaryOpToken => SemanticTokenType.Operator,
             TernaryOpToken => SemanticTokenType.Operator,
             UnaryOpToken => SemanticTokenType.Operator,
-            UnitToken => SemanticTokenType.Keyword,
-            _ => throw new ArgumentOutOfRangeException(nameof(token), "Unexpected token type")
+            AssignmentToken => SemanticTokenType.Operator,
+            _ => SemanticTokenType.Variable
         };
-        var length = token switch
+    }
+
+    private static int GetTokenLength(Token token)
+    {
+        return token switch
         {
-            BaseMulticharToken multichar => multichar.End - multichar.Start,
+            BaseMulticharToken multichar => multichar.Length,
             UnitToken unitToken => unitToken.length,
             RangeToken => 2,
             _ => 1
         };
-
-        return (type, length);
-    }
-
-    // TODO: in future, add initial token type for known identifiers at lexing state
-    private SemanticTokenType DecideTokenType(BaseMulticharToken token)
-    {
-        var s = _source[token.Start..token.End];
-        if (Grammar.FeatureIdentifiers.Contains(s))
-        {
-            return SemanticTokenType.Type;
-        }
-        if (Grammar.FunctionIdentifiers.Contains(s))
-        {
-            return SemanticTokenType.Function;
-        }
-        return Grammar.Constants.Contains(s)
-            ? SemanticTokenType.EnumMember
-            : SemanticTokenType.Variable;
     }
 }

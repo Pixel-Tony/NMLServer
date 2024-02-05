@@ -275,7 +275,7 @@ internal ref struct Lexer
         {
             return new KeywordToken(start, _pos, keywordType, kind);
         }
-        return new IdentifierToken(start, _pos);
+        return new IdentifierToken(start, _pos, Grammar.GetSymbolKind(value));
     }
 
     private Token ParseNumber(char c)
@@ -398,6 +398,7 @@ internal ref struct Lexer
             "param" => (KeywordType.Param, KeywordKind.ExpressionUsable),
             "while" => (KeywordType.While, KeywordKind.BlockDefining),
             "return" => (KeywordType.Return, KeywordKind.ReturnKeyword),
+            "string" => (KeywordType.String, KeywordKind.ExpressionUsable),
             "switch" => (KeywordType.Switch, KeywordKind.BlockDefining),
             "produce" => (KeywordType.Produce, KeywordKind.BlockDefining),
             "replace" => (KeywordType.Replace, KeywordKind.BlockDefining),

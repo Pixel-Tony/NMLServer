@@ -23,7 +23,7 @@ internal class ElseBlock : BaseStatement
                 case KeywordToken { Type: KeywordType.If } ifKeyword:
                     _ifKeyword = ifKeyword;
                     token = state.nextToken;
-                    goto label_parsingElseIfCondition;
+                    goto label_ParsingElseIfCondition;
 
                 case BracketToken { Bracket: '{' } openingBracket:
                     _openingBracket = openingBracket;
@@ -44,7 +44,7 @@ internal class ElseBlock : BaseStatement
                     break;
             }
         }
-        label_parsingElseIfCondition:
+        label_ParsingElseIfCondition:
         for (; token is not null; token = state.nextToken)
         {
             switch (token)
@@ -63,21 +63,21 @@ internal class ElseBlock : BaseStatement
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
-                case BaseValueToken:
                 case BracketToken:
                 case UnaryOpToken:
                 case BinaryOpToken:
                 case TernaryOpToken:
+                case BaseValueToken:
                     _condition = ExpressionAST.TryParse(state);
                     token = state.currentToken;
-                    goto label_parsingOpeningBracket;
+                    goto label_ParsingOpeningBracket;
 
                 default:
                     state.AddUnexpected(token);
                     break;
             }
         }
-        label_parsingOpeningBracket:
+        label_ParsingOpeningBracket:
         for (; token is not null; token = state.nextToken)
         {
             switch (token)

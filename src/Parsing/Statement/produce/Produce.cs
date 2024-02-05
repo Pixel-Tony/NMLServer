@@ -3,7 +3,7 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal sealed class Produce : BaseStatement
+internal sealed partial class Produce : BaseStatement
 {
     private readonly KeywordToken _keyword;
     private readonly BracketToken? _openingBracket;
@@ -13,27 +13,27 @@ internal sealed class Produce : BaseStatement
     private readonly BinaryOpToken? _thirdComma;
     private readonly ExpressionAST? _runAgain;
     private readonly BracketToken? _closingBracket;
-    private readonly ProduceCargoList _consumptions;
-    private readonly ProduceCargoList _productions;
+    private readonly CargoList _consumptions;
+    private readonly CargoList _productions;
 
-    private enum ParseFSM : byte
+    private enum InnerState : byte
     {
-        OpeningBracket = 0,
-        Id = 1,
-        FirstComma = 2,
-        Consumptions = 3,
-        SecondComma = 4,
-        Productions = 5,
-        ThirdComma = 6,
-        RunAgain = 7,
-        ClosingBracket = 8
+        OpeningBracket,
+        Id,
+        FirstComma,
+        Consumptions,
+        SecondComma,
+        Productions,
+        ThirdComma,
+        RunAgain,
+        ClosingBracket
     }
 
     public Produce(ParsingState state, KeywordToken keyword)
     {
         _keyword = keyword;
         var token = state.currentToken;
-        ParseFSM localState = ParseFSM.OpeningBracket;
+        InnerState innerState = InnerState.OpeningBracket;
         for (; token is not null && _openingBracket is null; token = state.nextToken)
         {
             switch (token)
@@ -41,9 +41,9 @@ internal sealed class Produce : BaseStatement
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     return;
 
-                case BracketToken { Bracket: '(' } openingBracket when localState is ParseFSM.OpeningBracket:
+                case BracketToken { Bracket: '(' } openingBracket when innerState is InnerState.OpeningBracket:
                     _openingBracket = openingBracket;
-                    localState = ParseFSM.Id;
+                    innerState = InnerState.Id;
                     break;
 
                 case BracketToken { Bracket: ')' } closingBracket:
@@ -51,51 +51,69 @@ internal sealed class Produce : BaseStatement
                     state.Increment();
                     return;
 
-                case BracketToken { Bracket: '[' } openingBracket when localState is ParseFSM.Consumptions:
-                    _consumptions = new ProduceCargoList(state, openingBracket);
-                    localState = ParseFSM.SecondComma;
-                    break;
-                case BracketToken { Bracket: ']' } closingBracket when localState is ParseFSM.Consumptions:
-                    _consumptions = new ProduceCargoList(closingBracket);
-                    localState = ParseFSM.SecondComma;
-                    break;
+                case BracketToken { Bracket: '[' } openingBracket:
+                    if (innerState is InnerState.Consumptions)
+                    {
+                        _consumptions = new CargoList(state, openingBracket);
+                        innerState = InnerState.SecondComma;
+                        break;
+                    }
+                    if (innerState is InnerState.Productions)
+                    {
+                        _productions = new CargoList(state, openingBracket);
+                        innerState = InnerState.ThirdComma;
+                        break;
+                    }
+                    goto default;
 
-                case BracketToken { Bracket: '[' } openingBracket when localState is ParseFSM.Productions:
-                    _productions = new ProduceCargoList(state, openingBracket);
-                    localState = ParseFSM.ThirdComma;
-                    break;
-                case BracketToken { Bracket: ']' } closingBracket when localState is ParseFSM.Productions:
-                    _productions = new ProduceCargoList(closingBracket);
-                    localState = ParseFSM.ThirdComma;
-                    break;
+                case BracketToken { Bracket: ']' } closingBracket:
+                    if (innerState is InnerState.Consumptions)
+                    {
+                        _consumptions = new CargoList(closingBracket);
+                        innerState = InnerState.SecondComma;
+                        break;
+                    }
+                    if (innerState is InnerState.Productions)
+                    {
+                        _productions = new CargoList(closingBracket);
+                        innerState = InnerState.ThirdComma;
+                        break;
+                    }
+                    goto default;
 
-                case BinaryOpToken { Type: OperatorType.Comma } comma when localState is ParseFSM.FirstComma:
-                    _firstComma = comma;
-                    localState = ParseFSM.Consumptions;
-                    break;
+                case BinaryOpToken { Type: OperatorType.Comma } comma:
+                    if (innerState is InnerState.FirstComma)
+                    {
+                        _firstComma = comma;
+                        innerState = InnerState.Consumptions;
+                        break;
+                    }
+                    if (innerState is InnerState.SecondComma)
+                    {
+                        _secondComma = comma;
+                        innerState = InnerState.Productions;
+                        break;
+                    }
+                    if (innerState is InnerState.ThirdComma)
+                    {
+                        _thirdComma = comma;
+                        innerState = InnerState.RunAgain;
+                        break;
+                    }
+                    goto default;
 
-                case BinaryOpToken { Type: OperatorType.Comma } comma when localState is ParseFSM.SecondComma:
-                    _secondComma = comma;
-                    localState = ParseFSM.Productions;
-                    break;
-
-                case BinaryOpToken { Type: OperatorType.Comma } comma when localState is ParseFSM.ThirdComma:
-                    _thirdComma = comma;
-                    localState = ParseFSM.RunAgain;
-                    break;
-
-                case IdentifierToken identifierToken when localState is ParseFSM.Id:
+                case IdentifierToken identifierToken when innerState is InnerState.Id:
                     _id = identifierToken;
-                    localState = ParseFSM.FirstComma;
+                    innerState = InnerState.FirstComma;
                     break;
 
                 case BracketToken { Bracket: '(' }
                     or KeywordToken { Kind: KeywordKind.ExpressionUsable }
-                    or BaseValueToken
                     or UnaryOpToken
                     or BinaryOpToken
                     or TernaryOpToken
-                    when localState is ParseFSM.RunAgain:
+                    or BaseValueToken
+                    when innerState is InnerState.RunAgain:
 
                     _runAgain = ExpressionAST.TryParse(state);
                     /* Expression parser will consume final ')' paren as part of expression, we have to undo this */
@@ -106,7 +124,7 @@ internal sealed class Produce : BaseStatement
                         state.Increment();
                         return;
                     }
-                    localState = ParseFSM.ClosingBracket;
+                    innerState = InnerState.ClosingBracket;
                     break;
 
                 default:

@@ -22,6 +22,7 @@ internal enum KeywordType : byte
     Template,
     SpriteSet,
     Switch,
+    String,
     SpriteGroup,
     RandomSwitch,
     Produce,

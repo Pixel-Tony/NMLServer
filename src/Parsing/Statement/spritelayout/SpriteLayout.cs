@@ -2,9 +2,9 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class SpriteLayout : BaseStatementWithBlock
+internal sealed partial class SpriteLayout : BaseStatementWithBlock
 {
-    private readonly SpriteLayoutEntry[]? _entries;
+    private readonly IReadOnlyList<Entry>? _entries;
 
     public SpriteLayout(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
@@ -12,27 +12,27 @@ internal class SpriteLayout : BaseStatementWithBlock
         {
             return;
         }
-        List<SpriteLayoutEntry> entries = new();
+        List<Entry> entries = new();
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
                 case BracketToken { Bracket: '{' } openingBracket:
-                    entries.Add(new SpriteLayoutEntry(state, openingBracket));
+                    entries.Add(new Entry(state, openingBracket));
                     break;
 
                 case BracketToken { Bracket: '}' } closingBracket:
                     ClosingBracket = closingBracket;
                     state.Increment();
-                    _entries = entries.ToArrayOrNull();
+                    _entries = entries.ToMaybeList();
                     return;
 
                 case IdentifierToken identifierToken:
-                    entries.Add(new SpriteLayoutEntry(state, identifierToken));
+                    entries.Add(new Entry(state, identifierToken));
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
-                    _entries = entries.ToArrayOrNull();
+                    _entries = entries.ToMaybeList();
                     return;
 
                 default:
@@ -41,6 +41,6 @@ internal class SpriteLayout : BaseStatementWithBlock
                     break;
             }
         }
-        _entries = entries.ToArrayOrNull();
+        _entries = entries.ToMaybeList();
     }
 }

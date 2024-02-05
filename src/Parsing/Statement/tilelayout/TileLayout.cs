@@ -2,10 +2,10 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class TileLayout : BaseStatementWithBlock
+internal sealed partial class TileLayout : BaseStatementWithBlock
 {
-    private readonly NMLAttribute[]? _attributes;
-    private readonly TileEntry[]? _entries;
+    private readonly IReadOnlyList<NMLAttribute>? _attributes;
+    private readonly IReadOnlyList<Entry>? _entries;
 
     public TileLayout(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
@@ -14,13 +14,13 @@ internal class TileLayout : BaseStatementWithBlock
             return;
         }
         List<NMLAttribute> attributes = new();
-        List<TileEntry> entries = new();
+        List<Entry> entries = new();
         for (var token = state.nextToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
                 case BinaryOpToken { Type: OperatorType.Comma } comma:
-                    entries.Add(new TileEntry(state, null, comma));
+                    entries.Add(new Entry(state, null, comma));
                     break;
 
                 case BracketToken { Bracket: '}' } closingBracket:
@@ -36,7 +36,7 @@ internal class TileLayout : BaseStatementWithBlock
                     goto label_End;
 
                 case NumericToken numericToken:
-                    entries.Add(new TileEntry(state, numericToken));
+                    entries.Add(new Entry(state, numericToken));
                     break;
 
                 default:
@@ -46,7 +46,7 @@ internal class TileLayout : BaseStatementWithBlock
             }
         }
         label_End:
-        _attributes = attributes.ToArrayOrNull();
-        _entries = entries.ToArrayOrNull();
+        _attributes = attributes.ToMaybeList();
+        _entries = entries.ToMaybeList();
     }
 }

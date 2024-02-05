@@ -8,9 +8,9 @@ namespace NMLServer;
 
 internal class Program
 {
-    public static ILanguageServer Server;
+    public static ILanguageServer? Server;
 
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         var storage = new SourceStorage();
 

@@ -2,10 +2,10 @@ namespace NMLServer.Lexing.Tokens;
 
 internal abstract class BaseMulticharToken : Token
 {
-    public readonly int End;
+    public readonly int Length;
 
     protected BaseMulticharToken(int start, int end) : base(start)
     {
-        End = end;
+        Length = end - start;
     }
 }

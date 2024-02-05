@@ -5,7 +5,7 @@ namespace NMLServer.Parsing;
 
 internal class ParsingState
 {
-    private readonly Token[] _tokens;
+    private readonly IReadOnlyList<Token> _tokens;
     private readonly int _max;
     private int _pointer;
     private readonly List<Token> _unexpectedTokens = new();
@@ -20,11 +20,11 @@ internal class ParsingState
         }
     }
 
-    public ParsingState(IEnumerable<Token> tokens)
+    public ParsingState(IReadOnlyList<Token> tokens)
     {
-        _tokens = tokens.ToArray();
+        _tokens = tokens;
         _pointer = 0;
-        _max = _tokens.Length - 1;
+        _max = _tokens.Count - 1;
     }
 
     public void Increment() => ++_pointer;

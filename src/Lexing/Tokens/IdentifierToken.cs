@@ -2,6 +2,10 @@ namespace NMLServer.Lexing.Tokens;
 
 internal sealed class IdentifierToken : BaseValueToken
 {
-    public IdentifierToken(int start, int end) : base(start, end)
-    { }
+    public SymbolKind semanticType { get; }
+
+    public IdentifierToken(int start, int end, SymbolKind type) : base(start, end)
+    {
+        semanticType = type;
+    }
 }

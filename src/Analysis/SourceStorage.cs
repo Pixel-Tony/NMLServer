@@ -8,18 +8,18 @@ internal class SourceStorage
 {
     public event Action<PublishDiagnosticsParams>? ShouldPublishDiagnostics;
 
-    private readonly Dictionary<DocumentUri, Document> _documents = new();
+    private readonly Dictionary<DocumentUri, (Document document, TextDocumentAttributes attributes)> _documents = new();
 
-    public TextDocumentAttributes this[DocumentUri uri] => new(uri, _documents[uri].languageId);
+    public TextDocumentAttributes this[DocumentUri uri] => _documents[uri].attributes;
 
     public void Add(TextDocumentItem target)
     {
-        if (_documents.TryGetValue(target.Uri, out _))
+        if (_documents.ContainsKey(target.Uri))
         {
             throw new Exception("Specified document is already added");
         }
         var document = new Document(target);
-        _documents[target.Uri] = document;
+        _documents[target.Uri] = (document, new TextDocumentAttributes(target.Uri, target.LanguageId));
         Analyze(document);
     }
 
@@ -43,18 +43,18 @@ internal class SourceStorage
 
     public void ApplyChanges(DidChangeTextDocumentParams request)
     {
-        var target = _documents[request.TextDocument.Uri];
-        target.UpdateFrom(request);
-        Analyze(target);
+        var document = _documents[request.TextDocument.Uri].document;
+        document.UpdateFrom(request);
+        Analyze(document);
     }
 
     public void ProvideSemanticTokens(SemanticTokensBuilder builder, TextDocumentIdentifier identifier)
     {
-        _documents[identifier.Uri].ProvideSemanticTokens(builder);
+        _documents[identifier.Uri].document.ProvideSemanticTokens(builder);
     }
 
     public IEnumerable<Diagnostic> GetDiagnostics(TextDocumentIdentifier identifier)
     {
-        return _documents[identifier.Uri].diagnostics;
+        return _documents[identifier.Uri].document.diagnostics;
     }
 }

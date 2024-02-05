@@ -3,7 +3,7 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class Assignment : BaseStatement
+internal sealed class Assignment : BaseStatement
 {
     private readonly ExpressionAST? _leftHandSide;
     private readonly AssignmentToken? _equalsSign;
@@ -13,10 +13,7 @@ internal class Assignment : BaseStatement
     public Assignment(ParsingState state)
     {
         _leftHandSide = ExpressionAST.TryParse(state);
-
-        for (var token = state.currentToken;
-             _equalsSign is null && token is not null;
-             token = state.nextToken)
+        for (var token = state.currentToken; token is not null; token = state.nextToken)
         {
             switch (token)
             {
@@ -26,7 +23,8 @@ internal class Assignment : BaseStatement
 
                 case AssignmentToken equalsSign:
                     _equalsSign = equalsSign;
-                    break;
+                    state.IncrementSkippingComments();
+                    goto label_End;
 
                 case SemicolonToken semicolon:
                     _semicolon = semicolon;
@@ -38,6 +36,7 @@ internal class Assignment : BaseStatement
                     break;
             }
         }
+        label_End:
         _righHandSide = ExpressionAST.TryParse(state);
         _semicolon = state.ExpectSemicolon();
     }

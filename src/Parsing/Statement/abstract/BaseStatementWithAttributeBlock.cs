@@ -4,13 +4,13 @@ namespace NMLServer.Parsing.Statement;
 
 internal class BaseStatementWithAttributeBlock : BaseStatementWithBlock
 {
-    protected readonly NMLAttribute[]? Attributes;
+    protected readonly IReadOnlyList<NMLAttribute>? Attributes;
 
     protected BaseStatementWithAttributeBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is null)
         {
-            Attributes = NMLAttribute.TryParseManyInBlock(state, ref ClosingBracket);
+            Attributes = NMLAttribute.TryParseSomeInBlock(state, ref ClosingBracket);
         }
     }
 }

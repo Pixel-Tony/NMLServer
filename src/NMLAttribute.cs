@@ -57,7 +57,7 @@ internal record struct NMLAttribute
         }
     }
 
-    public static NMLAttribute[]? TryParseManyInBlock(ParsingState state, ref BracketToken? expectedClosingBracket)
+    public static List<NMLAttribute>? TryParseSomeInBlock(ParsingState state, ref BracketToken? expectedClosingBracket)
     {
         List<NMLAttribute> attributes = new();
         for (var token = state.currentToken; token is not null; token = state.currentToken)
@@ -75,7 +75,7 @@ internal record struct NMLAttribute
                 case BracketToken { Bracket: '}' } closingBracket:
                     expectedClosingBracket = closingBracket;
                     state.Increment();
-                    return attributes.ToArrayOrNull();
+                    return attributes.ToMaybeList();
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     break;
@@ -86,6 +86,6 @@ internal record struct NMLAttribute
                     break;
             }
         }
-        return attributes.ToArrayOrNull();
+        return attributes.ToMaybeList();
     }
 }

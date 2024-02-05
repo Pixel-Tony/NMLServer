@@ -2,10 +2,10 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class TownNames : BaseStatementWithBlock
+internal sealed partial class TownNames : BaseStatementWithBlock
 {
-    private readonly NMLAttribute[]? _attributes;
-    private readonly TownNamesPart[]? _parts;
+    private readonly IReadOnlyList<NMLAttribute>? _attributes;
+    private readonly IReadOnlyList<Part>? _parts;
 
     public TownNames(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
@@ -14,13 +14,13 @@ internal class TownNames : BaseStatementWithBlock
             return;
         }
         List<NMLAttribute> attributes = new();
-        List<TownNamesPart> parts = new();
+        List<Part> parts = new();
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
                 case BracketToken { Bracket: '{' } openingInnerBracket:
-                    parts.Add(new TownNamesPart(state, openingInnerBracket));
+                    parts.Add(new Part(state, openingInnerBracket));
                     break;
 
                 case BracketToken { Bracket: '}' } closingBracket:
@@ -42,7 +42,7 @@ internal class TownNames : BaseStatementWithBlock
             }
         }
         label_End:
-        _attributes = attributes.ToArrayOrNull();
-        _parts = parts.ToArrayOrNull();
+        _attributes = attributes.ToMaybeList();
+        _parts = parts.ToMaybeList();
     }
 }

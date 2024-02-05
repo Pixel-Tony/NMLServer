@@ -2,10 +2,10 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class GRFBlock : BaseStatementWithBlock
+internal sealed partial class GRFBlock : BaseStatementWithBlock
 {
-    private NMLAttribute[]? _attributes;
-    private GRFParameter[]? _parameters;
+    private readonly IReadOnlyList<NMLAttribute>? _attributes;
+    private readonly IReadOnlyList<Parameter>? _parameters;
 
     public GRFBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
@@ -15,7 +15,8 @@ internal class GRFBlock : BaseStatementWithBlock
         }
 
         List<NMLAttribute> attributes = new();
-        List<GRFParameter> parameters = new();
+        List<Parameter> parameters = new();
+
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
@@ -29,7 +30,7 @@ internal class GRFBlock : BaseStatementWithBlock
                     break;
 
                 case KeywordToken { Type: KeywordType.Param } paramToken:
-                    parameters.Add(new GRFParameter(state, paramToken));
+                    parameters.Add(new Parameter(state, paramToken));
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
@@ -47,7 +48,7 @@ internal class GRFBlock : BaseStatementWithBlock
             }
         }
         label_End:
-        _attributes = attributes.ToArrayOrNull();
-        _parameters = parameters.ToArrayOrNull();
+        _attributes = attributes.ToMaybeList();
+        _parameters = parameters.ToMaybeList();
     }
 }

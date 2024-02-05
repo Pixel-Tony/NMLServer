@@ -11,9 +11,10 @@ internal readonly record struct ItemGraphicsAttribute
     private readonly ExpressionAST? _value;
     private readonly SemicolonToken? _semicolon;
 
-    public static ItemGraphicsAttribute[]? TryParseManyInBlock(ParsingState state, ref BracketToken? expectedClosingBracket)
+    public static List<ItemGraphicsAttribute>? TryParseSomeInBlock(ParsingState state, ref BracketToken? expectedClosingBracket)
     {
         List<ItemGraphicsAttribute> attributes = new();
+
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
@@ -21,7 +22,7 @@ internal readonly record struct ItemGraphicsAttribute
                 case BracketToken { Bracket: '}' } closingBracket:
                     expectedClosingBracket = closingBracket;
                     state.Increment();
-                    return attributes.ToArrayOrNull();
+                    return attributes.ToMaybeList();
 
                 case ColonToken colonToken:
                     attributes.Add(new ItemGraphicsAttribute(state, colonToken));
@@ -32,7 +33,7 @@ internal readonly record struct ItemGraphicsAttribute
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
-                    return attributes.ToArrayOrNull();
+                    return attributes.ToMaybeList();
 
                 default:
                     state.AddUnexpected(token);
@@ -40,7 +41,7 @@ internal readonly record struct ItemGraphicsAttribute
                     break;
             }
         }
-        return attributes.ToArrayOrNull();
+        return attributes.ToMaybeList();
     }
 
     private ItemGraphicsAttribute(ParsingState state, IdentifierToken identifier)

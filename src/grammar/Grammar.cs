@@ -1,15 +1,10 @@
+using System.Text;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
+
 namespace NMLServer;
 
 internal static class Grammar
 {
-    public static readonly HashSet<string> FeatureIdentifiers = new()
-    {
-        "FEAT_TRAINS", "FEAT_ROADVEHS", "FEAT_SHIPS", "FEAT_AIRCRAFT", "FEAT_STATIONS", "FEAT_CANALS", "FEAT_BRIDGES",
-        "FEAT_HOUSES", "FEAT_GLOBALVARS", "FEAT_INDUSTRYTILES", "FEAT_INDUSTRIES", "FEAT_CARGOS", "FEAT_SOUNDEFFECTS",
-        "FEAT_AIRPORTS", "FEAT_SIGNALS", "FEAT_OBJECTS", "FEAT_RAILTYPES", "FEAT_AIRPORTTILES", "FEAT_ROADTYPES",
-        "FEAT_TRAMTYPES", "FEAT_ROADSTOPS"
-    };
-
     public const int TernaryOperatorPrecedence = 1;
 
     public static readonly Dictionary<OperatorType, byte> OperatorPrecedences = new()
@@ -72,13 +67,36 @@ internal static class Grammar
 
     public static OperatorType GetOperatorType(char needle) => GetOperatorType(stackalloc char[] { needle });
 
-    public static readonly HashSet<string> FunctionIdentifiers = new()
-    {
-        "string", "STORE_TEMP", "STORE_PERM", "LOAD_TEMP", "LOAD_PERM"
-    };
+    private static readonly Dictionary<string, SymbolKind> _definedSymbols = new();
 
-    public static readonly HashSet<string> Constants = new()
+    static Grammar()
     {
-        "SELF", "PARENT"
-    };
+        AddFromFile("constants.txt", SymbolKind.Constant);
+        AddFromFile("functions.txt", SymbolKind.Function);
+        AddFromFile("variables.txt", SymbolKind.Variable);
+        AddFromFile("features.txt", SymbolKind.Feature);
+    }
+
+    private static void AddFromFile(string filename, SymbolKind kind)
+    {
+        try
+        {
+            filename = Path.Combine(AppContext.BaseDirectory, "grammar", filename);
+
+            foreach (var symbol in File.ReadAllText(filename, Encoding.UTF8).Split(' '))
+            {
+                _definedSymbols.TryAdd(symbol, kind);
+            }
+        }
+        catch (Exception e)
+        {
+            Program.Server?.LogInfo(e.ToString());
+        }
+    }
+
+    public static SymbolKind GetSymbolKind(ReadOnlySpan<char> needle)
+    {
+        _definedSymbols.TryGetValue(new string(needle), out var result);
+        return result;
+    }
 }

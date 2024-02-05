@@ -3,51 +3,9 @@ using NMLServer.Parsing.Expression;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class RecolourSprite : BaseStatementWithBlock
+internal partial class RecolourSprite
 {
-    private RecolourLine[]? _content;
-
-    public RecolourSprite(ParsingState state, KeywordToken keyword) : base(state, keyword)
-    {
-        if (ClosingBracket is not null)
-        {
-            return;
-        }
-        List<RecolourLine> content = new();
-        for (var token = state.currentToken; token is not null; token = state.nextToken)
-        {
-            switch (token)
-            {
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
-                    _content = content.ToArrayOrNull();
-                    return;
-
-                case BracketToken { Bracket: '}' } closingBracket:
-                    ClosingBracket = closingBracket;
-                    state.Increment();
-                    _content = content.ToArrayOrNull();
-                    return;
-
-                case RangeToken:
-                case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
-                case BracketToken { Bracket: not '{' }:
-                case UnaryOpToken:
-                case BinaryOpToken:
-                case TernaryOpToken:
-                case BaseValueToken:
-                    content.Add(new RecolourLine(state));
-                    break;
-
-                default:
-                    state.AddUnexpected(token);
-                    state.Increment();
-                    break;
-            }
-        }
-        _content = content.ToArrayOrNull();
-    }
-
-    private readonly record struct RecolourLine
+    private readonly record struct Line
     {
         private readonly ExpressionAST? _leftLeft;
         private readonly RangeToken? _leftRange;
@@ -58,7 +16,7 @@ internal class RecolourSprite : BaseStatementWithBlock
         private readonly ExpressionAST? _rightRight;
         private readonly SemicolonToken? _semicolon;
 
-        public RecolourLine(ParsingState state)
+        public Line(ParsingState state)
         {
             ExpressionOrRange(state, ref _leftLeft, ref _leftRange, ref _leftRight);
             for (var token = state.currentToken; token is not null; token = state.nextToken)

@@ -2,9 +2,9 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class Cargotable : BaseStatementWithBlock
+internal sealed class Cargotable : BaseStatementWithBlock
 {
-    private readonly (IdentifierToken? item, BinaryOpToken? comma)[]? _content;
+    private readonly IReadOnlyList<(IdentifierToken? item, BinaryOpToken? comma)>? _content;
 
     public Cargotable(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
@@ -41,6 +41,6 @@ internal class Cargotable : BaseStatementWithBlock
             }
         }
         label_End:
-        _content = content.ToArrayOrNull();
+        _content = content.ToMaybeList();
     }
 }

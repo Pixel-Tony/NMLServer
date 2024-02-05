@@ -2,10 +2,10 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class TracktypeTable : BaseStatementWithBlock
+internal sealed partial class TracktypeTable : BaseStatementWithBlock
 {
-    private (BaseValueToken? identifier, BinaryOpToken? comma)[]? _entries;
-    private TracktypeFallbackEntry[]? _fallbackEntries;
+    private IReadOnlyList<(BaseValueToken? identifier, BinaryOpToken? comma)>? _entries;
+    private IReadOnlyList<FallbackEntry>? _fallbackEntries;
 
     public TracktypeTable(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
@@ -14,8 +14,7 @@ internal class TracktypeTable : BaseStatementWithBlock
             return;
         }
         List<(BaseValueToken? identifier, BinaryOpToken? comma)> entries = new();
-        List<TracktypeFallbackEntry> fallbacks = new();
-
+        List<FallbackEntry> fallbacks = new();
         IdentifierToken? current = null;
         for (var token = state.currentToken; token is not null;)
         {
@@ -32,7 +31,7 @@ internal class TracktypeTable : BaseStatementWithBlock
                     break;
 
                 case ColonToken colonToken:
-                    fallbacks.Add(new TracktypeFallbackEntry(state, current, colonToken));
+                    fallbacks.Add(new FallbackEntry(state, current, colonToken));
                     current = null;
                     token = state.currentToken;
                     continue;
@@ -51,7 +50,7 @@ internal class TracktypeTable : BaseStatementWithBlock
             token = state.nextToken;
         }
         label_End:
-        _entries = entries.ToArrayOrNull();
-        _fallbackEntries = fallbacks.ToArrayOrNull();
+        _entries = entries.ToMaybeList();
+        _fallbackEntries = fallbacks.ToMaybeList();
     }
 }
