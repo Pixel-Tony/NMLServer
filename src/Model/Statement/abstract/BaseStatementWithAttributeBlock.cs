@@ -2,7 +2,7 @@ using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Parsing.Statement;
 
-internal class BaseStatementWithAttributeBlock : BaseStatementWithBlock
+internal abstract class BaseStatementWithAttributeBlock : BaseStatementWithBlock
 {
     protected readonly IReadOnlyList<NMLAttribute>? Attributes;
 

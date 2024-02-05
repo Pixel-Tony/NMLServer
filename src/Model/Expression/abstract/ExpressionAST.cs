@@ -147,9 +147,9 @@ internal abstract class ExpressionAST
                             current = binaryOperation.Right;
                             continue;
 
-                        case ParentedExpression { ClosingBracket: null, Expression: null } openedParen:
-                            openedParen.Expression = new ParentedExpression(openedParen, openingParen);
-                            current = openedParen.Expression;
+                        case ParentedExpression { ClosingBracket: null, Expression: null } parentedExpression:
+                            parentedExpression.Expression = new ParentedExpression(parentedExpression, openingParen);
+                            current = parentedExpression.Expression;
                             break;
 
                         case ParentedExpression { ClosingBracket: null } parentedExpression:
@@ -210,14 +210,11 @@ internal abstract class ExpressionAST
                         case ParentedExpression:
                             if (current._parent is null)
                             {
-                                var next = new ParentedExpression(null, null)
-                                {
-                                    Expression = result,
-                                    ClosingBracket = closingParen,
-                                };
+                                var next = new ParentedExpression(expression: result,
+                                    closingBracket: closingParen);
                                 result._parent = next;
-                                result = result._parent;
-                                current = result;
+                                result = next;
+                                current = next;
                                 break;
                             }
                             current = current._parent;
@@ -416,10 +413,10 @@ internal abstract class ExpressionAST
             TernaryOpToken ternaryOpToken => new TernaryOperation(null, ternaryOpToken),
             BracketToken bracketToken => bracketToken.Bracket switch
             {
-                '(' => new ParentedExpression(null, bracketToken),
-                '[' => new ParentedExpression(null, bracketToken),
-                ')' => new ParentedExpression(bracketToken),
-                ']' => new ParentedExpression(bracketToken),
+                '(' => new ParentedExpression(openingBracket: bracketToken),
+                '[' => new ParentedExpression(openingBracket: bracketToken),
+                ')' => new ParentedExpression(closingBracket: bracketToken),
+                ']' => new ParentedExpression(closingBracket: bracketToken),
                 _ => null
             },
             UnitToken unitToken => new UnitTerminatedExpression(null, unitToken),

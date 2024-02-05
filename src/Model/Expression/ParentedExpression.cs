@@ -8,11 +8,17 @@ internal class ParentedExpression : ExpressionAST
     public ExpressionAST? Expression;
     public BracketToken? ClosingBracket;
 
-    public ParentedExpression(ExpressionAST? parent, BracketToken? openingBracket) : base(parent)
-        => _openingBracket = openingBracket;
-
-    public ParentedExpression(BracketToken? closingBracket) : base(null)
-    { }
+    public ParentedExpression(
+        ExpressionAST? parent = null,
+        BracketToken? openingBracket = null,
+        ExpressionAST? expression = null,
+        BracketToken? closingBracket = null
+    ) : base(parent)
+    {
+        _openingBracket = openingBracket;
+        Expression = expression;
+        ClosingBracket = closingBracket;
+    }
 
     protected override void Replace(ExpressionAST target, ExpressionAST value)
     {
