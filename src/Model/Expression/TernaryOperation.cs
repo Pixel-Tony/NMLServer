@@ -1,8 +1,8 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
-internal class TernaryOperation : ExpressionAST
+internal sealed class TernaryOperation : ExpressionAST
 {
     private ExpressionAST? _condition;
     public ExpressionAST? TrueBranch;
@@ -38,6 +38,4 @@ internal class TernaryOperation : ExpressionAST
             FalseBranch = value;
         }
     }
-
-    public override string ToString() => $"({_condition} ? {TrueBranch} {(Colon != null ? ':' : '.')} {FalseBranch})";
 }

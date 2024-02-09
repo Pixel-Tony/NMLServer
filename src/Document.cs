@@ -1,15 +1,14 @@
 using System.Text;
 using NMLServer.Lexing;
-using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing;
-using NMLServer.Parsing.Statement;
+using NMLServer.Model;
+using NMLServer.Model.Statement;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
-namespace NMLServer.Analysis;
+namespace NMLServer;
 
 internal class Document
 {
@@ -194,11 +193,16 @@ internal class Document
     {
         foreach (var token in _tokens)
         {
-            var type = GetTokenType(token);
+            var hasType = GetTokenType(token, out var type);
             var tokenLength = GetTokenLength(token);
 
+            if (!hasType)
+            {
+                continue;
+            }
             if (token is CommentToken)
             {
+                /* only comments are allowed to span multiple lines */
                 foreach (var (line, @char, length) in GetRanges(token.Start, tokenLength))
                 {
                     builder.Push(line, @char, length, type);
@@ -212,26 +216,27 @@ internal class Document
         }
     }
 
-    private static SemanticTokenType? GetTokenType(Token token)
+    private static bool GetTokenType(Token token, out SemanticTokenType? type)
     {
-        return token switch
+        return (type = token switch
         {
             CommentToken => SemanticTokenType.Comment,
-            IdentifierToken id => id.semanticType.ToGeneralTokenType(),
-            UnitToken => SemanticTokenType.Keyword,
-            KeywordToken => SemanticTokenType.Keyword,
+            IdentifierToken id => id.kind.ToGeneralTokenType(),
+            UnitToken
+                or KeywordToken => SemanticTokenType.Keyword,
             NumericToken => SemanticTokenType.Number,
             StringToken => SemanticTokenType.String,
-            ColonToken => SemanticTokenType.Operator,
-            RangeToken => SemanticTokenType.Operator,
-            BracketToken => SemanticTokenType.Operator,
-            SemicolonToken => SemanticTokenType.Operator,
-            BinaryOpToken => SemanticTokenType.Operator,
-            TernaryOpToken => SemanticTokenType.Operator,
-            UnaryOpToken => SemanticTokenType.Operator,
-            AssignmentToken => SemanticTokenType.Operator,
-            _ => SemanticTokenType.Variable
-        };
+            ColonToken
+                or RangeToken
+                or BracketToken
+                or UnaryOpToken
+                or BinaryOpToken
+                or TernaryOpToken
+                or SemicolonToken
+                or AssignmentToken
+                => SemanticTokenType.Operator,
+            _ => null
+        }) is not null;
     }
 
     private static int GetTokenLength(Token token)

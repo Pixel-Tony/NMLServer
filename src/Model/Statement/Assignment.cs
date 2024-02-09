@@ -1,7 +1,7 @@
-using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Expression;
+using NMLServer.Lexing;
+using NMLServer.Model.Expression;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Model.Statement;
 
 internal sealed class Assignment : BaseStatement
 {

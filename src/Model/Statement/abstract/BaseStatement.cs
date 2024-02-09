@@ -1,4 +1,4 @@
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Model.Statement;
 
 internal abstract class BaseStatement
 { }

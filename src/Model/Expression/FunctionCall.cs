@@ -1,8 +1,8 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
-internal class FunctionCall : ExpressionAST
+internal sealed class FunctionCall : ExpressionAST
 {
     public readonly BaseMulticharToken Function;
     public ParentedExpression? Arguments;

@@ -1,8 +1,8 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
-internal class ParentedExpression : ExpressionAST
+internal sealed class ParentedExpression : ExpressionAST
 {
     private readonly BracketToken? _openingBracket;
     public ExpressionAST? Expression;

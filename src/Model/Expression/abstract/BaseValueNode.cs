@@ -1,13 +1,13 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
 internal abstract class BaseValueNode : ExpressionAST
 {
     public readonly BaseValueToken Token;
 
-    protected BaseValueNode(ExpressionAST? parent, BaseValueToken recordingToken) : base(parent)
+    protected BaseValueNode(ExpressionAST? parent, BaseValueToken token) : base(parent)
     {
-        Token = recordingToken;
+        Token = token;
     }
 }

@@ -1,12 +1,12 @@
-using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Expression;
+using NMLServer.Lexing;
+using NMLServer.Model.Expression;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Model.Statement;
 
-internal abstract class BaseSwitch : BaseStatementWithBlock
+internal abstract partial class BaseSwitch : BaseStatementWithBlock
 {
-    public readonly IReadOnlyList<SwitchLine>? Content;
-    public readonly IReadOnlyList<SwitchReturnLine>? ReturnLines;
+    private readonly IReadOnlyList<Line>? _content;
+    private readonly IReadOnlyList<ReturnLine>? _returnLines;
 
     protected BaseSwitch(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
@@ -14,10 +14,10 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
         {
             return;
         }
-        List<SwitchLine> switchLines = new();
-        List<SwitchReturnLine> returnLines = new();
+        List<Line> switchLines = new();
+        List<ReturnLine> returnLines = new();
         var innerState = InnerState.ExpectAnything;
-        SwitchLine currentLine = new();
+        Line currentLine = new();
         for (var token = state.currentToken; token is not null;)
         {
             switch (token)
@@ -30,7 +30,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                             break;
 
                         case InnerState.ExpectColonSemicolon:
-                            returnLines.Add(new SwitchReturnLine(null, currentLine.Condition, null));
+                            returnLines.Add(new ReturnLine(null, currentLine.Condition, null));
                             break;
 
                         case InnerState.ExpectAfterRange:
@@ -51,7 +51,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                     {
                         case InnerState.ExpectAnything:
                             state.Increment();
-                            returnLines.Add(new SwitchReturnLine(
+                            returnLines.Add(new ReturnLine(
                                     returnKeyword,
                                     ExpressionAST.TryParse(state),
                                     state.ExpectSemicolon()
@@ -68,7 +68,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                             currentLine.ReturnLine.Value = ExpressionAST.TryParse(state);
                             currentLine.ReturnLine.Semicolon = state.ExpectSemicolon();
                             switchLines.Add(currentLine);
-                            currentLine = new SwitchLine();
+                            currentLine = new Line();
                             innerState = InnerState.ExpectAnything;
                             token = state.currentToken;
                             continue;
@@ -104,7 +104,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                             currentLine.ReturnLine.Value = ExpressionAST.TryParse(state);
                             currentLine.ReturnLine.Semicolon = state.ExpectSemicolon();
                             switchLines.Add(currentLine);
-                            currentLine = new SwitchLine();
+                            currentLine = new Line();
                             innerState = InnerState.ExpectAnything;
                             token = state.currentToken;
                             continue;
@@ -124,7 +124,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                             break;
 
                         case InnerState.ExpectColonSemicolon:
-                            returnLines.Add(new SwitchReturnLine(null, currentLine.Condition, null));
+                            returnLines.Add(new ReturnLine(null, currentLine.Condition, null));
                             break;
 
                         case InnerState.ExpectAfterRange:
@@ -158,7 +158,7 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
                     {
                         case InnerState.ExpectRangeColonSemicolon:
                         case InnerState.ExpectColonSemicolon:
-                            returnLines.Add(new SwitchReturnLine(null, currentLine.Condition, semicolonToken));
+                            returnLines.Add(new ReturnLine(null, currentLine.Condition, semicolonToken));
                             currentLine.Condition = null;
                             break;
 
@@ -183,8 +183,8 @@ internal abstract class BaseSwitch : BaseStatementWithBlock
             token = state.nextToken;
         }
         label_Ending:
-        Content = switchLines.ToMaybeList();
-        ReturnLines = returnLines.ToMaybeList();
+        _content = switchLines.ToMaybeList();
+        _returnLines = returnLines.ToMaybeList();
     }
 
     private enum InnerState

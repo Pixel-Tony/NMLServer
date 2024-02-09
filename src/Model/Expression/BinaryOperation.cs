@@ -1,24 +1,23 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
-internal class BinaryOperation : ExpressionAST
+internal sealed class BinaryOperation : ExpressionAST
 {
     private readonly BinaryOpToken _operation;
     private ExpressionAST? _left;
     public ExpressionAST? Right;
 
-    public readonly uint Precedence;
+    public uint precedence => _operation.Precedence;
 
-    public BinaryOperation(ExpressionAST? parent, BinaryOpToken binaryOpToken) : base(parent)
+    public BinaryOperation(ExpressionAST? parent, BinaryOpToken op) : base(parent)
     {
-        _operation = binaryOpToken;
-        Precedence = binaryOpToken.Precedence;
+        _operation = op;
     }
 
-    public BinaryOperation(ExpressionAST? parent, ExpressionAST? left, BinaryOpToken op) : this(parent, op)
+    public BinaryOperation(ExpressionAST? parent, ExpressionAST? lhs, BinaryOpToken op) : this(parent, op)
     {
-        _left = left;
+        _left = lhs;
     }
 
     protected override void Replace(ExpressionAST target, ExpressionAST value)

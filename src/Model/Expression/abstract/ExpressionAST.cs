@@ -1,6 +1,6 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
 internal abstract class ExpressionAST
 {
@@ -12,6 +12,11 @@ internal abstract class ExpressionAST
     {
         throw new Exception($"Cannot replace child: {GetType()} is a bottom-level node");
     }
+
+    // public /* TODO: virtual */ abstract void Validate(object context);
+    // /* TODO: { } */
+    //
+    // public abstract EvaluatedExpressionType evaluatedType { get; }
 
     /// <summary>
     /// <para>Try to parse an NML expression.</para>
@@ -98,7 +103,7 @@ internal abstract class ExpressionAST
 
                         case FunctionCall:
                         case UnaryOperation:
-                        case BinaryOperation { Precedence: > TernaryOpToken.Precedence }:
+                        case BinaryOperation { precedence: > TernaryOpToken.Precedence }:
                         case BaseValueNode:
                         case ParentedExpression:
                             if (current._parent is null)
@@ -223,7 +228,7 @@ internal abstract class ExpressionAST
                     break;
 
                 case RangeToken:
-                case FailedToken:
+                case UnknownToken:
                 case BracketToken:
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                 case SemicolonToken:
@@ -310,28 +315,28 @@ internal abstract class ExpressionAST
                     switch (current)
                     {
                         case UnaryOperation { Expression: null } unaryOperation:
-                            unaryOperation.Expression = ValueNodeFactory.Make(unaryOperation, valueToken);
+                            unaryOperation.Expression = MakeValueFromToken(unaryOperation, valueToken);
                             current = unaryOperation.Expression;
                             break;
 
                         case BinaryOperation { Right: null } binaryOperation:
-                            binaryOperation.Right = ValueNodeFactory.Make(binaryOperation, valueToken);
+                            binaryOperation.Right = MakeValueFromToken(binaryOperation, valueToken);
                             current = binaryOperation.Right;
                             break;
 
                         // BaseValueToken pulls down, on TernaryExpression level => TrueBranch/FalseBranch is null
                         case TernaryOperation { Colon: null, FalseBranch: null } ternaryOperation:
-                            ternaryOperation.TrueBranch = ValueNodeFactory.Make(ternaryOperation, valueToken);
+                            ternaryOperation.TrueBranch = MakeValueFromToken(ternaryOperation, valueToken);
                             current = ternaryOperation.TrueBranch;
                             break;
 
                         case TernaryOperation ternaryOperation:
-                            ternaryOperation.FalseBranch = ValueNodeFactory.Make(ternaryOperation, valueToken);
+                            ternaryOperation.FalseBranch = MakeValueFromToken(ternaryOperation, valueToken);
                             current = ternaryOperation.FalseBranch;
                             break;
 
                         case ParentedExpression { Expression: null, ClosingBracket: null } openParen:
-                            openParen.Expression = ValueNodeFactory.Make(openParen, valueToken);
+                            openParen.Expression = MakeValueFromToken(openParen, valueToken);
                             current = openParen.Expression;
                             break;
 
@@ -347,7 +352,7 @@ internal abstract class ExpressionAST
                 case BinaryOpToken binaryOpToken:
                     switch (current)
                     {
-                        case BinaryOperation binaryOperation when binaryOpToken.Precedence > binaryOperation.Precedence:
+                        case BinaryOperation binaryOperation when binaryOpToken.Precedence > binaryOperation.precedence:
                             binaryOperation.Right = new BinaryOperation(binaryOperation, binaryOperation.Right,
                                 binaryOpToken);
                             current = binaryOperation.Right;
@@ -421,6 +426,17 @@ internal abstract class ExpressionAST
             },
             UnitToken unitToken => new UnitTerminatedExpression(null, unitToken),
             _ => null
+        };
+    }
+
+    private static BaseValueNode MakeValueFromToken(ExpressionAST? parent, BaseValueToken token)
+    {
+        return token switch
+        {
+            IdentifierToken tok => new Identifier(parent, tok),
+            NumericToken tok => new Number(parent, tok),
+            StringToken tok => new LiteralString(parent, tok),
+            _ => throw new ArgumentOutOfRangeException(nameof(token), "Unexpected token type")
         };
     }
 }

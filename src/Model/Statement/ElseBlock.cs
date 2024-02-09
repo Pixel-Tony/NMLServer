@@ -1,7 +1,7 @@
-using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Expression;
+using NMLServer.Lexing;
+using NMLServer.Model.Expression;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Model.Statement;
 
 internal class ElseBlock : BaseStatement
 {
@@ -28,7 +28,7 @@ internal class ElseBlock : BaseStatement
                 case BracketToken { Bracket: '{' } openingBracket:
                     _openingBracket = openingBracket;
                     state.Increment();
-                    _contents = new NMLFile(state, ref _closingBracket);
+                    _contents = new NMLFile(state, out _closingBracket, true);
                     return;
 
                 case BracketToken { Bracket: '}' } closingBracket:
@@ -52,7 +52,7 @@ internal class ElseBlock : BaseStatement
                 case BracketToken { Bracket: '{' } openingBracket:
                     _openingBracket = openingBracket;
                     state.Increment();
-                    _contents = new NMLFile(state, ref _closingBracket);
+                    _contents = new NMLFile(state, out _closingBracket, true);
                     return;
 
                 case BracketToken { Bracket: '}' } closingBracket:
@@ -85,7 +85,7 @@ internal class ElseBlock : BaseStatement
                 case BracketToken { Bracket: '{' } openingBracket:
                     _openingBracket = openingBracket;
                     state.Increment();
-                    _contents = new NMLFile(state, ref _closingBracket);
+                    _contents = new NMLFile(state, out _closingBracket, true);
                     return;
 
                 case BracketToken { Bracket: '}' } closingBracket:
@@ -101,6 +101,6 @@ internal class ElseBlock : BaseStatement
                     break;
             }
         }
-        _contents = new NMLFile(state, ref _closingBracket);
+        _contents = new NMLFile(state, out _closingBracket, true);
     }
 }

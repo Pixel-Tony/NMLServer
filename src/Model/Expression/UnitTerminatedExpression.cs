@@ -1,8 +1,8 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
-internal class UnitTerminatedExpression : ExpressionAST
+internal sealed class UnitTerminatedExpression : ExpressionAST
 {
     private readonly ExpressionAST? _child;
     private readonly UnitToken _token;

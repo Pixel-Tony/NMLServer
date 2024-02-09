@@ -1,8 +1,8 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
-internal class LiteralString : BaseValueNode
+internal sealed class LiteralString : BaseValueNode
 {
     public LiteralString(ExpressionAST? parent, StringToken token) : base(parent, token)
     { }

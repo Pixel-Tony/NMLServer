@@ -1,6 +1,6 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Model.Statement;
 
 internal abstract class BaseBlockWithChildren : BaseStatementWithBlock
 {
@@ -12,6 +12,6 @@ internal abstract class BaseBlockWithChildren : BaseStatementWithBlock
         {
             return;
         }
-        Children = new NMLFile(state, ref ClosingBracket);
+        Children = new NMLFile(state, out ClosingBracket, true);
     }
 }

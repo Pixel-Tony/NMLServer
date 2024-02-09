@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace NMLServer.Analysis;
+namespace NMLServer;
 
 internal static class UnitTask
 {

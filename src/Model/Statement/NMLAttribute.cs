@@ -1,7 +1,7 @@
-using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Expression;
+using NMLServer.Lexing;
+using NMLServer.Model.Expression;
 
-namespace NMLServer.Parsing;
+namespace NMLServer.Model.Statement;
 
 internal record struct NMLAttribute
 {

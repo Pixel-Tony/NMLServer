@@ -1,6 +1,6 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Model.Statement;
 
 internal class IfBlock : BaseBlockWithChildren
 {

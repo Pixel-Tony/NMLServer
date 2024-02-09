@@ -1,6 +1,6 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
 internal sealed class Number : BaseValueNode
 {

@@ -1,22 +1,26 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Statement;
+namespace NMLServer.Model.Statement;
 
 /* One ring to rule them all */
 internal readonly struct NMLFile
 {
     private readonly List<BaseStatement> _children = new();
 
-    public NMLFile(ParsingState state)
-    {
-        const int maxUnexpectedTokens = 100;
+    public NMLFile(ParsingState state) : this(state, out _)
+    { }
 
-        for (var token = state.currentToken;
-             state.unexpectedTokens.Count <= maxUnexpectedTokens && token is not null;
-             token = state.currentToken)
+    public NMLFile(ParsingState state, out BracketToken? expectedClosingBracket, bool inner = false)
+    {
+        for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
+                case BracketToken { Bracket: '}' } closingBracket when inner:
+                    expectedClosingBracket = closingBracket;
+                    state.Increment();
+                    return;
+
                 case IdentifierToken:
                 case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
                 case BracketToken { Bracket: not ('{' or '}') }:
@@ -37,44 +41,7 @@ internal readonly struct NMLFile
                     break;
             }
         }
-    }
-
-    public NMLFile(ParsingState state, ref BracketToken? expectedClosingBracket)
-    {
-        const int maxUnexpectedTokens = 100;
-        var unexpectedTokens = state.unexpectedTokens;
-
-        for (var token = state.currentToken;
-             token is not null && unexpectedTokens.Count <= maxUnexpectedTokens;
-             token = state.currentToken)
-        {
-            switch (token)
-            {
-                case BracketToken { Bracket: '}' } closingBracket:
-                    expectedClosingBracket = closingBracket;
-                    state.Increment();
-                    return;
-
-                case IdentifierToken:
-                case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
-                case BracketToken { Bracket: not ('{' or '}') }:
-                    _children.Add(new Assignment(state));
-                    break;
-
-                case KeywordToken { Kind: KeywordKind.FunctionBlockDefining } keywordToken:
-                    _children.Add(new FunctionLikeStatement(state, keywordToken));
-                    break;
-
-                case KeywordToken keywordToken:
-                    _children.Add(ParseBlockStatement(state, keywordToken));
-                    break;
-
-                default:
-                    state.AddUnexpected(token);
-                    state.Increment();
-                    break;
-            }
-        }
+        expectedClosingBracket = null;
     }
 
     private static BaseStatement ParseBlockStatement(ParsingState state, KeywordToken keyword)

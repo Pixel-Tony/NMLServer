@@ -1,4 +1,4 @@
-namespace NMLServer.Lexing.Tokens;
+namespace NMLServer.Lexing;
 
 internal abstract class BaseMulticharToken : Token
 {

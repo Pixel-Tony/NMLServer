@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing;
+namespace NMLServer.Model;
 
 internal class ParsingState
 {

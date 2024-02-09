@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using NMLServer.Lexing.Tokens;
 
 namespace NMLServer.Lexing;
 
@@ -66,7 +65,7 @@ internal ref struct Lexer
                     ++_pos;
                     tokens.Add(GetCurrentChar() is '.'
                         ? new RangeToken(_pos++ - 1)
-                        : new FailedToken(_pos - 1)
+                        : new UnknownToken(_pos - 1)
                     );
                     break;
 
@@ -103,7 +102,7 @@ internal ref struct Lexer
                     tokens.Add(
                         type is not OperatorType.None
                             ? ParseOperator(c, type)
-                            : new FailedToken(_pos++)
+                            : new UnknownToken(_pos++)
                     );
                     break;
             }
@@ -119,7 +118,7 @@ internal ref struct Lexer
         {
             return c switch
             {
-                '=' => new FailedToken(start),
+                '=' => new UnknownToken(start),
                 '!' or '~' => new UnaryOpToken(start, c),
                 _ => new BinaryOpToken(start, _pos, type)
             };
@@ -140,7 +139,7 @@ internal ref struct Lexer
         }
         return c switch
         {
-            '=' => new FailedToken(start),
+            '=' => new UnknownToken(start),
             '!' or '~' => new UnaryOpToken(start, c),
             _ => new BinaryOpToken(start, _pos, type)
         };

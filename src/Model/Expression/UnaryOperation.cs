@@ -1,8 +1,8 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
-internal class UnaryOperation : ExpressionAST
+internal sealed class UnaryOperation : ExpressionAST
 {
     private readonly UnaryOpToken _operation;
     public ExpressionAST? Expression;
@@ -16,6 +16,4 @@ internal class UnaryOperation : ExpressionAST
     {
         Expression = value;
     }
-
-    public override string ToString() => $"({_operation.Sign}{Expression?.ToString() ?? "."})";
 }

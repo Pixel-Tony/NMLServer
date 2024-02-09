@@ -1,8 +1,8 @@
-using NMLServer.Lexing.Tokens;
+using NMLServer.Lexing;
 
-namespace NMLServer.Parsing.Expression;
+namespace NMLServer.Model.Expression;
 
-internal class Identifier : BaseValueNode
+internal sealed class Identifier : BaseValueNode
 {
     public Identifier(ExpressionAST? parent, IdentifierToken token) : base(parent, token)
     { }
