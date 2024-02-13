@@ -5,9 +5,9 @@ internal sealed class UnitToken : Token
     private UnitType _unit;
     public int length { get; }
 
-    public UnitToken(int start, UnitType value, int length) : base(start)
+    public UnitToken(int start, UnitType value) : base(start)
     {
         _unit = value;
-        this.length = length;
+        length = (byte)value >> 4;
     }
 }

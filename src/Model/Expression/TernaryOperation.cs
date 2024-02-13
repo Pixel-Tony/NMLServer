@@ -4,17 +4,26 @@ namespace NMLServer.Model.Expression;
 
 internal sealed class TernaryOperation : ExpressionAST
 {
-    private ExpressionAST? _condition;
-    public ExpressionAST? TrueBranch;
-    public ExpressionAST? FalseBranch;
-    public TernaryOpToken QuestionMark;
-    public ColonToken? Colon;
-
     public const int Precedence = Grammar.TernaryOperatorPrecedence;
+
+    private ExpressionAST? _condition;
+    private readonly TernaryOpToken _questionMark;
+    public ExpressionAST? TrueBranch;
+    public ColonToken? Colon;
+    public ExpressionAST? FalseBranch;
+
+    public override int start => _condition?.start ?? _questionMark.Start;
+
+    public override int end
+        => FalseBranch?.end ?? (
+            Colon is not null
+                ? Colon.Start + 1
+                : TrueBranch?.end ?? _questionMark.Start + 1
+        );
 
     public TernaryOperation(ExpressionAST? parent, TernaryOpToken questionMark) : base(parent)
     {
-        QuestionMark = questionMark;
+        _questionMark = questionMark;
     }
 
     public TernaryOperation(ExpressionAST? parent, ExpressionAST? condition, TernaryOpToken questionMark)
@@ -23,7 +32,7 @@ internal sealed class TernaryOperation : ExpressionAST
         _condition = condition;
     }
 
-    protected override void Replace(ExpressionAST target, ExpressionAST value)
+    protected override void Replace(ExpressionAST target, FunctionCall value)
     {
         if (target == _condition)
         {

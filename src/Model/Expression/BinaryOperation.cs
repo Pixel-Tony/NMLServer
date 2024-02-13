@@ -4,9 +4,12 @@ namespace NMLServer.Model.Expression;
 
 internal sealed class BinaryOperation : ExpressionAST
 {
-    private readonly BinaryOpToken _operation;
     private ExpressionAST? _left;
+    private readonly BinaryOpToken _operation;
     public ExpressionAST? Right;
+
+    public override int start => _left?.start ?? _operation.Start;
+    public override int end => Right?.end ?? _operation.Start + _operation.Length;
 
     public uint precedence => _operation.Precedence;
 
@@ -20,7 +23,7 @@ internal sealed class BinaryOperation : ExpressionAST
         _left = lhs;
     }
 
-    protected override void Replace(ExpressionAST target, ExpressionAST value)
+    protected override void Replace(ExpressionAST target, FunctionCall value)
     {
         if (_left == target)
         {
