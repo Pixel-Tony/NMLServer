@@ -27,6 +27,7 @@ internal class ParsingState
         _max = _tokens.Count - 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Increment() => ++_pointer;
 
     public Token? currentToken => _pointer <= _max
@@ -37,6 +38,7 @@ internal class ParsingState
         ? _tokens[_pointer]
         : null;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SemicolonToken? ExpectSemicolon()
     {
         for (var token = currentToken; token is not null; token = nextToken)
@@ -82,6 +84,7 @@ internal class ParsingState
         return null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void IncrementSkippingComments()
     {
         Increment();

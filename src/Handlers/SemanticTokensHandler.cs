@@ -8,17 +8,13 @@ internal class SemanticTokensHandler : SemanticTokensHandlerBase
 {
     private readonly SourceStorage _storage;
 
-    public SemanticTokensHandler(SourceStorage storage)
-    {
-        _storage = storage;
-    }
+    public SemanticTokensHandler(SourceStorage storage) => _storage = storage;
 
-    protected override SemanticTokensRegistrationOptions CreateRegistrationOptions(SemanticTokensCapability capability,
-        ClientCapabilities clientCapabilities)
-    {
-        return new SemanticTokensRegistrationOptions
+    protected override SemanticTokensRegistrationOptions CreateRegistrationOptions(
+        SemanticTokensCapability capability, ClientCapabilities clientCapabilities)
+        => new()
         {
-            DocumentSelector = TextDocumentSelector.ForLanguage("nml"),
+            DocumentSelector = Program.NMLSelector,
             Legend = new SemanticTokensLegend
             {
                 TokenModifiers = capability.TokenModifiers,
@@ -27,7 +23,6 @@ internal class SemanticTokensHandler : SemanticTokensHandlerBase
             Full = new SemanticTokensCapabilityRequestFull { Delta = false },
             Range = false
         };
-    }
 
     protected override Task Tokenize(SemanticTokensBuilder builder, ITextDocumentIdentifierParams identifier,
         CancellationToken cancellationToken)
@@ -37,8 +32,5 @@ internal class SemanticTokensHandler : SemanticTokensHandlerBase
     }
 
     protected override Task<SemanticTokensDocument> GetSemanticTokensDocument(ITextDocumentIdentifierParams @params,
-        CancellationToken cancellationToken)
-    {
-        return Task.FromResult(new SemanticTokensDocument(RegistrationOptions.Legend));
-    }
+        CancellationToken _) => Task.FromResult(new SemanticTokensDocument(RegistrationOptions.Legend));
 }

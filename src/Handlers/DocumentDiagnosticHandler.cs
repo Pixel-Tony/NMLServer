@@ -16,7 +16,7 @@ internal class DocumentDiagnosticHandler : DocumentDiagnosticHandlerBase
     protected override DiagnosticsRegistrationOptions CreateRegistrationOptions(DiagnosticClientCapabilities capability,
         ClientCapabilities clientCapabilities)
     {
-        return new DiagnosticsRegistrationOptions { DocumentSelector = TextDocumentSelector.ForLanguage("nml") };
+        return new DiagnosticsRegistrationOptions { DocumentSelector = Program.NMLSelector };
     }
 
     public override Task<RelatedDocumentDiagnosticReport> Handle(DocumentDiagnosticParams request,

@@ -1,5 +1,7 @@
 using System.Text;
-using OmniSharp.Extensions.LanguageServer.Protocol.Window;
+using NMLServer.Lexing;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using static NMLServer.OperatorType;
 
 namespace NMLServer;
 
@@ -9,30 +11,30 @@ internal static class Grammar
 
     public static readonly Dictionary<OperatorType, byte> OperatorPrecedences = new()
     {
-        [OperatorType.Comma] = 0,
-        [OperatorType.QuestionMark] = TernaryOperatorPrecedence,
-        [OperatorType.Colon] = TernaryOperatorPrecedence,
-        [OperatorType.LogicalOr] = 2,
-        [OperatorType.LogicalAnd] = 3,
-        [OperatorType.BinaryOr] = 4,
-        [OperatorType.BinaryXor] = 5,
-        [OperatorType.BinaryAnd] = 6,
-        [OperatorType.Eq] = 7,
-        [OperatorType.Ne] = 7,
-        [OperatorType.Le] = 7,
-        [OperatorType.Ge] = 7,
-        [OperatorType.Lt] = 7,
-        [OperatorType.Gt] = 7,
-        [OperatorType.ShiftLeft] = 8,
-        [OperatorType.ShiftRight] = 8,
-        [OperatorType.ShiftRightFunky] = 8,
-        [OperatorType.Plus] = 9,
-        [OperatorType.Minus] = 9,
-        [OperatorType.Multiply] = 10,
-        [OperatorType.Divide] = 10,
-        [OperatorType.Modula] = 10,
-        [OperatorType.LogicalNot] = 11,
-        [OperatorType.BinaryNot] = 11
+        [Comma] = 0,
+        [QuestionMark] = TernaryOperatorPrecedence,
+        [Colon] = TernaryOperatorPrecedence,
+        [LogicalOr] = 2,
+        [LogicalAnd] = 3,
+        [BinaryOr] = 4,
+        [BinaryXor] = 5,
+        [BinaryAnd] = 6,
+        [Eq] = 7,
+        [Ne] = 7,
+        [Le] = 7,
+        [Ge] = 7,
+        [Lt] = 7,
+        [Gt] = 7,
+        [ShiftLeft] = 8,
+        [ShiftRight] = 8,
+        [ShiftRightFunky] = 8,
+        [Plus] = 9,
+        [Minus] = 9,
+        [Multiply] = 10,
+        [Divide] = 10,
+        [Modula] = 10,
+        [LogicalNot] = 11,
+        [BinaryNot] = 11
     };
 
     public static OperatorType GetOperatorType(ReadOnlySpan<char> needle)
@@ -85,12 +87,12 @@ internal static class Grammar
 
             foreach (var symbol in File.ReadAllText(filename, Encoding.UTF8).Split(' '))
             {
-                _definedSymbols.TryAdd(symbol, kind);
+                _definedSymbols[symbol] = kind;
             }
         }
         catch (Exception e)
         {
-            Program.Server?.LogInfo(e.ToString());
+            Program.LogInfo(e.ToString());
         }
     }
 

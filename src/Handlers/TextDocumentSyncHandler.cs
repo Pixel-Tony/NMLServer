@@ -11,48 +11,41 @@ internal class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
 {
     private readonly SourceStorage _storage;
 
-    public TextDocumentSyncHandler(SourceStorage storage)
-    {
-        _storage = storage;
-    }
+    public TextDocumentSyncHandler(SourceStorage storage) => _storage = storage;
 
-    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
-    {
-        return new TextDocumentAttributes(uri, _storage[uri].LanguageId);
-    }
+    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) => _storage[uri];
 
-    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
+    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken _)
     {
         _storage.Add(request.TextDocument);
         return UnitTask.Result;
     }
 
-    public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
+    public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken _)
     {
         _storage.ApplyChanges(request);
         return UnitTask.Result;
     }
 
-    public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken)
+    public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken _)
     {
         return UnitTask.Result;
     }
 
-    public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
+    public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken _)
     {
         _storage.Remove(request.TextDocument);
         return UnitTask.Result;
     }
 
     protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(
-        TextSynchronizationCapability capability,
-        ClientCapabilities clientCapabilities)
+        TextSynchronizationCapability capability, ClientCapabilities clientCapabilities)
+        => _options;
+
+    private static readonly TextDocumentSyncRegistrationOptions _options = new()
     {
-        return new TextDocumentSyncRegistrationOptions
-        {
-            DocumentSelector = TextDocumentSelector.ForLanguage("nml"),
-            Change = Document.SyncKind,
-            Save = new SaveOptions { IncludeText = false }
-        };
-    }
+        DocumentSelector = Program.NMLSelector,
+        Change = TextDocumentSyncKind.Incremental,
+        Save = new SaveOptions { IncludeText = false }
+    };
 }
