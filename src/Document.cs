@@ -22,7 +22,6 @@ internal partial class Document
 
     public IEnumerable<Diagnostic> diagnostics => Analyze();
 
-    // TODO: is it valid or a dirty fix?
     private static string EncodeSource(string source)
     {
         return Encoding.UTF8.GetString(Encoding.Default.GetBytes(source));

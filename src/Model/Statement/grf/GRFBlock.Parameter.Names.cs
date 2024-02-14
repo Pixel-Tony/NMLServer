@@ -22,9 +22,7 @@ internal partial class GRFBlock
                 _colon = colon;
                 _openingBracket = openingBracket;
                 List<NMLAttribute> attributes = new();
-                for (var token = state.nextToken;
-                     _closingBracket is null && token is not null;
-                     token = state.currentToken)
+                for (var token = state.nextToken; token is not null; token = state.currentToken)
                 {
                     switch (token)
                     {
@@ -43,7 +41,7 @@ internal partial class GRFBlock
                             _semicolon = state.ExpectSemicolon();
                             return;
 
-                        case KeywordToken:
+                        case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                             _items = attributes.ToMaybeList();
                             return;
 
@@ -54,7 +52,6 @@ internal partial class GRFBlock
                     }
                 }
                 _items = attributes.ToMaybeList();
-                _semicolon = state.ExpectSemicolon();
             }
         }
     }
