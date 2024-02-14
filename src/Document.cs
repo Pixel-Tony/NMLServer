@@ -221,4 +221,34 @@ internal partial class Document
             }
         }
     }
+
+    public LocationOrLocationLinks? ProvideDefinition(Position position)
+    {
+        if (_file.isEmpty)
+        {
+            return null;
+        }
+        var coordinate = ProtocolToLocal(position);
+        var symbol = _file.GetSymbolAt(coordinate, out int tokenLength);
+        if (symbol is not IdentifierToken identifierToken)
+        {
+            return null;
+        }
+        var elements = _file.GetSourcesForSymbol(identifierToken);
+        if (elements is null)
+        {
+            return null;
+        }
+        List<LocationOrLocationLink> locations = new(capacity: elements.Count);
+        foreach (var canDefineElement in elements)
+        {
+            var (line, @char) = GetPosition(canDefineElement.symbol!.Start);
+            locations.Add(new Location
+            {
+                Uri = Uri,
+                Range = new Range(line, @char, line, @char + tokenLength)
+            });
+        }
+        return locations;
+    }
 }

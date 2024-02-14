@@ -30,6 +30,7 @@ internal class Program
                 .AddHandler<TextDocumentSyncHandler>()
                 .AddHandler<DocumentDiagnosticHandler>()
                 .AddHandler<SemanticTokensHandler>()
+                .AddHandler<DefinitionHandler>()
         ).ConfigureAwait(false);
 
         storage.ShouldPublishDiagnostics += _server.PublishDiagnostics;

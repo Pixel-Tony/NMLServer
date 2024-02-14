@@ -7,6 +7,7 @@ namespace NMLServer.Model.Statement;
 /* One ring to rule them all */
 internal readonly struct NMLFile
 {
+    public bool isEmpty => _tokens!.Count == 0;
     private readonly List<BaseStatement> _children = new();
     private readonly Dictionary<IdentifierToken, List<ISymbolSource>> _definedSymbols;
 
@@ -144,5 +145,36 @@ internal readonly struct NMLFile
             }
         }
         return ctx.GetDiagnostics(document);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Token? GetSymbolAt(int coordinate, out int tokenLength)
+    {
+        int max = _tokens!.Count - 1;
+        tokenLength = 0;
+        for (int left = 0, right = max; left <= right;)
+        {
+            int mid = left + (right - left) / 2;
+            var current = _tokens[mid];
+            int start = current.Start;
+            if (start > coordinate)
+            {
+                right = mid - 1;
+                continue;
+            }
+            tokenLength = current.GetLength();
+            if (start + tokenLength >= coordinate)
+            {
+                return current;
+            }
+            left = mid + 1;
+        }
+        return null;
+    }
+
+    public IReadOnlyList<ISymbolSource>? GetSourcesForSymbol(IdentifierToken symbol)
+    {
+        _definedSymbols.TryGetValue(symbol, out var list);
+        return list;
     }
 }

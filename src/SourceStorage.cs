@@ -57,4 +57,10 @@ internal class SourceStorage
     {
         return _documents[identifier.Uri].document.diagnostics;
     }
+
+    public LocationOrLocationLinks? ProvideDefinition(DefinitionParams request)
+    {
+        var document = _documents[request.TextDocument.Uri].document;
+        return document.ProvideDefinition(request.Position);
+    }
 }
