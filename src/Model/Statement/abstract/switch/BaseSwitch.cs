@@ -16,7 +16,7 @@ internal abstract partial class BaseSwitch : BaseStatementWithBlock
         }
         List<Line> switchLines = new();
         List<ReturnLine> returnLines = new();
-        var innerState = InnerState.ExpectAnything;
+        var innerState = InnerState.ExpectingAnything;
         Line currentLine = new();
         for (var token = state.currentToken; token is not null;)
         {
@@ -25,21 +25,21 @@ internal abstract partial class BaseSwitch : BaseStatementWithBlock
                 case BracketToken { Bracket: '}' } closingBracket:
                     switch (innerState)
                     {
-                        case InnerState.ExpectRangeColonSemicolon:
+                        case InnerState.ExpectingRangeColonSemicolon:
                             returnLines.Add(currentLine.ReturnLine);
                             break;
 
-                        case InnerState.ExpectColonSemicolon:
+                        case InnerState.ExpectingColonSemicolon:
                             returnLines.Add(new ReturnLine(null, currentLine.Condition, null));
                             break;
 
-                        case InnerState.ExpectAfterRange:
-                        case InnerState.ExpectColon:
-                        case InnerState.ExpectValue:
+                        case InnerState.ExpectingAfterRange:
+                        case InnerState.ExpectingColon:
+                        case InnerState.ExpectingValue:
                             switchLines.Add(currentLine);
                             break;
 
-                        case InnerState.ExpectAnything:
+                        case InnerState.ExpectingAnything:
                             break;
                     }
                     ClosingBracket = closingBracket;
@@ -49,27 +49,27 @@ internal abstract partial class BaseSwitch : BaseStatementWithBlock
                 case KeywordToken { Type: KeywordType.Return } returnKeyword:
                     switch (innerState)
                     {
-                        case InnerState.ExpectAnything:
+                        case InnerState.ExpectingAnything:
                             state.Increment();
-                            returnLines.Add(new ReturnLine(
-                                    returnKeyword,
-                                    ExpressionAST.TryParse(state),
-                                    state.ExpectSemicolon()
-                                )
-                            );
-                            innerState = InnerState.ExpectAnything;
+                        {
+                            var expression = ExpressionAST.TryParse(state);
+                            var semicolon = state.ExpectSemicolon();
+                            returnLines.Add(new ReturnLine(returnKeyword, expression, semicolon));
+                        }
+                            innerState = InnerState.ExpectingAnything;
                             token = state.currentToken;
                             continue;
 
-                        case InnerState.ExpectValue:
-                            currentLine.ReturnLine.ReturnKeyword = returnKeyword;
-                            state.Increment();
-
-                            currentLine.ReturnLine.Value = ExpressionAST.TryParse(state);
-                            currentLine.ReturnLine.Semicolon = state.ExpectSemicolon();
+                        case InnerState.ExpectingValue:
+                            state.IncrementSkippingComments();
+                        {
+                            var expression = ExpressionAST.TryParse(state);
+                            var semicolon = state.ExpectSemicolon();
+                            currentLine.ReturnLine = new ReturnLine(returnKeyword, expression, semicolon);
+                        }
                             switchLines.Add(currentLine);
                             currentLine = new Line();
-                            innerState = InnerState.ExpectAnything;
+                            innerState = InnerState.ExpectingAnything;
                             token = state.currentToken;
                             continue;
 
@@ -86,26 +86,26 @@ internal abstract partial class BaseSwitch : BaseStatementWithBlock
                 case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
                     switch (innerState)
                     {
-                        case InnerState.ExpectAnything:
+                        case InnerState.ExpectingAnything:
                             currentLine.Condition = ExpressionAST.TryParse(state);
                             innerState = currentLine.Condition is UnitTerminatedExpression
-                                ? InnerState.ExpectColonSemicolon
-                                : InnerState.ExpectRangeColonSemicolon;
+                                ? InnerState.ExpectingColonSemicolon
+                                : InnerState.ExpectingRangeColonSemicolon;
                             token = state.currentToken;
                             continue;
 
-                        case InnerState.ExpectAfterRange:
+                        case InnerState.ExpectingAfterRange:
                             currentLine.ConditionRightSide = ExpressionAST.TryParse(state);
-                            innerState = InnerState.ExpectColon;
+                            innerState = InnerState.ExpectingColon;
                             token = state.currentToken;
                             continue;
 
-                        case InnerState.ExpectValue:
+                        case InnerState.ExpectingValue:
                             currentLine.ReturnLine.Value = ExpressionAST.TryParse(state);
                             currentLine.ReturnLine.Semicolon = state.ExpectSemicolon();
                             switchLines.Add(currentLine);
                             currentLine = new Line();
-                            innerState = InnerState.ExpectAnything;
+                            innerState = InnerState.ExpectingAnything;
                             token = state.currentToken;
                             continue;
 
@@ -116,54 +116,54 @@ internal abstract partial class BaseSwitch : BaseStatementWithBlock
                 case KeywordToken:
                     switch (innerState)
                     {
-                        case InnerState.ExpectAnything:
+                        case InnerState.ExpectingAnything:
                             break;
 
-                        case InnerState.ExpectRangeColonSemicolon:
+                        case InnerState.ExpectingRangeColonSemicolon:
                             returnLines.Add(currentLine.ReturnLine);
                             break;
 
-                        case InnerState.ExpectColonSemicolon:
+                        case InnerState.ExpectingColonSemicolon:
                             returnLines.Add(new ReturnLine(null, currentLine.Condition, null));
                             break;
 
-                        case InnerState.ExpectAfterRange:
-                        case InnerState.ExpectColon:
-                        case InnerState.ExpectValue:
+                        case InnerState.ExpectingAfterRange:
+                        case InnerState.ExpectingColon:
+                        case InnerState.ExpectingValue:
                             switchLines.Add(currentLine);
                             break;
                     }
                     goto label_Ending;
 
                 case ColonToken colonToken:
-                    if (innerState == InnerState.ExpectValue)
+                    if (innerState == InnerState.ExpectingValue)
                     {
                         goto label_Unexpected;
                     }
                     currentLine.Colon = colonToken;
-                    innerState = InnerState.ExpectValue;
+                    innerState = InnerState.ExpectingValue;
                     break;
 
                 case RangeToken rangeToken:
-                    if (innerState is not (InnerState.ExpectRangeColonSemicolon or InnerState.ExpectAnything))
+                    if (innerState is not (InnerState.ExpectingRangeColonSemicolon or InnerState.ExpectingAnything))
                     {
                         goto label_Unexpected;
                     }
                     currentLine.Range = rangeToken;
-                    innerState = InnerState.ExpectAfterRange;
+                    innerState = InnerState.ExpectingAfterRange;
                     break;
 
                 case SemicolonToken semicolonToken:
                     switch (innerState)
                     {
-                        case InnerState.ExpectRangeColonSemicolon:
-                        case InnerState.ExpectColonSemicolon:
+                        case InnerState.ExpectingRangeColonSemicolon:
+                        case InnerState.ExpectingColonSemicolon:
                             returnLines.Add(new ReturnLine(null, currentLine.Condition, semicolonToken));
                             currentLine.Condition = null;
                             break;
 
-                        case InnerState.ExpectColon:
-                        case InnerState.ExpectValue:
+                        case InnerState.ExpectingColon:
+                        case InnerState.ExpectingValue:
                             currentLine.ReturnLine.Semicolon = semicolonToken;
                             switchLines.Add(currentLine);
                             currentLine = default;
@@ -172,7 +172,7 @@ internal abstract partial class BaseSwitch : BaseStatementWithBlock
                         default:
                             goto label_Unexpected;
                     }
-                    innerState = InnerState.ExpectAnything;
+                    innerState = InnerState.ExpectingAnything;
                     break;
 
                 default:
@@ -189,11 +189,11 @@ internal abstract partial class BaseSwitch : BaseStatementWithBlock
 
     private enum InnerState
     {
-        ExpectAnything,            // Start of the line
-        ExpectRangeColonSemicolon, // Expression present, can be a "key: value" or a "value;"
-        ExpectAfterRange,          // Expression and range operator present, expect second half of range
-        ExpectColonSemicolon,      // Expression +unit present
-        ExpectColon,               // Expression .. Expression (+unit) present, expect colon and value afterwards
-        ExpectValue                // Colon present, expect value
+        ExpectingAnything, // Start of the line
+        ExpectingRangeColonSemicolon, // Expression present, can be a "key: value" or a "value;"
+        ExpectingAfterRange, // Expression and range operator present, expect second half of range
+        ExpectingColonSemicolon, // Expression +unit present
+        ExpectingColon, // Expression .. Expression (+unit) present, expect colon and value afterwards
+        ExpectingValue // Colon present, expect value
     }
 }

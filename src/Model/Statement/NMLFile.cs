@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using NMLServer.Lexing;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace NMLServer.Model.Statement;
 
@@ -6,12 +8,35 @@ namespace NMLServer.Model.Statement;
 internal readonly struct NMLFile
 {
     private readonly List<BaseStatement> _children = new();
+    private readonly Dictionary<IdentifierToken, List<ISymbolSource>> _definedSymbols;
 
-    public NMLFile(ParsingState state) : this(state, out _)
-    { }
+    private static IIdentifierTokenComparer _currentComparer = null!;
 
-    public NMLFile(ParsingState state, out BracketToken? expectedClosingBracket, bool inner = false)
+    private readonly List<Token>? _tokens;
+    public IEnumerable<Token> tokens => _tokens!;
+    public IReadOnlyList<Token> unexpectedTokens { get; } = null!;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static NMLFile Make(List<Token> tokens, IIdentifierTokenComparer comparer)
     {
+        _currentComparer = comparer;
+        return new NMLFile(tokens);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private NMLFile(List<Token> tokens) : this(new ParsingState(tokens), out _, false)
+    {
+        _tokens = tokens;
+    }
+
+    public NMLFile(ParsingState state, out BracketToken? expectedClosingBracket, bool inner)
+    {
+        if (!inner)
+        {
+            unexpectedTokens = state.unexpectedTokens;
+        }
+        _definedSymbols = new Dictionary<IdentifierToken, List<ISymbolSource>>(_currentComparer);
+
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
@@ -24,7 +49,19 @@ internal readonly struct NMLFile
                 case IdentifierToken:
                 case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
                 case BracketToken { Bracket: not ('{' or '}') }:
-                    _children.Add(new Assignment(state));
+                    Assignment assignment = new(state);
+                    _children.Add(assignment);
+                    var parameter = assignment.symbol;
+                    if (parameter is null)
+                    {
+                        break;
+                    }
+                    if (_definedSymbols.TryGetValue(parameter, out var paramMentions))
+                    {
+                        paramMentions.Add(assignment);
+                        break;
+                    }
+                    _definedSymbols[parameter] = new List<ISymbolSource>(1) { assignment };
                     break;
 
                 case KeywordToken { Kind: KeywordKind.FunctionBlockDefining } keywordToken:
@@ -32,8 +69,21 @@ internal readonly struct NMLFile
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining } keywordToken:
-                    _children.Add(ParseBlockStatement(state, keywordToken));
+                {
+                    var child = ParseBlockStatement(state, keywordToken);
+                    _children.Add(child);
+                    if (child is not ISymbolSource { symbol: { } element } canDefineElement)
+                    {
+                        break;
+                    }
+                    if (_definedSymbols.TryGetValue(element, out var list))
+                    {
+                        list.Add(canDefineElement);
+                        break;
+                    }
+                    _definedSymbols[element] = new List<ISymbolSource>(1) { canDefineElement };
                     break;
+                }
 
                 default:
                     state.AddUnexpected(token);
@@ -44,6 +94,7 @@ internal readonly struct NMLFile
         expectedClosingBracket = null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static BaseStatement ParseBlockStatement(ParsingState state, KeywordToken keyword)
     {
         return keyword.Type switch

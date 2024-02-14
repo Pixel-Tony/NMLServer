@@ -1,23 +1,41 @@
+using NMLServer.Lexing;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace NMLServer;
 
-internal static class Extentions
+internal static class Extensions
 {
-    public static List<T>? ToMaybeList<T>(this List<T> target) => target.Count > 0
-        ? target
-        : null;
-
-    public static SemanticTokenType ToGeneralTokenType(this SymbolKind target) => target switch
+    public static List<T>? ToMaybeList<T>(this List<T> target)
     {
-        SymbolKind.Feature => SemanticTokenType.Type,
-        SymbolKind.Function => SemanticTokenType.Function,
-        SymbolKind.Macro => SemanticTokenType.Macro,
-        SymbolKind.Variable => SemanticTokenType.Variable,
-        SymbolKind.Parameter => SemanticTokenType.Parameter,
-        SymbolKind.Constant => SemanticTokenType.EnumMember,
-        _ => SemanticTokenType.Variable
-    };
+        return target.Count > 0
+            ? target
+            : null;
+    }
+
+    public static SemanticTokenType? ToGeneralTokenType(this SymbolKind target)
+    {
+        return (target & (SymbolKind)0x0F) switch
+        {
+            SymbolKind.Feature => SemanticTokenType.Type,
+            SymbolKind.Switch => SemanticTokenType.Function,
+            SymbolKind.Macro => SemanticTokenType.Macro,
+            SymbolKind.Variable => SemanticTokenType.Variable,
+            SymbolKind.Parameter => SemanticTokenType.Parameter,
+            SymbolKind.Constant => SemanticTokenType.EnumMember,
+            _ => null as SemanticTokenType?
+        };
+    }
+
+    public static int GetLength(this Token token)
+    {
+        return token switch
+        {
+            BaseMulticharToken multicharToken => multicharToken.Length,
+            UnitToken unitToken => unitToken.length,
+            RangeToken => 2,
+            _ => 1
+        };
+    }
 
     // public static void VerifyAsParameter(this ExpressionAST target, DiagnosticsContext diagnosticsContext, EvaluatedExpressionType expectedType)
     // {
@@ -27,7 +45,7 @@ internal static class Extentions
     //         return;
     //     }
     // }
-    //
+
     // public static void VerifyAsParameters(this ExpressionAST target, DiagnosticsContext diagnosticsContext,
     //     params EvaluatedExpressionType[] paramTypes)
     // {

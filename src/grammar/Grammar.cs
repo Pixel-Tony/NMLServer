@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using NMLServer.Lexing;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -37,36 +38,39 @@ internal static class Grammar
         [BinaryNot] = 11
     };
 
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OperatorType GetOperatorType(ReadOnlySpan<char> needle)
         => needle switch
         {
-            "," => OperatorType.Comma,
-            "?" => OperatorType.QuestionMark,
-            ":" => OperatorType.Colon,
-            "||" => OperatorType.LogicalOr,
-            "&&" => OperatorType.LogicalAnd,
-            "|" => OperatorType.BinaryOr,
-            "^" => OperatorType.BinaryXor,
-            "&" => OperatorType.BinaryAnd,
-            "==" => OperatorType.Eq,
-            "!=" => OperatorType.Ne,
-            "<=" => OperatorType.Le,
-            ">=" => OperatorType.Ge,
-            "<" => OperatorType.Lt,
-            ">" => OperatorType.Gt,
-            "<<" => OperatorType.ShiftLeft,
-            ">>" => OperatorType.ShiftRight,
-            ">>>" => OperatorType.ShiftRightFunky,
-            "+" => OperatorType.Plus,
-            "-" => OperatorType.Minus,
-            "*" => OperatorType.Multiply,
-            "/" => OperatorType.Divide,
-            "%" => OperatorType.Modula,
-            "!" => OperatorType.LogicalNot,
-            "~" => OperatorType.BinaryNot,
-            _ => OperatorType.None
+            "," => Comma,
+            "?" => QuestionMark,
+            ":" => Colon,
+            "||" => LogicalOr,
+            "&&" => LogicalAnd,
+            "|" => BinaryOr,
+            "^" => BinaryXor,
+            "&" => BinaryAnd,
+            "==" => Eq,
+            "!=" => Ne,
+            "<=" => Le,
+            ">=" => Ge,
+            "<" => Lt,
+            ">" => Gt,
+            "<<" => ShiftLeft,
+            ">>" => ShiftRight,
+            ">>>" => ShiftRightFunky,
+            "+" => Plus,
+            "-" => Minus,
+            "*" => Multiply,
+            "/" => Divide,
+            "%" => Modula,
+            "!" => LogicalNot,
+            "~" => BinaryNot,
+            _ => None
         };
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OperatorType GetOperatorType(char needle) => GetOperatorType(stackalloc char[] { needle });
 
     private static readonly Dictionary<string, SymbolKind> _definedSymbols = new();
@@ -74,7 +78,9 @@ internal static class Grammar
     static Grammar()
     {
         AddFromFile("constants.txt", SymbolKind.Constant);
-        AddFromFile("functions.txt", SymbolKind.Function);
+        AddFromFile("misc-bits.txt", SymbolKind.Variable | SymbolKind.Writeable);
+        AddFromFile("readable.txt", SymbolKind.Variable);
+        AddFromFile("functions.txt", SymbolKind.Switch);
         AddFromFile("variables.txt", SymbolKind.Variable);
         AddFromFile("features.txt", SymbolKind.Feature);
     }
@@ -100,5 +106,29 @@ internal static class Grammar
     {
         _definedSymbols.TryGetValue(new string(needle), out var result);
         return result;
+    }
+
+    // TODO: nullable readonly struct, why?
+    public static bool GetTokenSemanticType(Token token, out SemanticTokenType? type)
+    {
+        return (type = token switch
+        {
+            CommentToken => SemanticTokenType.Comment,
+            IdentifierToken id => id.kind.ToGeneralTokenType(),
+            UnitToken
+                or KeywordToken => SemanticTokenType.Keyword,
+            NumericToken => SemanticTokenType.Number,
+            StringToken => SemanticTokenType.String,
+            ColonToken
+                or RangeToken
+                or BracketToken
+                or UnaryOpToken
+                or BinaryOpToken
+                or TernaryOpToken
+                or SemicolonToken
+                or AssignmentToken
+                => SemanticTokenType.Operator,
+            _ => null
+        }) is not null;
     }
 }
