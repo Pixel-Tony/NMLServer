@@ -188,7 +188,7 @@ internal partial class Document
             });
         }
 
-        // _file.ProvideDiagnostics(_diagnostics);
+        _diagnostics.AddRange(_file.ProvideDiagnostics(this));
 
         _isActualVersionOfDiagnostics = true;
         return _diagnostics;

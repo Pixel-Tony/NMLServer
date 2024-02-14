@@ -131,4 +131,18 @@ internal readonly struct NMLFile
             _ => throw new ArgumentOutOfRangeException(nameof(keyword.Type), "Unexpected keyword type")
         };
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public IEnumerable<Diagnostic> ProvideDiagnostics(Document document)
+    {
+        DiagnosticsContext ctx = new();
+        foreach (var node in _children)
+        {
+            if (node is IValidatable validatable)
+            {
+                validatable.ProvideDiagnostics(ctx);
+            }
+        }
+        return ctx.GetDiagnostics(document);
+    }
 }

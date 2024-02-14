@@ -323,4 +323,9 @@ internal abstract class ExpressionAST
             _ => throw new ArgumentOutOfRangeException(nameof(token), "Unexpected token type")
         };
     }
+
+    public virtual void ProvideDiagnostics(DiagnosticsContext context)
+    {
+        // TODO
+    }
 }
