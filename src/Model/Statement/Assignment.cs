@@ -12,6 +12,9 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
 
     public IdentifierToken? symbol { get; }
 
+    public override int start => _leftHandSide.start;
+    public override int end => _semicolon?.end ?? (_righHandSide?.end ?? (_equalsSign?.end ?? _leftHandSide.end));
+
     public Assignment(ParsingState state)
     {
         _leftHandSide = ExpressionAST.TryParse(state)!;

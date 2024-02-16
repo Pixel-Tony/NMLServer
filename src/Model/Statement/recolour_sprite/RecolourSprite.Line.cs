@@ -5,9 +5,9 @@ namespace NMLServer.Model.Statement;
 
 internal partial class RecolourSprite
 {
-    private readonly record struct Line
+    public readonly record struct Line : IAllowsParseInsideBlock<Line>
     {
-        private readonly ExpressionAST? _leftLeft;
+        private readonly ExpressionAST _leftLeft;
         private readonly RangeToken? _leftRange;
         private readonly ExpressionAST? _leftRight;
         private readonly ColonToken? _colon;
@@ -16,9 +16,47 @@ internal partial class RecolourSprite
         private readonly ExpressionAST? _rightRight;
         private readonly SemicolonToken? _semicolon;
 
-        public Line(ParsingState state)
+        public int end => _semicolon?.end ?? (_rightRight?.end ?? (_rightRange?.end ?? (_rightLeft?.end ??
+            (_colon?.end ?? (_leftRight?.end ?? (_leftRange?.end ?? _leftLeft.end))))));
+
+        static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ParsingState state,
+            ref BracketToken? closingBracket)
         {
-            ExpressionOrRange(state, ref _leftLeft, ref _leftRange, ref _leftRight);
+            List<Line> content = new();
+            for (var token = state.currentToken; token is not null; token = state.nextToken)
+            {
+                switch (token)
+                {
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                        return content.ToMaybeList();
+
+                    case BracketToken { Bracket: '}' } expectedClosingBracket:
+                        closingBracket = expectedClosingBracket;
+                        state.Increment();
+                        return content.ToMaybeList();
+
+                    case RangeToken:
+                    case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
+                    case BracketToken { Bracket: not '{' }:
+                    case UnaryOpToken:
+                    case BinaryOpToken:
+                    case TernaryOpToken:
+                    case BaseValueToken:
+                        content.Add(new Line(state));
+                        break;
+
+                    default:
+                        state.AddUnexpected(token);
+                        state.Increment();
+                        break;
+                }
+            }
+            return content.ToMaybeList();
+        }
+
+        private Line(ParsingState state)
+        {
+            ExpressionOrRange(state, ref _leftLeft!, ref _leftRange, ref _leftRight);
             for (var token = state.currentToken; token is not null; token = state.nextToken)
             {
                 switch (token)

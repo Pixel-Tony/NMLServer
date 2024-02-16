@@ -5,12 +5,18 @@ namespace NMLServer.Model.Statement;
 
 internal sealed partial class TownNames
 {
-    private readonly partial record struct Part
+    private readonly partial record struct Part : IHasEnd
     {
         private readonly BracketToken _openingBracket;
-        private readonly BracketToken? _closingBracket;
         private readonly IReadOnlyList<TownNamesPartTextEntry>? _texts;
         private readonly IReadOnlyList<SubEntry>? _subParts;
+        private readonly BracketToken? _closingBracket;
+
+        public int end => _closingBracket?.end ?? Extensions.LastOf(_texts, _subParts) switch
+        {
+            0 => _openingBracket.end,
+            var v => v
+        };
 
         public Part(ParsingState state, BracketToken openingBracket)
         {
@@ -27,7 +33,7 @@ internal sealed partial class TownNames
                         goto label_End;
 
                     case IdentifierToken:
-                        var call = ExpressionAST.TryParse(state, true);
+                        var call = ExpressionAST.TryParse(state, true)!;
                         token = state.currentToken;
                         if (token is BinaryOpToken { Type: OperatorType.Comma } commaInText)
                         {
@@ -39,7 +45,7 @@ internal sealed partial class TownNames
 
                     case KeywordToken { Type: KeywordType.TownNames } subPartKeyword:
                         state.IncrementSkippingComments();
-                        var args = ExpressionAST.TryParse(state, true);
+                        var args = ExpressionAST.TryParse(state, true)!;
 
                         token = state.currentToken;
                         if (token is BinaryOpToken { Type: OperatorType.Comma } commaInSubPart)

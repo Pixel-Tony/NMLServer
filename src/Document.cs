@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using NMLServer.Lexing;
-using NMLServer.Model.Statement;
+using NMLServer.Model;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -12,13 +12,21 @@ namespace NMLServer;
 internal partial class Document
 {
     public readonly DocumentUri Uri;
-    private int _version;
-    private bool _isActualVersionOfDiagnostics;
-    private string _source;
     private readonly List<int> _lineLengths = new();
     private readonly List<Diagnostic> _diagnostics = new();
 
+    private string _source;
+
+    private string source
+    {
+        set => _symbolComparer.Context = _source = value;
+    }
+
+    private readonly IdentifierComparer _symbolComparer;
+
     private NMLFile _file;
+    private int _version;
+    private bool _isActualVersionOfDiagnostics;
 
     public IEnumerable<Diagnostic> diagnostics => Analyze();
 
@@ -32,14 +40,14 @@ internal partial class Document
         Uri = item.Uri;
         _version = item.Version ?? 0;
         _source = EncodeSource(item.Text);
+        _symbolComparer = new IdentifierComparer(_source);
 
-        var tokens = Lexer.Process(_source, _lineLengths);
-        var comparer = new IdentifierComparer(_source);
-        _file = NMLFile.Make(tokens, comparer);
+        var tokens = Lexer.Process(_source, in _lineLengths);
+        _file = new NMLFile(tokens, _symbolComparer);
     }
 
-    // TODO| find the list of statements affected by change, drop them;
-    // TODO| use updated source range covered by them to get new sublist, insert into old list.
+    // TODO find the list of statements affected by change, drop them and cleanup;
+    // TODO use updated source range covered by them to get new sublist, insert into old list.
     public void UpdateFrom(DidChangeTextDocumentParams request)
     {
         if (_version >= request.TextDocument.Version)
@@ -48,28 +56,25 @@ internal partial class Document
         }
         foreach (var change in request.ContentChanges)
         {
-            if (change.Range is null)
+            var range = change.Range;
+            if (range is null)
             {
-                _source = EncodeSource(change.Text);
+                source = EncodeSource(change.Text);
                 ++_version;
                 continue;
             }
-            var (startIndex, endIndex) = ProtocolToLocal(change.Range);
-            var line = change.Range.Start.Line;
-            if (line > _lineLengths.Count - 1)
-            {
-                _lineLengths.EnsureCapacity(line + 1);
-            }
-            _lineLengths[line] = _source.Length - change.RangeLength + change.Text.Length;
-            {
-                var span = _source.AsSpan();
-                _source = string.Concat(span[..startIndex], EncodeSource(change.Text), span[endIndex..]);
-            }
+            var (startIndex, endIndex) = ProtocolToLocal(range);
+            var line = range.Start.Line;
+            var text = EncodeSource(change.Text);
+            _lineLengths.EnsureCapacity(line + 1);
+            _lineLengths[line] = _source.Length - change.RangeLength + text.Length;
+            var span = _source.AsSpan();
+            source = string.Concat(span[..startIndex], text, span[endIndex..]);
             ++_version;
         }
 
-        var tokens = Lexer.Process(_source, _lineLengths);
-        _file = NMLFile.Make(tokens, new IdentifierComparer(_source));
+        var tokens = Lexer.Process(_source, in _lineLengths);
+        _file = new NMLFile(tokens, _symbolComparer);
         _isActualVersionOfDiagnostics = false;
         Analyze();
     }
@@ -165,6 +170,7 @@ internal partial class Document
     }
 
     // TODO: add option "max. number of problems per file"
+    // TODO: full to delta, if possible
     private IEnumerable<Diagnostic> Analyze()
     {
         if (_isActualVersionOfDiagnostics)
@@ -187,9 +193,7 @@ internal partial class Document
                 Range = new Range(line, @char, line, @char + length),
             });
         }
-
         _diagnostics.AddRange(_file.ProvideDiagnostics(this));
-
         _isActualVersionOfDiagnostics = true;
         return _diagnostics;
     }
@@ -229,20 +233,20 @@ internal partial class Document
             return null;
         }
         var coordinate = ProtocolToLocal(position);
-        var symbol = _file.GetSymbolAt(coordinate, out int tokenLength);
-        if (symbol is not IdentifierToken identifierToken)
+        var token = _file.GetTokenAt(coordinate);
+        if (token is not IdentifierToken { Length: var tokenLength } symbol)
         {
             return null;
         }
-        var elements = _file.GetSourcesForSymbol(identifierToken);
+        var elements = _file.GetSourcesForSymbol(symbol);
         if (elements is null)
         {
             return null;
         }
         List<LocationOrLocationLink> locations = new(capacity: elements.Count);
-        foreach (var canDefineElement in elements)
+        foreach (var sameSymbol in elements)
         {
-            var (line, @char) = GetPosition(canDefineElement.symbol!.Start);
+            var (line, @char) = GetPosition(sameSymbol.Start);
             locations.Add(new Location
             {
                 Uri = Uri,

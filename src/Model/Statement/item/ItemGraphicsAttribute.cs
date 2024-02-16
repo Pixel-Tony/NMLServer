@@ -3,7 +3,7 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal readonly record struct ItemGraphicsAttribute
+internal readonly record struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGraphicsAttribute>
 {
     private readonly IdentifierToken? _identifier;
     private readonly ColonToken? _colon;
@@ -11,7 +11,10 @@ internal readonly record struct ItemGraphicsAttribute
     private readonly ExpressionAST? _value;
     private readonly SemicolonToken? _semicolon;
 
-    public static List<ItemGraphicsAttribute>? TryParseSomeInBlock(ParsingState state, ref BracketToken? expectedClosingBracket)
+    public int end => _semicolon?.end ?? (_value?.end ?? (_returnKeyword?.end ?? (_colon?.end ?? _identifier!.end)));
+
+    public static List<ItemGraphicsAttribute>? ParseSomeInBlock(ParsingState state,
+        ref BracketToken? expectedClosingBracket)
     {
         List<ItemGraphicsAttribute> attributes = new();
 
@@ -47,7 +50,7 @@ internal readonly record struct ItemGraphicsAttribute
     private ItemGraphicsAttribute(ParsingState state, IdentifierToken identifier)
     {
         _identifier = identifier;
-        for (var token = state.nextToken; _colon is null && token is not null; token = state.nextToken)
+        for (var token = state.nextToken; token is not null; token = state.nextToken)
         {
             switch (token)
             {
@@ -67,8 +70,8 @@ internal readonly record struct ItemGraphicsAttribute
                     _semicolon = state.ExpectSemicolon();
                     return;
 
-                case KeywordToken:
-                    break;
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    return;
 
                 case SemicolonToken semicolonToken:
                     _semicolon = semicolonToken;

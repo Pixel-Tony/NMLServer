@@ -6,7 +6,7 @@ internal partial class GRFBlock
 {
     private partial class Parameter
     {
-        private readonly record struct Names
+        private readonly record struct Names : IHasEnd
         {
             private readonly IdentifierToken? _name;
             private readonly ColonToken? _colon;
@@ -14,6 +14,9 @@ internal partial class GRFBlock
             private readonly IReadOnlyList<NMLAttribute>? _items;
             private readonly BracketToken? _closingBracket;
             private readonly SemicolonToken? _semicolon;
+
+            public int end => _semicolon?.end ?? (_closingBracket?.end ?? (_items?[^1].end ?? (_openingBracket?.end
+                ?? (_colon?.end ?? _name!.end))));
 
             public Names(ParsingState state, IdentifierToken? name, ColonToken? colon,
                 BracketToken openingBracket)

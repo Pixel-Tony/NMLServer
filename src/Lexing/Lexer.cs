@@ -4,33 +4,19 @@ namespace NMLServer.Lexing;
 
 internal static class Lexer
 {
-    private ref struct Data
-    {
-        public readonly int MaxPos;
-        public int Pos;
-        public readonly ReadOnlySpan<char> Content;
-
-        public char currentChar => Content[Pos];
-
-        public Data(ReadOnlySpan<char> content)
-        {
-            MaxPos = content.Length - 1;
-            Pos = 0;
-            Content = content;
-        }
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static List<Token> Process(string input, List<int> lineLengths)
-        => Process(input.AsSpan(), lineLengths).tokens;
+    public static List<Token> Process(string input, in List<int> lineLengths)
+        => Process(input.AsSpan(), in lineLengths).tokens;
 
-    private static (List<Token> tokens, List<int> lineLengths) Process(ReadOnlySpan<char> input, List<int> lineLengths)
+    // TODO: add parameters for start and max symbol positions
+    private static (List<Token> tokens, List<int> lineLengths) Process(ReadOnlySpan<char> input,
+        in List<int> lineLengths)
     {
-        Data data = new(input);
+        LexData data = new(content: input);
         List<Token> tokens = new();
         lineLengths.Clear();
         int lineStart = 0;
-        while (data.Pos <= data.MaxPos)
+        while (data.isInBounds)
         {
             char c = data.currentChar;
             if (c is '\n')
@@ -44,86 +30,63 @@ internal static class Lexer
                 ++data.Pos;
                 continue;
             }
-            if (c is '_' || char.IsLetter(c))
+            if (char.IsLetter(c))
             {
                 tokens.Add(ParseIdentifier(ref data));
                 continue;
             }
-            switch (c)
+            tokens.Add(c switch
             {
-                case >= '0' and <= '9':
-                    tokens.Add(ParseNumber(c, ref data));
-                    break;
-
-                case '=':
-                    if (data.Pos == data.MaxPos || data.Content[data.Pos + 1] is not '=')
-                    {
-                        tokens.Add(new AssignmentToken(data.Pos++));
-                        continue;
-                    }
-                    tokens.Add(new BinaryOpToken(data.Pos, ++data.Pos, OperatorType.Eq));
-                    ++data.Pos;
-                    break;
-
-                case '.':
-                    if (data.Pos == data.MaxPos)
-                    {
-                        break;
-                    }
-                    ++data.Pos;
-                    tokens.Add(data.currentChar is '.'
-                        ? new RangeToken(data.Pos++ - 1)
-                        : new UnknownToken(data.Pos - 1)
-                    );
-                    break;
-
-                case ';':
-                    tokens.Add(new SemicolonToken(data.Pos++));
-                    break;
-
-                case ':':
-                    tokens.Add(new ColonToken(data.Pos++));
-                    break;
-
-                case '?':
-                    tokens.Add(new TernaryOpToken(data.Pos++));
-                    break;
-
-                case '/':
-                    tokens.Add(ParseFromSlash(lineLengths, ref lineStart, ref data));
-                    break;
-
-                case '[' or ']' or '(' or ')' or '{' or '}':
-                    tokens.Add(new BracketToken(data.Pos++, c));
-                    break;
-
-                case '\'' or '"':
-                    tokens.Add(ParseLiteralString(c, ref data));
-                    break;
-
-                case '#':
-                    tokens.Add(ParseHashtagComment(ref data));
-                    break;
-
-                default:
-                    var type = Grammar.GetOperatorType(c);
-                    tokens.Add(
-                        type is not OperatorType.None
-                            ? ParseOperator(c, type, ref data)
-                            : new UnknownToken(data.Pos++)
-                    );
-                    break;
-            }
+                '_' => ParseIdentifier(ref data),
+                >= '0' and <= '9' => ParseNumber(c, ref data),
+                ';' => new SemicolonToken(data.Pos++),
+                ':' => new ColonToken(data.Pos++),
+                '=' => ParseOnEqualsSign(ref data),
+                '.' => ParseOnDot(ref data),
+                '?' => new TernaryOpToken(data.Pos++),
+                '/' => ParseFromSlash(lineLengths, ref lineStart, ref data),
+                '[' or ']' or '(' or ')' or '{' or '}' => new BracketToken(data.Pos++, c),
+                '\'' or '"' => ParseLiteralString(c, ref data),
+                '#' => ParseHashtagComment(ref data),
+                _ => TryParseOperator(c, Grammar.GetOperatorType(c), ref data)
+            });
         }
         lineLengths.Add(data.Pos - lineStart);
         return (tokens, lineLengths);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseOperator(char c, OperatorType type, ref Data data)
+    private static Token ParseOnDot(ref LexData data)
     {
+        if (data.isAtLastChar)
+        {
+            return new UnknownToken(data.Pos++);
+        }
+        ++data.Pos;
+        return data.currentChar is '.'
+            ? new RangeToken(data.Pos++ - 1)
+            : new UnknownToken(data.Pos - 1);
+    }
+
+    private static Token ParseOnEqualsSign(ref LexData data)
+    {
+        if (data.isAtLastChar || data.nextChar is not '=')
+        {
+            return new AssignmentToken(data.Pos++);
+        }
+        var result = new BinaryOpToken(data.Pos, ++data.Pos, OperatorType.Eq);
+        ++data.Pos;
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Token TryParseOperator(char c, OperatorType type, ref LexData data)
+    {
+        if (type is OperatorType.None)
+        {
+            return new UnknownToken(data.Pos++);
+        }
         int start = data.Pos++;
-        if (data.Pos == data.MaxPos)
+        if (data.isAtLastChar)
         {
             return c switch
             {
@@ -133,7 +96,6 @@ internal static class Lexer
             };
         }
         ReadOnlySpan<char> needle = stackalloc char[2] { c, data.currentChar };
-
         var opTokenType = Grammar.GetOperatorType(needle);
         if (opTokenType is OperatorType.None)
         {
@@ -144,7 +106,7 @@ internal static class Lexer
                 _ => new BinaryOpToken(start, data.Pos, type)
             };
         }
-        if (opTokenType is not OperatorType.ShiftRight || data.Pos >= data.MaxPos)
+        if (opTokenType is not OperatorType.ShiftRight || data.isAtLastChar)
         {
             return new BinaryOpToken(start, ++data.Pos, opTokenType);
         }
@@ -155,10 +117,10 @@ internal static class Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static CommentToken ParseHashtagComment(ref Data data)
+    private static CommentToken ParseHashtagComment(ref LexData data)
     {
         int start = data.Pos++;
-        while (data.Pos <= data.MaxPos)
+        while (data.isInBounds)
         {
             char c = data.currentChar;
             if (c == '\n')
@@ -171,10 +133,10 @@ internal static class Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseFromSlash(ICollection<int> lineLengths, ref int lineStart, ref Data data)
+    private static Token ParseFromSlash(ICollection<int> lineLengths, ref int lineStart, ref LexData data)
     {
         int start = data.Pos++;
-        if (data.MaxPos == data.Pos)
+        if (data.isAtLastChar)
         {
             return new BinaryOpToken(start, data.Pos, OperatorType.Divide);
         }
@@ -182,7 +144,7 @@ internal static class Lexer
         {
             case '*':
                 ++data.Pos;
-                while (data.Pos <= data.MaxPos && data.Pos - start < 3)
+                while (data.isInBounds && data.Pos - start < 3)
                 {
                     if (data.currentChar is '\n')
                     {
@@ -193,7 +155,7 @@ internal static class Lexer
                     ++data.Pos;
                 }
                 char prev = data.Content[data.Pos - 1];
-                while (data.Pos <= data.MaxPos)
+                while (data.isInBounds)
                 {
                     var current = data.currentChar;
                     if (current is '\n')
@@ -214,7 +176,7 @@ internal static class Lexer
 
             case '/':
                 ++data.Pos;
-                while (data.Pos <= data.MaxPos)
+                while (data.isInBounds)
                 {
                     if (data.currentChar is '\n')
                     {
@@ -230,10 +192,10 @@ internal static class Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseLiteralString(char openingQuote, ref Data data)
+    private static Token ParseLiteralString(char openingQuote, ref LexData data)
     {
         int start = data.Pos++;
-        while (data.Pos <= data.MaxPos)
+        while (data.isInBounds)
         {
             char c = data.currentChar;
             ++data.Pos;
@@ -246,11 +208,11 @@ internal static class Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseIdentifier(ref Data data)
+    private static Token ParseIdentifier(ref LexData data)
     {
         int start = data.Pos++;
-        char current = default;
-        for (; data.Pos <= data.MaxPos; ++data.Pos)
+        char current = '\0';
+        for (; data.isInBounds; ++data.Pos)
         {
             current = data.currentChar;
             if (!IsValidIdentifierCharacter(current))
@@ -265,11 +227,11 @@ internal static class Lexer
             case '/' when data.MaxPos - data.Pos > 1 && !IsValidIdentifierCharacter(data.Content[data.Pos + 2]):
                 switch (data.Pos - start)
                 {
-                    case 1 when value is "m" && data.Content[data.Pos + 1] is 's':
+                    case 1 when value is "m" && data.nextChar is 's':
                         data.Pos += 2;
                         return new UnitToken(start, UnitType.MPS);
 
-                    case 2 when value is "km" && data.Content[data.Pos + 1] is 'h':
+                    case 2 when value is "km" && data.nextChar is 'h':
                         data.Pos += 2;
                         return new UnitToken(start, UnitType.KMPH);
                 }
@@ -292,7 +254,7 @@ internal static class Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseNumber(char c, ref Data data)
+    private static Token ParseNumber(char c, ref LexData data)
     {
         const byte startingZero = 0;
         const byte onInt = 1;
@@ -301,9 +263,11 @@ internal static class Lexer
         const byte floatOnDot = 4;
         const byte floatAfterDot = 5;
 
-        var innerState = c is '0' ? startingZero : onInt;
+        var innerState = c is '0'
+            ? startingZero
+            : onInt;
         int start = data.Pos++;
-        for (; data.Pos <= data.MaxPos; ++data.Pos)
+        for (; data.isInBounds; ++data.Pos)
         {
             c = data.currentChar;
             switch (innerState)
@@ -384,8 +348,7 @@ internal static class Lexer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static UnitType CheckLiteralUnit(ReadOnlySpan<char> target)
-    {
-        return target switch
+        => target switch
         {
             "hp" => UnitType.HP,
             "kg" => UnitType.Kg,
@@ -397,12 +360,10 @@ internal static class Lexer
             "tons" => UnitType.Tons,
             _ => UnitType.None
         };
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static (KeywordType type, KeywordKind kind) CheckKeyword(ReadOnlySpan<char> needle)
-    {
-        return needle switch
+        => needle switch
         {
             "if" => (KeywordType.If, KeywordKind.BlockDefining),
             "grf" => (KeywordType.Grf, KeywordKind.BlockDefining),
@@ -444,5 +405,27 @@ internal static class Lexer
             "alternative_sprites" => (KeywordType.AlternativeSprites, KeywordKind.BlockDefining),
             _ => (KeywordType.None, KeywordKind.None)
         };
+
+    private ref struct LexData
+    {
+        public readonly int MaxPos;
+        public int Pos;
+        public readonly ReadOnlySpan<char> Content;
+
+        public char currentChar => Content[Pos];
+
+        public char nextChar => Content[Pos + 1];
+
+        public bool isAtLastChar => Pos == MaxPos;
+
+        public bool isInBounds => Pos <= MaxPos;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public LexData(ReadOnlySpan<char> content)
+        {
+            MaxPos = content.Length - 1;
+            Pos = 0;
+            Content = content;
+        }
     }
 }

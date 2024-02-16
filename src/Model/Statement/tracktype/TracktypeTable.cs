@@ -4,8 +4,10 @@ namespace NMLServer.Model.Statement;
 
 internal sealed partial class TracktypeTable : BaseStatementWithBlock
 {
-    private IReadOnlyList<(BaseValueToken? identifier, BinaryOpToken? comma)>? _entries;
-    private IReadOnlyList<FallbackEntry>? _fallbackEntries;
+    private readonly IReadOnlyList<ValueWithComma<BaseValueToken>>? _entries;
+    private readonly IReadOnlyList<FallbackEntry>? _fallbackEntries;
+
+    protected override int middleEnd => Extensions.LastOf(_entries, _fallbackEntries);
 
     public TracktypeTable(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
@@ -13,7 +15,7 @@ internal sealed partial class TracktypeTable : BaseStatementWithBlock
         {
             return;
         }
-        List<(BaseValueToken? identifier, BinaryOpToken? comma)> entries = new();
+        List<ValueWithComma<BaseValueToken>> entries = new();
         List<FallbackEntry> fallbacks = new();
         IdentifierToken? current = null;
         for (var token = state.currentToken; token is not null;)
@@ -26,11 +28,11 @@ internal sealed partial class TracktypeTable : BaseStatementWithBlock
                     goto label_End;
 
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
-                    entries.Add((current, commaToken));
+                    entries.Add(new(current, commaToken));
                     current = null;
                     break;
 
-                case ColonToken colonToken:
+                case ColonToken colonToken when current is not null:
                     fallbacks.Add(new FallbackEntry(state, current, colonToken));
                     current = null;
                     token = state.currentToken;
@@ -41,6 +43,10 @@ internal sealed partial class TracktypeTable : BaseStatementWithBlock
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    if (current is not null)
+                    {
+                        entries.Add(new(current, null));
+                    }
                     goto label_End;
 
                 default:

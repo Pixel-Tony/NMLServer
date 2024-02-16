@@ -7,6 +7,8 @@ internal sealed partial class TownNames : BaseStatementWithBlock
     private readonly IReadOnlyList<NMLAttribute>? _attributes;
     private readonly IReadOnlyList<Part>? _parts;
 
+    protected override int middleEnd => Extensions.LastOf(_attributes, _parts);
+
     public TownNames(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is not null)

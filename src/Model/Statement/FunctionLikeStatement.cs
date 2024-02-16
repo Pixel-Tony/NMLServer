@@ -9,6 +9,9 @@ internal sealed class FunctionLikeStatement : BaseStatement
     private readonly ExpressionAST? _parameters;
     private readonly SemicolonToken? _semicolon;
 
+    public override int start => _keyword.Start;
+    public override int end => _semicolon?.end ?? (_parameters?.end ?? _keyword.end);
+
     public FunctionLikeStatement(ParsingState state, KeywordToken keyword)
     {
         _keyword = keyword;

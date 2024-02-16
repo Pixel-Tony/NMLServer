@@ -71,7 +71,26 @@ internal static class Grammar
         };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OperatorType GetOperatorType(char needle) => GetOperatorType(stackalloc char[] { needle });
+    public static OperatorType GetOperatorType(char needle)
+        => needle switch
+        {
+            ',' => Comma,
+            '?' => QuestionMark,
+            ':' => Colon,
+            '|' => BinaryOr,
+            '^' => BinaryXor,
+            '&' => BinaryAnd,
+            '<' => Lt,
+            '>' => Gt,
+            '+' => Plus,
+            '-' => Minus,
+            '*' => Multiply,
+            '/' => Divide,
+            '%' => Modula,
+            '!' => LogicalNot,
+            '~' => BinaryNot,
+            _ => None
+        };
 
     private static readonly Dictionary<string, SymbolKind> _definedSymbols = new();
 

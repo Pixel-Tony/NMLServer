@@ -7,6 +7,8 @@ internal sealed partial class GRFBlock : BaseStatementWithBlock
     private readonly IReadOnlyList<NMLAttribute>? _attributes;
     private readonly IReadOnlyList<Parameter>? _parameters;
 
+    protected override int middleEnd => Extensions.LastOf(_attributes, _parameters);
+
     public GRFBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is not null)

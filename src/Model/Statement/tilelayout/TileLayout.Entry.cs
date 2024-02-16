@@ -5,7 +5,7 @@ namespace NMLServer.Model.Statement;
 
 internal sealed partial class TileLayout
 {
-    internal readonly record struct Entry
+    internal readonly record struct Entry : IHasEnd
     {
         private readonly NumericToken? _x;
         private readonly BinaryOpToken? _comma;
@@ -13,6 +13,8 @@ internal sealed partial class TileLayout
         private readonly ColonToken? _colon;
         private readonly ExpressionAST? _value;
         private readonly SemicolonToken? _semicolon;
+
+        public int end => _semicolon?.end ?? (_value?.end ?? (_colon?.end ?? (_y?.end ?? (_comma?.end ?? _x!.end))));
 
         public Entry(ParsingState state, NumericToken? x, BinaryOpToken? comma = null)
         {

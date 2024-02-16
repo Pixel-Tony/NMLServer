@@ -8,9 +8,7 @@ internal class ParsingState
     private readonly IReadOnlyList<Token> _tokens;
     private readonly int _max;
     private int _pointer;
-    private readonly List<Token> _unexpectedTokens = new();
-
-    public IReadOnlyList<Token> unexpectedTokens => _unexpectedTokens;
+    private readonly List<Token> _unexpectedTokens;
 
     public void AddUnexpected(Token? token)
     {
@@ -20,8 +18,9 @@ internal class ParsingState
         }
     }
 
-    public ParsingState(IReadOnlyList<Token> tokens)
+    public ParsingState(IReadOnlyList<Token> tokens, List<Token>? unexpectedTokens = null)
     {
+        _unexpectedTokens = unexpectedTokens ?? new List<Token>();
         _tokens = tokens;
         _pointer = 0;
         _max = _tokens.Count - 1;

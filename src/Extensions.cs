@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using NMLServer.Lexing;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
@@ -11,6 +12,11 @@ internal static class Extensions
             ? target
             : null;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int LastOf<T1, T2>(IReadOnlyList<T1>? first, IReadOnlyList<T2>? second)
+        where T1 : IHasEnd where T2 : IHasEnd
+        => int.Max(first?[^1].end ?? 0, second?[^1].end ?? 0);
 
     public static SemanticTokenType? ToGeneralTokenType(this SymbolKind target)
     {
@@ -26,6 +32,7 @@ internal static class Extensions
         };
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetLength(this Token token)
     {
         return token switch

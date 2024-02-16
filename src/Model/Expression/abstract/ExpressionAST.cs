@@ -1,8 +1,9 @@
 using NMLServer.Lexing;
+using NMLServer.Model.Statement;
 
 namespace NMLServer.Model.Expression;
 
-internal abstract class ExpressionAST
+internal abstract class ExpressionAST : IAllowsParseInsideBlock<ExpressionAST>
 {
     private ExpressionAST? _parent;
 
@@ -14,6 +15,24 @@ internal abstract class ExpressionAST
     protected virtual void Replace(ExpressionAST target, FunctionCall value)
     {
         throw new Exception($"Cannot replace child: {GetType()} is a bottom-level node");
+    }
+
+    public static List<ExpressionAST>? ParseSomeInBlock(ParsingState state, ref BracketToken? closingBracket)
+    {
+        var expression = TryParse(state);
+        if (expression is not null)
+        {
+            List<ExpressionAST> result = new();
+            while (expression is not null)
+            {
+                result.Add(expression);
+                expression = TryParse(state);
+            }
+            closingBracket = state.ExpectClosingCurlyBracket();
+            return result;
+        }
+        closingBracket = state.ExpectClosingCurlyBracket();
+        return null;
     }
 
     // TODO: possibly provide Parse(ParsingState, bool, Token) method for parsing from already checked token

@@ -13,13 +13,28 @@ internal partial class GRFBlock
         private readonly IReadOnlyList<Names>? _names;
         private readonly BracketToken? _innerClosingBracket;
 
+        protected override int middleEnd
+        {
+            get
+            {
+                if (_innerClosingBracket is not null)
+                {
+                    return _innerClosingBracket.end;
+                }
+                return Extensions.LastOf(_names, _attributes) switch
+                {
+                    0 => _innerOpeningBracket?.end ?? _name?.end ?? 0,
+                    var v => v
+                };
+            }
+        }
+
         public Parameter(ParsingState state, KeywordToken keyword) : base(state, keyword)
         {
             if (ClosingBracket is not null)
             {
                 return;
             }
-
             bool inside = false;
             for (var token = state.currentToken; !inside && token is not null; token = state.nextToken)
             {

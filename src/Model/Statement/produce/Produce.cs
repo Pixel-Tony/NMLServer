@@ -9,12 +9,18 @@ internal sealed partial class Produce : BaseStatement
     private readonly BracketToken? _openingBracket;
     private readonly IdentifierToken? _id;
     private readonly BinaryOpToken? _firstComma;
+    private readonly CargoList _consumptions;
     private readonly BinaryOpToken? _secondComma;
+    private readonly CargoList _productions;
     private readonly BinaryOpToken? _thirdComma;
     private readonly ExpressionAST? _runAgain;
     private readonly BracketToken? _closingBracket;
-    private readonly CargoList _consumptions;
-    private readonly CargoList _productions;
+
+    public override int start => _keyword.Start;
+
+    public override int end
+        => _closingBracket?.end ?? (_runAgain?.end ?? (_thirdComma?.end ?? (_productions.end ?? (_secondComma?.end
+            ?? (_consumptions.end ?? _firstComma?.end ?? _id?.end ?? _openingBracket?.end ?? _keyword.end)))));
 
     private enum InnerState : byte
     {

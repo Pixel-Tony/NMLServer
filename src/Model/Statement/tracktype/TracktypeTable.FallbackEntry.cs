@@ -4,20 +4,23 @@ namespace NMLServer.Model.Statement;
 
 internal partial class TracktypeTable
 {
-    private readonly record struct FallbackEntry
+    private readonly record struct FallbackEntry : IHasEnd
     {
-        public readonly BaseValueToken? Identifier;
-        public readonly ColonToken? Colon;
+        private readonly BaseValueToken _identifier;
+        private readonly ColonToken? _colon;
         private readonly BracketToken? _openingBracket;
-        private readonly IReadOnlyList<(BaseValueToken? identifier, BinaryOpToken? comma)>? _fallback;
+        private readonly IReadOnlyList<ValueWithComma<BaseValueToken>>? _fallback;
         private readonly BracketToken? _closingBracket;
         private readonly BinaryOpToken? _comma;
 
-        public FallbackEntry(ParsingState state, BaseValueToken? identifier, ColonToken colon)
+        public int end => _comma?.end ?? (_closingBracket?.end ?? (_fallback?[^1].end ?? (_openingBracket?.end
+            ?? (_colon?.end ?? _identifier.end))));
+
+        public FallbackEntry(ParsingState state, BaseValueToken identifier, ColonToken colon)
         {
-            Identifier = identifier;
-            Colon = colon;
-            List<(BaseValueToken? identifier, BinaryOpToken? comma)> fallbacks = new();
+            _identifier = identifier;
+            _colon = colon;
+            List<ValueWithComma<BaseValueToken>> fallbacks = new();
             BaseValueToken? current = null;
             for (var token = state.nextToken; token is not null; token = state.nextToken)
             {
@@ -27,8 +30,8 @@ internal partial class TracktypeTable
                         _fallback = fallbacks.ToMaybeList();
                         return;
 
-                    case BinaryOpToken { Type: OperatorType.Comma } commaToken:
-                        fallbacks.Add((current, commaToken));
+                    case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
+                        fallbacks.Add(new(current, commaToken));
                         current = null;
                         break;
 

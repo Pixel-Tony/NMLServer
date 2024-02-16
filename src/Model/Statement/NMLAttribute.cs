@@ -3,12 +3,15 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal record struct NMLAttribute
+internal readonly record struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
 {
     private readonly BaseMulticharToken? _key;
     private readonly ColonToken? _colon;
-    private ExpressionAST? _value;
-    private SemicolonToken? _semicolon;
+    private readonly ExpressionAST? _value;
+    private readonly SemicolonToken? _semicolon;
+
+    public int start => _key?.Start ?? (_colon?.Start ?? (_value?.start ?? _semicolon!.Start));
+    public int end => _semicolon?.end ?? (_value?.end ?? (_colon?.end ?? _key!.end));
 
     public NMLAttribute(BaseMulticharToken? key, ColonToken? colon, ExpressionAST? value, SemicolonToken? semicolon)
     {
@@ -57,7 +60,7 @@ internal record struct NMLAttribute
         }
     }
 
-    public static List<NMLAttribute>? TryParseSomeInBlock(ParsingState state, ref BracketToken? expectedClosingBracket)
+    public static List<NMLAttribute>? ParseSomeInBlock(ParsingState state, ref BracketToken? closingBracket)
     {
         List<NMLAttribute> attributes = new();
         for (var token = state.currentToken; token is not null; token = state.currentToken)
@@ -72,8 +75,8 @@ internal record struct NMLAttribute
                     attributes.Add(new NMLAttribute(state, identifierToken));
                     break;
 
-                case BracketToken { Bracket: '}' } closingBracket:
-                    expectedClosingBracket = closingBracket;
+                case BracketToken { Bracket: '}' } expectedClosingBracket:
+                    closingBracket = expectedClosingBracket;
                     state.Increment();
                     return attributes.ToMaybeList();
 

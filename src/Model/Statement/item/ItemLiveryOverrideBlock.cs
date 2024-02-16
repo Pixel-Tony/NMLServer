@@ -2,15 +2,8 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal class ItemLiveryOverrideBlock : BaseStatementWithBlock
+internal class ItemLiveryOverrideBlock : BaseStatementWithBlockOf<ItemGraphicsAttribute>
 {
-    private IReadOnlyList<ItemGraphicsAttribute>? _attributes;
-
     public ItemLiveryOverrideBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
-    {
-        if (ClosingBracket is null)
-        {
-            _attributes = ItemGraphicsAttribute.TryParseSomeInBlock(state, ref ClosingBracket);
-        }
-    }
+    { }
 }

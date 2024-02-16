@@ -7,6 +7,8 @@ internal sealed partial class TileLayout : BaseStatementWithBlock
     private readonly IReadOnlyList<NMLAttribute>? _attributes;
     private readonly IReadOnlyList<Entry>? _entries;
 
+    protected override int middleEnd => Extensions.LastOf(_attributes, _entries);
+
     public TileLayout(ParsingState state, KeywordToken keyword) : base(state, keyword)
     {
         if (ClosingBracket is not null)
