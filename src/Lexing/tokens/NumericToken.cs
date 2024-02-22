@@ -1,7 +1,3 @@
 namespace NMLServer.Lexing;
 
-internal sealed class NumericToken : BaseValueToken
-{
-    public NumericToken(int start, int end) : base(start, end)
-    { }
-}
+internal sealed class NumericToken(int start, int end) : BaseValueToken(start, end);

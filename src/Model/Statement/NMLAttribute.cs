@@ -10,7 +10,7 @@ internal readonly record struct NMLAttribute : IAllowsParseInsideBlock<NMLAttrib
     private readonly ExpressionAST? _value;
     private readonly SemicolonToken? _semicolon;
 
-    public int start => _key?.Start ?? (_colon?.Start ?? (_value?.start ?? _semicolon!.Start));
+    public int start => _key?.start ?? (_colon?.start ?? (_value?.start ?? _semicolon!.start));
     public int end => _semicolon?.end ?? (_value?.end ?? (_colon?.end ?? _key!.end));
 
     public NMLAttribute(BaseMulticharToken? key, ColonToken? colon, ExpressionAST? value, SemicolonToken? semicolon)

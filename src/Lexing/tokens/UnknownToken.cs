@@ -1,7 +1,3 @@
 namespace NMLServer.Lexing;
 
-internal sealed class UnknownToken : Token
-{
-    public UnknownToken(int pos) : base(pos)
-    { }
-}
+internal sealed class UnknownToken(int start) : Token(start);

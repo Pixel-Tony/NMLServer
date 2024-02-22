@@ -4,15 +4,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace NMLServer.Analysis;
 
-internal class DefinitionHandler : DefinitionHandlerBase
+internal class DefinitionHandler(SourceStorage storage) : DefinitionHandlerBase
 {
-    private readonly SourceStorage _storage;
-
-    public DefinitionHandler(SourceStorage storage)
-    {
-        _storage = storage;
-    }
-
     protected override DefinitionRegistrationOptions CreateRegistrationOptions(DefinitionCapability capability,
         ClientCapabilities clientCapabilities)
     {
@@ -21,6 +14,6 @@ internal class DefinitionHandler : DefinitionHandlerBase
 
     public override Task<LocationOrLocationLinks?> Handle(DefinitionParams request, CancellationToken _)
     {
-        return Task.FromResult(_storage.ProvideDefinition(request));
+        return Task.FromResult(storage.ProvideDefinition(request));
     }
 }

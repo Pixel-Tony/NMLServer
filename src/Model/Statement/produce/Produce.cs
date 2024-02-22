@@ -16,7 +16,7 @@ internal sealed partial class Produce : BaseStatement
     private readonly ExpressionAST? _runAgain;
     private readonly BracketToken? _closingBracket;
 
-    public override int start => _keyword.Start;
+    public override int start => _keyword.start;
 
     public override int end
         => _closingBracket?.end ?? (_runAgain?.end ?? (_thirdComma?.end ?? (_productions.end ?? (_secondComma?.end

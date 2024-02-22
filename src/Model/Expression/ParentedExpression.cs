@@ -2,30 +2,23 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Expression;
 
-internal sealed class ParentedExpression : ExpressionAST
+internal sealed class ParentedExpression(
+    ExpressionAST? parent = null,
+    BracketToken? openingBracket = null,
+    ExpressionAST? expression = null,
+    BracketToken? closingBracket = null)
+    : ExpressionAST(parent)
 {
-    public readonly BracketToken? OpeningBracket;
-    public ExpressionAST? Expression;
-    public BracketToken? ClosingBracket;
+    public readonly BracketToken? OpeningBracket = openingBracket;
+    public ExpressionAST? Expression = expression;
+    public BracketToken? ClosingBracket = closingBracket;
 
-    public override int start => OpeningBracket?.Start ?? Expression?.start ?? ClosingBracket!.Start;
+    public override int start => OpeningBracket?.start ?? Expression?.start ?? ClosingBracket!.start;
 
     public override int end
         => ClosingBracket is not null
-            ? ClosingBracket.Start + 1
-            : Expression?.end ?? OpeningBracket!.Start + 1;
-
-    public ParentedExpression(
-        ExpressionAST? parent = null,
-        BracketToken? openingBracket = null,
-        ExpressionAST? expression = null,
-        BracketToken? closingBracket = null
-    ) : base(parent)
-    {
-        OpeningBracket = openingBracket;
-        Expression = expression;
-        ClosingBracket = closingBracket;
-    }
+            ? ClosingBracket.start + 1
+            : Expression?.end ?? OpeningBracket!.start + 1;
 
     protected override void Replace(ExpressionAST target, FunctionCall value)
     {

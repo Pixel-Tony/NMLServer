@@ -3,6 +3,7 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model;
 
+// TODO -> ref struct
 internal class ParsingState
 {
     private readonly IReadOnlyList<Token> _tokens;
@@ -18,9 +19,9 @@ internal class ParsingState
         }
     }
 
-    public ParsingState(IReadOnlyList<Token> tokens, List<Token>? unexpectedTokens = null)
+    public ParsingState(IReadOnlyList<Token> tokens, in List<Token>? unexpectedTokens = null)
     {
-        _unexpectedTokens = unexpectedTokens ?? new List<Token>();
+        _unexpectedTokens = unexpectedTokens ?? [];
         _tokens = tokens;
         _pointer = 0;
         _max = _tokens.Count - 1;

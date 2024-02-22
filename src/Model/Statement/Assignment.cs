@@ -18,7 +18,7 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
     public Assignment(ParsingState state)
     {
         _leftHandSide = ExpressionAST.TryParse(state)!;
-        if (_leftHandSide is Identifier { kind: SymbolKind.None } identifier)
+        if (_leftHandSide is Identifier { kind: SymbolKind.Undefined } identifier)
         {
             identifier.kind = SymbolKind.Parameter | SymbolKind.Writeable | SymbolKind.UserDefined;
             symbol = identifier.token;
@@ -72,7 +72,7 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
             {
                 if (opening!.Bracket is not '[')
                 {
-                    context.AddError("Expected square bracket for var/param invocation", opening.Start, 1);
+                    context.AddError("Expected square bracket for var/param invocation", opening.start, 1);
                 }
                 if (closing is null)
                 {
@@ -80,7 +80,7 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
                 }
                 else if (closing.Bracket is not ']')
                 {
-                    context.AddError("Expected square bracket for var/param invocation", closing.Start, 1);
+                    context.AddError("Expected square bracket for var/param invocation", closing.start, 1);
                 }
                 break;
             }
@@ -90,10 +90,10 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
         }
         if (_righHandSide is null)
         {
-            context.AddError("Missing assigned value", _equalsSign.Start + 1);
+            context.AddError("Missing assigned value", _equalsSign.start + 1);
             if (_semicolon is null)
             {
-                context.AddError("Missing semicolon", _equalsSign.Start + 1);
+                context.AddError("Missing semicolon", _equalsSign.start + 1);
             }
             return;
         }

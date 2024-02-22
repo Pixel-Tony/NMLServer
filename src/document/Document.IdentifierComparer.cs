@@ -4,14 +4,9 @@ namespace NMLServer;
 
 internal partial class Document
 {
-    private class IdentifierComparer : IIdentifierTokenComparer
+    private class IdentifierComparer(string context) : IIdentifierTokenComparer
     {
-        public string Context;
-
-        public IdentifierComparer(string context)
-        {
-            Context = context;
-        }
+        public string Context = context;
 
         public bool Equals(IdentifierToken? x, IdentifierToken? y)
         {

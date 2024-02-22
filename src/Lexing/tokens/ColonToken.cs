@@ -1,7 +1,3 @@
 namespace NMLServer.Lexing;
 
-internal sealed class ColonToken : Token
-{
-    public ColonToken(int position) : base(position)
-    { }
-}
+internal sealed class ColonToken(int start) : Token(start);

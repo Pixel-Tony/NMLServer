@@ -10,7 +10,7 @@ internal abstract class BaseStatementWithBlock : BaseStatement
     protected readonly BracketToken? OpeningBracket;
     protected BracketToken? ClosingBracket;
 
-    public sealed override int start => _keyword.Start;
+    public sealed override int start => _keyword.start;
 
     public sealed override int end
     {

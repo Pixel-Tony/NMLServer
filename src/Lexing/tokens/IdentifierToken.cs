@@ -2,19 +2,13 @@ using System.Runtime.CompilerServices;
 
 namespace NMLServer.Lexing;
 
-internal sealed class IdentifierToken : BaseValueToken
+internal sealed class IdentifierToken(int start, int end, StringView value) : BaseValueToken(start, end)
 {
-    public SymbolKind kind { get; set; }
+    public SymbolKind kind { get; set; } = Grammar.GetSymbolKind(value);
 
-    public readonly int Hash;
+    public readonly int Hash = string.GetHashCode(value);
 
-    public IdentifierToken(int start, int end, ReadOnlySpan<char> value) : base(start, end)
-    {
-        kind = Grammar.GetSymbolKind(value);
-        Hash = string.GetHashCode(value);
-    }
-
-    public bool Equals(IdentifierToken obj, ReadOnlySpan<char> context)
+    public bool Equals(IdentifierToken obj, StringView context)
     {
         var value = Value(context);
         var tokenValue = obj.Value(context);
@@ -22,5 +16,5 @@ internal sealed class IdentifierToken : BaseValueToken
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ReadOnlySpan<char> Value(ReadOnlySpan<char> source) => source.Slice(Start, Length);
+    private StringView Value(StringView source) => source.Slice(start, length);
 }

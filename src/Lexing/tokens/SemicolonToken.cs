@@ -1,7 +1,3 @@
 namespace NMLServer.Lexing;
 
-internal sealed class SemicolonToken : Token
-{
-    public SemicolonToken(int pos) : base(pos)
-    { }
-}
+internal sealed class SemicolonToken(int start) : Token(start);

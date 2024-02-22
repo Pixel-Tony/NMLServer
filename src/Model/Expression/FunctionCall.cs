@@ -2,17 +2,12 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Expression;
 
-internal sealed class FunctionCall : ExpressionAST
+internal sealed class FunctionCall(ExpressionAST? parent, BaseMulticharToken function) : ExpressionAST(parent)
 {
-    public readonly BaseMulticharToken Function;
+    public readonly BaseMulticharToken Function = function;
     /* has opening paren if not null */
     public ParentedExpression? Arguments;
 
-    public override int start => Function.Start;
-    public override int end => Arguments?.end ?? start + Function.Length;
-
-    public FunctionCall(ExpressionAST? parent, BaseMulticharToken function) : base(parent)
-    {
-        Function = function;
-    }
+    public override int start => Function.start;
+    public override int end => Arguments?.end ?? start + Function.length;
 }

@@ -1,9 +1,8 @@
 namespace NMLServer.Lexing;
 
-internal sealed class RangeToken : Token
+internal sealed class RangeToken(int start) : Token(start)
 {
-    public override int end => Start + 2;
+    public override int end => start + 2;
 
-    public RangeToken(int start) : base(start)
-    { }
+    public override int length => 2;
 }

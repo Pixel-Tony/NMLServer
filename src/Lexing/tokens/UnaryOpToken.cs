@@ -1,11 +1,6 @@
 namespace NMLServer.Lexing;
 
-internal sealed class UnaryOpToken : Token
+internal sealed class UnaryOpToken(int start, char sign) : Token(start)
 {
-    public readonly char Sign;
-
-    public UnaryOpToken(int pos, char sign) : base(pos)
-    {
-        Sign = sign;
-    }
+    public readonly char Sign = sign;
 }

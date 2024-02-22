@@ -40,7 +40,7 @@ internal static class Grammar
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OperatorType GetOperatorType(ReadOnlySpan<char> needle)
+    public static OperatorType GetOperatorType(StringView needle)
         => needle switch
         {
             "," => Comma,
@@ -121,7 +121,7 @@ internal static class Grammar
         }
     }
 
-    public static SymbolKind GetSymbolKind(ReadOnlySpan<char> needle)
+    public static SymbolKind GetSymbolKind(StringView needle)
     {
         _definedSymbols.TryGetValue(new string(needle), out var result);
         return result;
@@ -133,7 +133,7 @@ internal static class Grammar
         return (type = token switch
         {
             CommentToken => SemanticTokenType.Comment,
-            IdentifierToken id => id.kind.ToGeneralTokenType(),
+            IdentifierToken id => id.kind.ToSemanticType(),
             UnitToken
                 or KeywordToken => SemanticTokenType.Keyword,
             NumericToken => SemanticTokenType.Number,

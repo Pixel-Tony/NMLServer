@@ -1,13 +1,8 @@
 namespace NMLServer.Lexing;
 
-internal sealed class KeywordToken : BaseMulticharToken
+internal sealed class KeywordToken(int start, int end, KeywordType type, KeywordKind kind)
+    : BaseMulticharToken(start, end)
 {
-    public readonly KeywordType Type;
-    public readonly KeywordKind Kind;
-
-    public KeywordToken(int start, int end, KeywordType type, KeywordKind kind) : base(start, end)
-    {
-        Type = type;
-        Kind = kind;
-    }
+    public readonly KeywordType Type = type;
+    public readonly KeywordKind Kind = kind;
 }

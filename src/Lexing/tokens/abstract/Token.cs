@@ -1,13 +1,10 @@
 namespace NMLServer.Lexing;
 
-internal abstract class Token : IHasEnd
+internal abstract class Token(int start) : IHasStart, IHasEnd
 {
-    public readonly int Start;
+    public int start { get; set; } = start;
 
-    public virtual int end => Start + 1;
+    public virtual int length => end - start;
 
-    protected Token(int start)
-    {
-        Start = start;
-    }
+    public virtual int end => start + 1;
 }

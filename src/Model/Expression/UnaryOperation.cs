@@ -2,19 +2,13 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Expression;
 
-internal sealed class UnaryOperation : ExpressionAST
+internal sealed class UnaryOperation(ExpressionAST? parent, UnaryOpToken operation) : ExpressionAST(parent)
 {
-    private readonly UnaryOpToken _operation;
     public ExpressionAST? Expression;
 
-    public override int start => _operation.Start;
+    public override int start => operation.start;
 
-    public override int end => Expression?.end ?? _operation.Start + 1;
-
-    public UnaryOperation(ExpressionAST? parent, UnaryOpToken operation) : base(parent)
-    {
-        _operation = operation;
-    }
+    public override int end => Expression?.end ?? operation.start + 1;
 
     protected override void Replace(ExpressionAST target, FunctionCall value)
     {

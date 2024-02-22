@@ -2,21 +2,15 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Expression;
 
-internal sealed class BinaryOperation : ExpressionAST
+internal sealed class BinaryOperation(ExpressionAST? parent, BinaryOpToken op) : ExpressionAST(parent)
 {
     private ExpressionAST? _left;
-    private readonly BinaryOpToken _operation;
     public ExpressionAST? Right;
 
-    public override int start => _left?.start ?? _operation.Start;
-    public override int end => Right?.end ?? _operation.Start + _operation.Length;
+    public override int start => _left?.start ?? op.start;
+    public override int end => Right?.end ?? op.start + op.length;
 
-    public uint precedence => _operation.Precedence;
-
-    public BinaryOperation(ExpressionAST? parent, BinaryOpToken op) : base(parent)
-    {
-        _operation = op;
-    }
+    public uint precedence => op.Precedence;
 
     public BinaryOperation(ExpressionAST? parent, ExpressionAST? lhs, BinaryOpToken op) : this(parent, op)
     {

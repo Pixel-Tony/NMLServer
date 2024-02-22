@@ -1,6 +1,5 @@
 using NMLServer.Model.Expression;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace NMLServer;
 

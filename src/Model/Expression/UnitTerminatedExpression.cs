@@ -2,17 +2,8 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Expression;
 
-internal sealed class UnitTerminatedExpression : ExpressionAST
+internal sealed class UnitTerminatedExpression(ExpressionAST? child, UnitToken token) : ExpressionAST(null)
 {
-    private readonly ExpressionAST? _child;
-    private readonly UnitToken _token;
-
-    public override int start => _child?.start ?? _token.Start;
-    public override int end => _token.Start + _token.length;
-
-    public UnitTerminatedExpression(ExpressionAST? child, UnitToken token) : base(null)
-    {
-        _child = child;
-        _token = token;
-    }
+    public override int start => child?.start ?? token.start;
+    public override int end => token.start + token.length;
 }

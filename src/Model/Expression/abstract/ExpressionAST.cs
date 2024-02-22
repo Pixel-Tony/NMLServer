@@ -113,7 +113,7 @@ internal abstract class ExpressionAST : IAllowsParseInsideBlock<ExpressionAST>
 
                         case FunctionCall:
                         case UnaryOperation:
-                        case BinaryOperation { precedence: > TernaryOpToken.Precedence }:
+                        case BinaryOperation { precedence: > Grammar.TernaryOperatorPrecedence }:
                         case BaseValueNode:
                         case ParentedExpression:
                             if (current._parent is null)

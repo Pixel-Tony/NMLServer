@@ -4,12 +4,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace NMLServer.Analysis;
 
-internal class SemanticTokensHandler : SemanticTokensHandlerBase
+internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHandlerBase
 {
-    private readonly SourceStorage _storage;
-
-    public SemanticTokensHandler(SourceStorage storage) => _storage = storage;
-
     protected override SemanticTokensRegistrationOptions CreateRegistrationOptions(
         SemanticTokensCapability capability, ClientCapabilities clientCapabilities)
         => new()
@@ -20,14 +16,13 @@ internal class SemanticTokensHandler : SemanticTokensHandlerBase
                 TokenModifiers = capability.TokenModifiers,
                 TokenTypes = capability.TokenTypes
             },
-            Full = new SemanticTokensCapabilityRequestFull { Delta = false },
-            Range = false
+            Full = new SemanticTokensCapabilityRequestFull()
         };
 
     protected override Task Tokenize(SemanticTokensBuilder builder, ITextDocumentIdentifierParams identifier,
         CancellationToken cancellationToken)
     {
-        _storage.ProvideSemanticTokens(builder, identifier.TextDocument);
+        storage.ProvideSemanticTokens(builder, identifier.TextDocument.Uri);
         return Task.CompletedTask;
     }
 

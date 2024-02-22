@@ -6,6 +6,7 @@ namespace NMLServer;
 
 internal static class Extensions
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<T>? ToMaybeList<T>(this List<T> target)
     {
         return target.Count > 0
@@ -18,7 +19,7 @@ internal static class Extensions
         where T1 : IHasEnd where T2 : IHasEnd
         => int.Max(first?[^1].end ?? 0, second?[^1].end ?? 0);
 
-    public static SemanticTokenType? ToGeneralTokenType(this SymbolKind target)
+    public static SemanticTokenType? ToSemanticType(this SymbolKind target)
     {
         return (target & (SymbolKind)0x0F) switch
         {

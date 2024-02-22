@@ -4,15 +4,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace NMLServer.Analysis;
 
-internal class DocumentDiagnosticHandler : DocumentDiagnosticHandlerBase
+internal class DocumentDiagnosticHandler(SourceStorage storage) : DocumentDiagnosticHandlerBase
 {
-    private readonly SourceStorage _storage;
-
-    public DocumentDiagnosticHandler(SourceStorage storage)
-    {
-        _storage = storage;
-    }
-
     protected override DiagnosticsRegistrationOptions CreateRegistrationOptions(DiagnosticClientCapabilities capability,
         ClientCapabilities clientCapabilities)
     {
@@ -24,7 +17,7 @@ internal class DocumentDiagnosticHandler : DocumentDiagnosticHandlerBase
     {
         return Task.FromResult<RelatedDocumentDiagnosticReport>(new RelatedFullDocumentDiagnosticReport
         {
-            Items = new Container<Diagnostic>(_storage.GetDiagnostics(request.TextDocument))
+            Items = new Container<Diagnostic>(storage.GetDiagnostics(request.TextDocument))
         });
     }
 }

@@ -1,15 +1,9 @@
 namespace NMLServer.Lexing;
 
-internal sealed class UnitToken : Token
+internal sealed class UnitToken(int start, UnitType value) : Token(start)
 {
-    private UnitType _unit;
-    public int length { get; }
+    private UnitType _unit = value;
+    public override int length { get; } = (byte)value >> 4;
 
-    public override int end => Start + length;
-
-    public UnitToken(int start, UnitType value) : base(start)
-    {
-        _unit = value;
-        length = (byte)value >> 4;
-    }
+    public override int end => start + length;
 }

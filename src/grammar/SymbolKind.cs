@@ -6,7 +6,7 @@ namespace NMLServer;
 [Flags]
 internal enum SymbolKind : byte
 {
-    None = 0,
+    Undefined = 0,
     Feature = 0x01,
     Switch = 0x02,
     Macro = 0x04,

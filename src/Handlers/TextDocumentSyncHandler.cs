@@ -7,23 +7,19 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 
 namespace NMLServer.Analysis;
 
-internal class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
+internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentSyncHandlerBase
 {
-    private readonly SourceStorage _storage;
-
-    public TextDocumentSyncHandler(SourceStorage storage) => _storage = storage;
-
-    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) => _storage[uri];
+    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) => storage[uri];
 
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken _)
     {
-        _storage.Add(request.TextDocument);
+        storage.Add(request.TextDocument);
         return UnitTask.Result;
     }
 
     public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken _)
     {
-        _storage.ApplyChanges(request);
+        storage.ApplyChanges(request);
         return UnitTask.Result;
     }
 
@@ -34,7 +30,7 @@ internal class TextDocumentSyncHandler : TextDocumentSyncHandlerBase
 
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken _)
     {
-        _storage.Remove(request.TextDocument);
+        storage.Remove(request.TextDocument);
         return UnitTask.Result;
     }
 

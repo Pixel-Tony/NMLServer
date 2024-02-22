@@ -1,13 +1,7 @@
 namespace NMLServer.Lexing;
 
-internal sealed class BinaryOpToken : BaseMulticharToken
+internal sealed class BinaryOpToken(int start, int end, OperatorType type) : BaseMulticharToken(start, end)
 {
-    public readonly byte Precedence;
-    public readonly OperatorType Type;
-
-    public BinaryOpToken(int start, int end, OperatorType type) : base(start, end)
-    {
-        Precedence = Grammar.OperatorPrecedences[type];
-        Type = type;
-    }
+    public readonly byte Precedence = Grammar.OperatorPrecedences[type];
+    public readonly OperatorType Type = type;
 }
