@@ -6,7 +6,7 @@ internal partial class GRFBlock
 {
     private partial class Parameter
     {
-        private readonly record struct Names : IHasEnd
+        private readonly struct Names : IHasEnd
         {
             private readonly IdentifierToken? _name;
             private readonly ColonToken? _colon;
@@ -24,7 +24,7 @@ internal partial class GRFBlock
                 _name = name;
                 _colon = colon;
                 _openingBracket = openingBracket;
-                List<NMLAttribute> attributes = new();
+                List<NMLAttribute> attributes = [];
                 for (var token = state.nextToken; token is not null; token = state.currentToken)
                 {
                     switch (token)

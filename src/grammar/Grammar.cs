@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using NMLServer.Lexing;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using static NMLServer.OperatorType;
 
 namespace NMLServer;
@@ -106,28 +107,25 @@ internal static class Grammar
 
     private static void AddFromFile(string filename, SymbolKind kind)
     {
-        try
-        {
-            filename = Path.Combine(AppContext.BaseDirectory, "grammar", filename);
+        filename = Path.Combine(AppContext.BaseDirectory, "grammar", filename);
 
-            foreach (var symbol in File.ReadAllText(filename, Encoding.UTF8).Split(' '))
-            {
-                _definedSymbols[symbol] = kind;
-            }
-        }
-        catch (Exception e)
+        if (!File.Exists(filename))
         {
-            Program.LogInfo(e.ToString());
+            Program.Server.LogError($"Couldn't load builtin symbol list from {filename}");
+        }
+        foreach (var symbol in File.ReadAllText(filename, Encoding.UTF8).Split(' '))
+        {
+            _definedSymbols[symbol] = kind;
         }
     }
 
-    public static SymbolKind GetSymbolKind(StringView needle)
+    // TODO: replace 'needle' type with ReadOnlySpan<char> if it gets supported
+    public static SymbolKind GetSymbolKind(string needle)
     {
-        _definedSymbols.TryGetValue(new string(needle), out var result);
+        _definedSymbols.TryGetValue(needle, out var result);
         return result;
     }
 
-    // TODO: nullable readonly struct, why?
     public static bool GetTokenSemanticType(Token token, out SemanticTokenType? type)
     {
         return (type = token switch

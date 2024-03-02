@@ -67,7 +67,8 @@ internal static class Lexer
             : new UnknownToken(data.Pos - 1);
     }
 
-    private static Token ParseOnEqualsSign(ref LexData data)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Token ParseOnEqualsSign()
     {
         if (data.isAtLastChar || data.nextChar is not '=')
         {
@@ -95,7 +96,7 @@ internal static class Lexer
                 _ => new BinaryOpToken(start, data.Pos, type)
             };
         }
-        ReadOnlySpan<char> needle = stackalloc char[2] { c, data.currentChar };
+        StringView needle = stackalloc char[2] { c, data.currentChar };
         var opTokenType = Grammar.GetOperatorType(needle);
         if (opTokenType is OperatorType.None)
         {
@@ -254,7 +255,10 @@ internal static class Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseNumber(char c, ref LexData data)
+    private static bool IsValidIdentifierCharacter(char c) => c is '_' || char.IsLetterOrDigit(c);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private NumericToken ParseNumber(char c)
     {
         const byte startingZero = 0;
         const byte onInt = 1;
@@ -344,10 +348,7 @@ internal static class Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsValidIdentifierCharacter(char c) => c is '_' || char.IsLetterOrDigit(c);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static UnitType CheckLiteralUnit(ReadOnlySpan<char> target)
+    private static UnitType CheckLiteralUnit(StringView target)
         => target switch
         {
             "hp" => UnitType.HP,
@@ -362,7 +363,7 @@ internal static class Lexer
         };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static (KeywordType type, KeywordKind kind) CheckKeyword(ReadOnlySpan<char> needle)
+    private static (KeywordType type, KeywordKind kind) CheckKeyword(StringView needle)
         => needle switch
         {
             "if" => (KeywordType.If, KeywordKind.BlockDefining),

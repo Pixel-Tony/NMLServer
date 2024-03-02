@@ -3,26 +3,22 @@ using NMLServer.Model.Statement;
 
 namespace NMLServer.Model.Expression;
 
-internal abstract class ExpressionAST : IAllowsParseInsideBlock<ExpressionAST>
+internal abstract class ExpressionAST(ExpressionAST? parent) : IAllowsParseInsideBlock<ExpressionAST>
 {
-    private ExpressionAST? _parent;
+    private ExpressionAST? _parent = parent;
 
     public abstract int start { get; }
     public abstract int end { get; }
 
-    protected ExpressionAST(ExpressionAST? parent) => _parent = parent;
-
     protected virtual void Replace(ExpressionAST target, FunctionCall value)
-    {
-        throw new Exception($"Cannot replace child: {GetType()} is a bottom-level node");
-    }
+        => throw new Exception("Cannot replace child at the bottom-level node");
 
     public static List<ExpressionAST>? ParseSomeInBlock(ParsingState state, ref BracketToken? closingBracket)
     {
         var expression = TryParse(state);
         if (expression is not null)
         {
-            List<ExpressionAST> result = new();
+            List<ExpressionAST> result = [];
             while (expression is not null)
             {
                 result.Add(expression);
@@ -38,8 +34,8 @@ internal abstract class ExpressionAST : IAllowsParseInsideBlock<ExpressionAST>
     // TODO: possibly provide Parse(ParsingState, bool, Token) method for parsing from already checked token
     /// <summary>
     /// <para>Try to parse an NML expression.</para>
-    /// NML expression can only contain ONE unit token. If if does, it is always the last token,
-    /// and corresponding <see cref="UnitTerminatedExpression"/> node is the root of result.
+    /// Any NML expression can only contain ONE unit token. If if does, it is always the last token, and corresponding
+    /// <see cref="UnitTerminatedExpression"/> node is the root of result.
     /// </summary>
     /// <param name="state">The current parsing state.</param>
     /// <param name="parseUntilOuterComma">The flag to stop parsing if top-level comma is encountered.</param>

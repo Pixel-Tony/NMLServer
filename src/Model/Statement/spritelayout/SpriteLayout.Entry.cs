@@ -4,7 +4,7 @@ namespace NMLServer.Model.Statement;
 
 internal sealed partial class SpriteLayout
 {
-    public readonly record struct Entry : IAllowsParseInsideBlock<Entry>
+    public readonly struct Entry : IAllowsParseInsideBlock<Entry>
     {
         private readonly IdentifierToken? _identifier;
         private readonly BracketToken? _openingBracket;

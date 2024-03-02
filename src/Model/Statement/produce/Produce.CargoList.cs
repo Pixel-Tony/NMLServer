@@ -4,7 +4,7 @@ namespace NMLServer.Model.Statement;
 
 internal partial class Produce
 {
-    private readonly record struct CargoList
+    private readonly struct CargoList
     {
         private readonly BracketToken? _openingBracket;
         private readonly IReadOnlyList<NMLAttribute>? _content;

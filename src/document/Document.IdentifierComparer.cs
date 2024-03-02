@@ -10,7 +10,7 @@ internal partial class Document
 
         public bool Equals(IdentifierToken? x, IdentifierToken? y)
         {
-            return ReferenceEquals(x, y) || (x is not null && y is not null && x.Equals(y, Context));
+            return ReferenceEquals(x, y) || (x is not null && y is not null && x.ContextuallyEqual(y, Context));
         }
 
         public int GetHashCode(IdentifierToken obj) => obj.Hash;

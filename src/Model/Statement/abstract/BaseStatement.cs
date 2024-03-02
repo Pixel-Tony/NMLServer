@@ -12,14 +12,22 @@ internal abstract class BaseStatement : IAllowsParseInsideBlock<BaseStatement>
         => ParseSomeInBlock(state, ref closingBracket, true);
 
     public static List<BaseStatement>? ParseSomeInBlock(ParsingState state, ref BracketToken? closingBracket,
-        bool inner)
+        bool isInner)
     {
-        List<BaseStatement> children = new();
+        List<BaseStatement> children = [];
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
-                case BracketToken { Bracket: '}' } expectedClosingBracket when inner:
+                case KeywordToken { Kind: KeywordKind.FunctionBlockDefining } keywordToken:
+                    children.Add(new FunctionLikeStatement(state, keywordToken));
+                    break;
+
+                case KeywordToken { Kind: KeywordKind.BlockDefining } keywordToken:
+                    children.Add(ParseBlockStatement(state, keywordToken));
+                    break;
+
+                case BracketToken { Bracket: '}' } expectedClosingBracket when isInner:
                     closingBracket = expectedClosingBracket;
                     state.Increment();
                     return children;
@@ -29,16 +37,6 @@ internal abstract class BaseStatement : IAllowsParseInsideBlock<BaseStatement>
                 case BracketToken { Bracket: not ('{' or '}') }:
                     children.Add(new Assignment(state));
                     break;
-
-                case KeywordToken { Kind: KeywordKind.FunctionBlockDefining } keywordToken:
-                    children.Add(new FunctionLikeStatement(state, keywordToken));
-                    break;
-
-                case KeywordToken { Kind: KeywordKind.BlockDefining } keywordToken:
-                {
-                    children.Add(ParseBlockStatement(state, keywordToken));
-                    break;
-                }
 
                 default:
                     state.AddUnexpected(token);
@@ -83,7 +81,7 @@ internal abstract class BaseStatement : IAllowsParseInsideBlock<BaseStatement>
             KeywordType.Produce => new Produce(state, keyword),
             KeywordType.TownNames => new TownNames(state, keyword),
             KeywordType.RecolourSprite => new RecolourSprite(state, keyword),
-            _ => throw new ArgumentOutOfRangeException(nameof(keyword.Type), "Unexpected keyword type")
+            _ => throw new ArgumentOutOfRangeException(nameof(keyword), keyword.Type, "Unexpected keyword type")
         };
     }
 }

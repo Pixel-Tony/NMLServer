@@ -2,8 +2,4 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed class Spriteset : BaseSpriteHolder
-{
-    public Spriteset(ParsingState state, KeywordToken keyword) : base(state, keyword)
-    { }
-}
+internal sealed class Spriteset(ParsingState state, KeywordToken keyword) : BaseSpriteHolder(state, keyword);

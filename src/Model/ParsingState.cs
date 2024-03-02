@@ -6,10 +6,18 @@ namespace NMLServer.Model;
 // TODO -> ref struct
 internal class ParsingState
 {
-    private readonly IReadOnlyList<Token> _tokens;
-    private readonly int _max;
     private int _pointer;
+    private readonly int _max;
+    private readonly IReadOnlyList<Token> _tokens;
     private readonly List<Token> _unexpectedTokens;
+
+    public ParsingState(IReadOnlyList<Token> tokens, in List<Token> unexpectedTokens)
+    {
+        _unexpectedTokens = unexpectedTokens;
+        _tokens = tokens;
+        _pointer = 0;
+        _max = _tokens.Count - 1;
+    }
 
     public void AddUnexpected(Token? token)
     {
@@ -17,14 +25,6 @@ internal class ParsingState
         {
             _unexpectedTokens.Add(token);
         }
-    }
-
-    public ParsingState(IReadOnlyList<Token> tokens, in List<Token>? unexpectedTokens = null)
-    {
-        _unexpectedTokens = unexpectedTokens ?? [];
-        _tokens = tokens;
-        _pointer = 0;
-        _max = _tokens.Count - 1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

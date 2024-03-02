@@ -8,59 +8,45 @@ internal class SourceStorage
 {
     public event Action<PublishDiagnosticsParams>? ShouldPublishDiagnostics;
 
-    private readonly Dictionary<DocumentUri, (Document document, TextDocumentAttributes attributes)> _documents = new();
+    private readonly Dictionary<DocumentUri, Document> _documents = new();
 
-    public TextDocumentAttributes this[DocumentUri uri] => _documents[uri].attributes;
+    public TextDocumentAttributes this[DocumentUri uri] => _documents[uri].Attributes;
 
     public void Add(TextDocumentItem target)
     {
-        if (_documents.ContainsKey(target.Uri))
-        {
-            throw new Exception("Specified document is already added");
-        }
         var document = new Document(target);
-        _documents[target.Uri] = (document, new TextDocumentAttributes(target.Uri, target.LanguageId));
+        _documents.Add(target.Uri, document);
         Analyze(document);
     }
 
-    private void Analyze(Document document)
-    {
-        ShouldPublishDiagnostics?.Invoke(new PublishDiagnosticsParams
-        {
-            Uri = document.Uri,
-            Diagnostics = new Container<Diagnostic>(document.diagnostics)
-        });
-    }
+    public void Remove(TextDocumentIdentifier item) => _documents.Remove(item.Uri);
 
-    public void Remove(TextDocumentIdentifier item)
+    private void Analyze(Document document) => ShouldPublishDiagnostics?.Invoke(new PublishDiagnosticsParams
     {
-        if (!_documents.ContainsKey(item.Uri))
-        {
-            throw new Exception("Specified document not present.");
-        }
-        _documents.Remove(item.Uri);
-    }
+        Uri = document.Uri,
+        Diagnostics = document.ProvideDiagnostics()
+    });
 
     public void ApplyChanges(DidChangeTextDocumentParams request)
     {
-        var document = _documents[request.TextDocument.Uri].document;
+        var document = _documents[request.TextDocument.Uri];
         document.UpdateFrom(request);
         Analyze(document);
     }
 
-    public void ProvideSemanticTokens(SemanticTokensBuilder builder, TextDocumentIdentifier identifier)
+    public void ProvideSemanticTokens(SemanticTokensBuilder builder, DocumentUri uri)
     {
-        _documents[identifier.Uri].document.ProvideSemanticTokens(builder);
+        _documents[uri].ProvideSemanticTokens(builder);
     }
 
     public IEnumerable<Diagnostic> GetDiagnostics(TextDocumentIdentifier identifier)
     {
-        return _documents[identifier.Uri].document.diagnostics;
+        return _documents[identifier.Uri].ProvideDiagnostics();
     }
 
     public LocationOrLocationLinks? ProvideDefinition(DefinitionParams request)
     {
-        var document = _documents[request.TextDocument.Uri].document;
-        return document.ProvideDefinition(request.Position);
+        var document = _documents[request.TextDocument.Uri];
+        return document.ProvideDefinitions(request.Position);
     }
 }

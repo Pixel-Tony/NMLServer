@@ -2,24 +2,21 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal readonly record struct ValueWithComma<T>(T Identifier, BinaryOpToken? Comma) : IAllowsParseInsideBlock<ValueWithComma<T>>
-    where T : BaseValueToken
+internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
+    : IAllowsParseInsideBlock<ValueWithComma<T>> where T : BaseValueToken
 {
-    public readonly T Identifier = Identifier;
-    public readonly BinaryOpToken? Comma = Comma;
-
-    public int end => Comma?.end ?? Identifier.end;
+    public int end => comma?.end ?? identifier.end;
 
     public static List<ValueWithComma<T>>? ParseSomeInBlock(ParsingState state, ref BracketToken? closingBracket)
     {
-        List<ValueWithComma<T>> chain = new();
+        List<ValueWithComma<T>> chain = [];
         T? current = null;
         for (var token = state.currentToken; token is not null; token = state.nextToken)
         {
             switch (token)
             {
-                case BinaryOpToken { Type: OperatorType.Comma } comma when current is not null:
-                    chain.Add(new(current, comma));
+                case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
+                    chain.Add(new ValueWithComma<T>(current, commaToken));
                     current = null;
                     break;
 

@@ -2,8 +2,4 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed class Switch : BaseSwitch
-{
-    public Switch(ParsingState state, KeywordToken keyword) : base(state, keyword)
-    { }
-}
+internal sealed class Switch(ParsingState state, KeywordToken keyword) : BaseSwitch(state, keyword);

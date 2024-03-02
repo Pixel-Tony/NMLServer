@@ -5,7 +5,7 @@ namespace NMLServer.Model.Statement;
 
 internal sealed partial class TileLayout
 {
-    internal readonly record struct Entry : IHasEnd
+    internal readonly struct Entry : IHasEnd
     {
         private readonly NumericToken? _x;
         private readonly BinaryOpToken? _comma;

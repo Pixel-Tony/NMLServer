@@ -6,7 +6,6 @@ namespace NMLServer;
 
 internal static class Extensions
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<T>? ToMaybeList<T>(this List<T> target)
     {
         return target.Count > 0
@@ -14,7 +13,6 @@ internal static class Extensions
             : null;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LastOf<T1, T2>(IReadOnlyList<T1>? first, IReadOnlyList<T2>? second)
         where T1 : IHasEnd where T2 : IHasEnd
         => int.Max(first?[^1].end ?? 0, second?[^1].end ?? 0);

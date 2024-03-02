@@ -4,7 +4,7 @@ namespace NMLServer.Model.Statement;
 
 internal partial class TracktypeTable
 {
-    private readonly record struct FallbackEntry : IHasEnd
+    private readonly struct FallbackEntry : IHasEnd
     {
         private readonly BaseValueToken _identifier;
         private readonly ColonToken? _colon;

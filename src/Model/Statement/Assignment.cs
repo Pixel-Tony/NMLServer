@@ -60,7 +60,7 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
         }
         switch (_leftHandSide)
         {
-            // TODO: add support for random param names, check if mentioned earlier and is param name
+            // TODO: add support for previously defined param names
             case Identifier { kind: var kind } when kind.HasFlag(SymbolKind.UserDefined):
                 break;
 

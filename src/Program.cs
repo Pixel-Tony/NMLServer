@@ -1,9 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using NMLServer.Analysis;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 using OmniSharp.Extensions.LanguageServer.Server;
 
 namespace NMLServer;
@@ -14,27 +12,25 @@ internal class Program
         new TextDocumentFilter { Language = "nml", Scheme = "file" }
     );
 
-    private static ILanguageServer? _server;
-
-    public static void LogInfo(string message) => _server?.LogInfo(message);
+    public static ILanguageServer Server = null!;
 
     public static async Task Main()
     {
-        var storage = new SourceStorage();
+        SourceStorage storage = new();
 
-        _server = await LanguageServer.From(
-            options => options
+        Server = await LanguageServer.From(
+            new LanguageServerOptions()
                 .WithInput(Console.OpenStandardInput())
                 .WithOutput(Console.OpenStandardOutput())
                 .WithServices(services => services.AddSingleton(storage))
                 .AddHandler<TextDocumentSyncHandler>()
-                .AddHandler<DocumentDiagnosticHandler>()
-                .AddHandler<SemanticTokensHandler>()
-                .AddHandler<DefinitionHandler>()
+                // .AddHandler<DocumentDiagnosticHandler>()
+                // .AddHandler<SemanticTokensHandler>()
+                // .AddHandler<DefinitionHandler>()
         ).ConfigureAwait(false);
 
-        storage.ShouldPublishDiagnostics += _server.PublishDiagnostics;
+        // storage.ShouldPublishDiagnostics += Server.PublishDiagnostics;
 
-        await _server.WaitForExit.ConfigureAwait(false);
+        await Server.WaitForExit.ConfigureAwait(false);
     }
 }

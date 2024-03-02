@@ -16,7 +16,7 @@ internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHand
                 TokenModifiers = capability.TokenModifiers,
                 TokenTypes = capability.TokenTypes
             },
-            Full = new SemanticTokensCapabilityRequestFull()
+            Full = true
         };
 
     protected override Task Tokenize(SemanticTokensBuilder builder, ITextDocumentIdentifierParams identifier,

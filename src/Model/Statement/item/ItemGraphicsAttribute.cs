@@ -3,7 +3,7 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal readonly record struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGraphicsAttribute>
+internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGraphicsAttribute>
 {
     private readonly IdentifierToken? _identifier;
     private readonly ColonToken? _colon;
