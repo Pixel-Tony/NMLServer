@@ -1,0 +1,1 @@
+climate difficulty_level traininfo_y_offset

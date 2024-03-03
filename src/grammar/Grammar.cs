@@ -1,5 +1,9 @@
+using System.Runtime.CompilerServices;
 using System.Text;
+using NMLServer.Lexing;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Window;
+using static NMLServer.OperatorType;
 
 namespace NMLServer;
 
@@ -9,94 +13,138 @@ internal static class Grammar
 
     public static readonly Dictionary<OperatorType, byte> OperatorPrecedences = new()
     {
-        [OperatorType.Comma] = 0,
-        [OperatorType.QuestionMark] = TernaryOperatorPrecedence,
-        [OperatorType.Colon] = TernaryOperatorPrecedence,
-        [OperatorType.LogicalOr] = 2,
-        [OperatorType.LogicalAnd] = 3,
-        [OperatorType.BinaryOr] = 4,
-        [OperatorType.BinaryXor] = 5,
-        [OperatorType.BinaryAnd] = 6,
-        [OperatorType.Eq] = 7,
-        [OperatorType.Ne] = 7,
-        [OperatorType.Le] = 7,
-        [OperatorType.Ge] = 7,
-        [OperatorType.Lt] = 7,
-        [OperatorType.Gt] = 7,
-        [OperatorType.ShiftLeft] = 8,
-        [OperatorType.ShiftRight] = 8,
-        [OperatorType.ShiftRightFunky] = 8,
-        [OperatorType.Plus] = 9,
-        [OperatorType.Minus] = 9,
-        [OperatorType.Multiply] = 10,
-        [OperatorType.Divide] = 10,
-        [OperatorType.Modula] = 10,
-        [OperatorType.LogicalNot] = 11,
-        [OperatorType.BinaryNot] = 11
+        [Comma] = 0,
+        [QuestionMark] = TernaryOperatorPrecedence,
+        [Colon] = TernaryOperatorPrecedence,
+        [LogicalOr] = 2,
+        [LogicalAnd] = 3,
+        [BinaryOr] = 4,
+        [BinaryXor] = 5,
+        [BinaryAnd] = 6,
+        [Eq] = 7,
+        [Ne] = 7,
+        [Le] = 7,
+        [Ge] = 7,
+        [Lt] = 7,
+        [Gt] = 7,
+        [ShiftLeft] = 8,
+        [ShiftRight] = 8,
+        [ShiftRightFunky] = 8,
+        [Plus] = 9,
+        [Minus] = 9,
+        [Multiply] = 10,
+        [Divide] = 10,
+        [Modula] = 10,
+        [LogicalNot] = 11,
+        [BinaryNot] = 11
     };
 
-    public static OperatorType GetOperatorType(ReadOnlySpan<char> needle)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static OperatorType GetOperatorType(StringView needle)
         => needle switch
         {
-            "," => OperatorType.Comma,
-            "?" => OperatorType.QuestionMark,
-            ":" => OperatorType.Colon,
-            "||" => OperatorType.LogicalOr,
-            "&&" => OperatorType.LogicalAnd,
-            "|" => OperatorType.BinaryOr,
-            "^" => OperatorType.BinaryXor,
-            "&" => OperatorType.BinaryAnd,
-            "==" => OperatorType.Eq,
-            "!=" => OperatorType.Ne,
-            "<=" => OperatorType.Le,
-            ">=" => OperatorType.Ge,
-            "<" => OperatorType.Lt,
-            ">" => OperatorType.Gt,
-            "<<" => OperatorType.ShiftLeft,
-            ">>" => OperatorType.ShiftRight,
-            ">>>" => OperatorType.ShiftRightFunky,
-            "+" => OperatorType.Plus,
-            "-" => OperatorType.Minus,
-            "*" => OperatorType.Multiply,
-            "/" => OperatorType.Divide,
-            "%" => OperatorType.Modula,
-            "!" => OperatorType.LogicalNot,
-            "~" => OperatorType.BinaryNot,
-            _ => OperatorType.None
+            "," => Comma,
+            "?" => QuestionMark,
+            ":" => Colon,
+            "||" => LogicalOr,
+            "&&" => LogicalAnd,
+            "|" => BinaryOr,
+            "^" => BinaryXor,
+            "&" => BinaryAnd,
+            "==" => Eq,
+            "!=" => Ne,
+            "<=" => Le,
+            ">=" => Ge,
+            "<" => Lt,
+            ">" => Gt,
+            "<<" => ShiftLeft,
+            ">>" => ShiftRight,
+            ">>>" => ShiftRightFunky,
+            "+" => Plus,
+            "-" => Minus,
+            "*" => Multiply,
+            "/" => Divide,
+            "%" => Modula,
+            "!" => LogicalNot,
+            "~" => BinaryNot,
+            _ => None
         };
 
-    public static OperatorType GetOperatorType(char needle) => GetOperatorType(stackalloc char[] { needle });
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static OperatorType GetOperatorType(char needle)
+        => needle switch
+        {
+            ',' => Comma,
+            '?' => QuestionMark,
+            ':' => Colon,
+            '|' => BinaryOr,
+            '^' => BinaryXor,
+            '&' => BinaryAnd,
+            '<' => Lt,
+            '>' => Gt,
+            '+' => Plus,
+            '-' => Minus,
+            '*' => Multiply,
+            '/' => Divide,
+            '%' => Modula,
+            '!' => LogicalNot,
+            '~' => BinaryNot,
+            _ => None
+        };
 
     private static readonly Dictionary<string, SymbolKind> _definedSymbols = new();
 
     static Grammar()
     {
         AddFromFile("constants.txt", SymbolKind.Constant);
-        AddFromFile("functions.txt", SymbolKind.Function);
+        AddFromFile("misc-bits.txt", SymbolKind.Variable | SymbolKind.Writeable);
+        AddFromFile("readable.txt", SymbolKind.Variable);
+        AddFromFile("functions.txt", SymbolKind.Switch);
         AddFromFile("variables.txt", SymbolKind.Variable);
         AddFromFile("features.txt", SymbolKind.Feature);
     }
 
     private static void AddFromFile(string filename, SymbolKind kind)
     {
-        try
-        {
-            filename = Path.Combine(AppContext.BaseDirectory, "grammar", filename);
+        filename = Path.Combine(AppContext.BaseDirectory, "grammar", filename);
 
-            foreach (var symbol in File.ReadAllText(filename, Encoding.UTF8).Split(' '))
-            {
-                _definedSymbols.TryAdd(symbol, kind);
-            }
-        }
-        catch (Exception e)
+        if (!File.Exists(filename))
         {
-            Program.Server?.LogInfo(e.ToString());
+            Program.Server.LogError($"Couldn't load builtin symbol list from {filename}");
+        }
+        foreach (var symbol in File.ReadAllText(filename, Encoding.UTF8).Split(' '))
+        {
+            _definedSymbols[symbol] = kind;
         }
     }
 
-    public static SymbolKind GetSymbolKind(ReadOnlySpan<char> needle)
+    // TODO: replace 'needle' type with ReadOnlySpan<char> if it gets supported
+    public static SymbolKind GetSymbolKind(string needle)
     {
-        _definedSymbols.TryGetValue(new string(needle), out var result);
+        _definedSymbols.TryGetValue(needle, out var result);
         return result;
+    }
+
+    public static bool GetTokenSemanticType(Token token, out SemanticTokenType? type)
+    {
+        return (type = token switch
+        {
+            CommentToken => SemanticTokenType.Comment,
+            IdentifierToken id => id.kind.ToSemanticType(),
+            UnitToken
+                or KeywordToken => SemanticTokenType.Keyword,
+            NumericToken => SemanticTokenType.Number,
+            StringToken => SemanticTokenType.String,
+            ColonToken
+                or RangeToken
+                or BracketToken
+                or UnaryOpToken
+                or BinaryOpToken
+                or TernaryOpToken
+                or SemicolonToken
+                or AssignmentToken
+                => SemanticTokenType.Operator,
+            _ => null
+        }) is not null;
     }
 }
