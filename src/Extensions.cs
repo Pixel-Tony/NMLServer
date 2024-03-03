@@ -1,9 +1,10 @@
 using System.Runtime.CompilerServices;
-using NMLServer.Lexing;
+using System.Runtime.InteropServices;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace NMLServer;
 
+// TODO docstrings
 internal static class Extensions
 {
     public static List<T>? ToMaybeList<T>(this List<T> target)
@@ -12,6 +13,9 @@ internal static class Extensions
             ? target
             : null;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsValidIdentifierCharacter(this char c) => c is '_' || char.IsLetterOrDigit(c);
 
     public static int LastOf<T1, T2>(IReadOnlyList<T1>? first, IReadOnlyList<T2>? second)
         where T1 : IHasEnd where T2 : IHasEnd
@@ -31,69 +35,68 @@ internal static class Extensions
         };
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetLength(this Token token)
+    private static Span<T> CreateFullListSpan<T>(List<T> list)
+        => MemoryMarshal.CreateSpan(ref CollectionsMarshal.AsSpan(list)[0], list.Capacity);
+
+    // TODO: docstring
+    public static void ReplaceRange<T>(this List<T> destination, List<T> source, int rangeStart, int rangeEnd)
     {
-        return token switch
+        int delta = source.Count - (rangeEnd - rangeStart);
+        Span<T> destinationAsSpan;
+
+        switch (delta)
         {
-            BaseMulticharToken multicharToken => multicharToken.Length,
-            UnitToken unitToken => unitToken.length,
-            RangeToken => 2,
-            _ => 1
-        };
+            case > 0:
+                destination.EnsureCapacity(destination.Count + delta);
+                destinationAsSpan = CreateFullListSpan(destination);
+                destinationAsSpan[rangeEnd..destination.Count].CopyTo(destinationAsSpan[(rangeEnd + delta)..]);
+                CollectionsMarshal.AsSpan(source).CopyTo(destinationAsSpan[rangeStart..]);
+                CollectionsMarshal.SetCount(destination, destination.Count + delta);
+                return;
+
+            case < 0:
+                destinationAsSpan = CollectionsMarshal.AsSpan(destination);
+                destination.RemoveRange(rangeEnd + delta, -delta);
+                CollectionsMarshal.AsSpan(source).CopyTo(destinationAsSpan[rangeStart..]);
+                return;
+
+            default:
+                destinationAsSpan = CollectionsMarshal.AsSpan(destination);
+                CollectionsMarshal.AsSpan(source).CopyTo(destinationAsSpan[rangeStart..]);
+                return;
+        }
     }
 
-    // public static void VerifyAsParameter(this ExpressionAST target, DiagnosticsContext diagnosticsContext, EvaluatedExpressionType expectedType)
-    // {
-    //     if (target.evaluatedType != expectedType)
-    //     {
-    //         // TODO;
-    //         return;
-    //     }
-    // }
+    public static void ComplementStartByRange<T>(this List<T> destination, in List<T> source, int end)
+    {
+        if (end is 0)
+        {
+            destination.InsertRange(0, source);
+            return;
+        }
 
-    // public static void VerifyAsParameters(this ExpressionAST target, DiagnosticsContext diagnosticsContext,
-    //     params EvaluatedExpressionType[] paramTypes)
-    // {
-    //     if (target is not ParentedExpression { Expression: var args })
-    //     {
-    //         // TODO: expected parens
-    //         return;
-    //     }
-    //     for (int i = 0; i < paramTypes.Length - 1; ++i)
-    //     {
-    //         if (args is null)
-    //         {
-    //             // TODO: (..., <null here> )
-    //             return;
-    //         }
-    //         if (args is not BinaryOperation { Operation.Type: OperatorType.Comma } commaJoinedArguments)
-    //         {
-    //             // TODO: expected x params, got x - n (n > 0)
-    //             return;
-    //         }
-    //         args = commaJoinedArguments.Right;
-    //         var left = commaJoinedArguments.left;
-    //         if (left is null)
-    //         {
-    //             // TODO: missing parameter
-    //         }
-    //         else if (left.evaluatedType != paramTypes[i])
-    //         {
-    //             // TODO: type mismatch
-    //         }
-    //     }
-    //     if (args is BinaryOperation { Operation.Type: OperatorType.Comma } excessCommaJoinedArguments)
-    //     {
-    //         // TODO: expected x params, got x + n (n > 0)
-    //     }
-    //     else if (args is null)
-    //     {
-    //         // TODO: (..., <null here> )
-    //     }
-    //     else if (args.evaluatedType != paramTypes[^1])
-    //     {
-    //         // TODO: type mismatch
-    //     }
-    // }
+        var capacity = destination.Count - end + source.Count;
+        destination.EnsureCapacity(capacity);
+        var span = CreateFullListSpan(destination);
+        span[end..destination.Count].CopyTo(span[source.Count..]);
+        CollectionsMarshal.AsSpan(source).CopyTo(span);
+        CollectionsMarshal.SetCount(destination, capacity);
+    }
+
+    // note: destination.Count >= 1
+    public static void ComplementEndByRange<T>(this List<T> destination, in List<T> source, int start)
+    {
+        if (source.Count <= 1)
+        {
+            destination[start] = source[0];
+            destination.RemoveRange(start + 1, destination.Count - (start + 1));
+            return;
+        }
+        var capacity = start + source.Count;
+        destination.EnsureCapacity(capacity);
+        var span = CreateFullListSpan(destination);
+        CollectionsMarshal.AsSpan(source).CopyTo(span[start..]);
+        CollectionsMarshal.SetCount(destination, capacity);
+        destination.RemoveRange(capacity, destination.Count - capacity);
+    }
 }

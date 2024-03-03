@@ -3,17 +3,17 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
+internal sealed class Assignment : BaseStatement, ISymbolSource
 {
     private readonly ExpressionAST _leftHandSide;
     private readonly AssignmentToken? _equalsSign;
-    private readonly ExpressionAST? _righHandSide;
+    private readonly ExpressionAST? _rightHandSide;
     private readonly SemicolonToken? _semicolon;
 
     public IdentifierToken? symbol { get; }
 
     public override int start => _leftHandSide.start;
-    public override int end => _semicolon?.end ?? (_righHandSide?.end ?? (_equalsSign?.end ?? _leftHandSide.end));
+    public override int end => _semicolon?.end ?? (_rightHandSide?.end ?? (_equalsSign?.end ?? _leftHandSide.end));
 
     public Assignment(ParsingState state)
     {
@@ -47,11 +47,12 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
             }
         }
         label_End:
-        _righHandSide = ExpressionAST.TryParse(state);
+        _rightHandSide = ExpressionAST.TryParse(state);
         _semicolon = state.ExpectSemicolon();
     }
 
-    public void ProvideDiagnostics(DiagnosticsContext context)
+    // TODO
+    public void ProvideDiagnostics(dynamic context)
     {
         if (_equalsSign is null)
         {
@@ -88,7 +89,7 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
                 context.AddError("Invalid parameter assignment target", _leftHandSide);
                 break;
         }
-        if (_righHandSide is null)
+        if (_rightHandSide is null)
         {
             context.AddError("Missing assigned value", _equalsSign.start + 1);
             if (_semicolon is null)
@@ -97,10 +98,10 @@ internal sealed class Assignment : BaseStatement, IValidatable, ISymbolSource
             }
             return;
         }
-        _righHandSide.ProvideDiagnostics(context);
+        // _rightHandSide.ProvideDiagnostics(context);
         if (_semicolon is null)
         {
-            context.AddError("Missing semicolon", _righHandSide);
+            context.AddError("Missing semicolon", _rightHandSide);
         }
     }
 }

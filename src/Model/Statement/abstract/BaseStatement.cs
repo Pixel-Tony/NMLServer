@@ -5,6 +5,21 @@ namespace NMLServer.Model.Statement;
 
 internal abstract class BaseStatement : IAllowsParseInsideBlock<BaseStatement>
 {
+    /*
+     * List of diagnostics in the order of declining importance
+     *
+     * 1 [ERROR]
+     * For every statement - check if all elements of AST are present
+     *
+     * 2 [ERROR]
+     * Check if all expression AST elements are present and of correct type: no mismatched parenthesis, no missing
+     * parameters to operators, etc.
+     *
+     * 3 [ERROR]
+     * For every expression in attribute setters, parameters etc. - check for evaluated type to match expected.
+     */
+    public virtual void ProvideDiagnostics(dynamic context) { }
+
     public abstract int start { get; }
     public abstract int end { get; }
 

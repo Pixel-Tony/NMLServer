@@ -2,101 +2,133 @@ using System.Runtime.CompilerServices;
 
 namespace NMLServer.Lexing;
 
-internal static class Lexer
+// TODO docstrings
+internal ref struct Lexer(StringView content, in List<int> lineLengths, int pos, int end, int lineLength = 0)
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static List<Token> Process(string input, in List<int> lineLengths)
-        => Process(input.AsSpan(), in lineLengths).tokens;
+    private int _lineStart = pos - lineLength;
+    private readonly StringView _content = content;
+    private readonly List<int> _lineLengths = lineLengths;
+    private readonly int _maxPos = end - 1;
 
-    // TODO: add parameters for start and max symbol positions
-    private static (List<Token> tokens, List<int> lineLengths) Process(ReadOnlySpan<char> input,
-        in List<int> lineLengths)
+    private readonly char currentChar => _content[pos];
+    private readonly char nextChar => _content[pos + 1];
+    private readonly bool isAtLastChar => pos == _maxPos;
+    private readonly bool isInBounds => pos <= _maxPos;
+
+    public Lexer(StringView content, in List<int> lineLengths) : this(content, in lineLengths, 0, content.Length)
+    { }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ProcessUntilFileEnd(in List<Token> tokens)
     {
-        LexData data = new(content: input);
-        List<Token> tokens = new();
-        lineLengths.Clear();
-        int lineStart = 0;
-        while (data.isInBounds)
+        for (var token = LexToken(out _); token is not null; token = LexToken(out _))
         {
-            char c = data.currentChar;
+            tokens.Add(token);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ProcessUntilFileEnd(ref Token? token, in List<Token> tokens)
+    {
+        for (token = LexToken(out _); token is not null; token = LexToken(out _))
+        {
+            tokens.Add(token);
+        }
+    }
+
+    /// <summary>Try to lex a token at current Lexer state in source code span.</summary>
+    /// <param name="tokenStart">
+    /// The start position of token is returned to avoid possible virtual call in outer scope.
+    /// </param>
+    /// <returns>The lexed token, if any; null otherwise.</returns>
+    /// <remarks>
+    /// This method should not be called after previous call returned null, as currently calculated line length is added
+    /// to <see cref="lineLengths"/> list in that case.
+    /// </remarks>
+    public Token? LexToken(out int tokenStart)
+    {
+        while (isInBounds)
+        {
+            char c = currentChar;
             if (c is '\n')
             {
-                lineLengths.Add(++data.Pos - lineStart);
-                lineStart = data.Pos;
+                AddLine();
                 continue;
             }
             if (char.IsWhiteSpace(c))
             {
-                ++data.Pos;
+                ++pos;
                 continue;
             }
-            if (char.IsLetter(c))
+            tokenStart = pos;
+            if (char.IsLetter(c) || c is '_')
             {
-                tokens.Add(ParseIdentifier(ref data));
-                continue;
+                return ParseIdentifier();
             }
-            tokens.Add(c switch
+            return c switch
             {
-                '_' => ParseIdentifier(ref data),
-                >= '0' and <= '9' => ParseNumber(c, ref data),
-                ';' => new SemicolonToken(data.Pos++),
-                ':' => new ColonToken(data.Pos++),
-                '=' => ParseOnEqualsSign(ref data),
-                '.' => ParseOnDot(ref data),
-                '?' => new TernaryOpToken(data.Pos++),
-                '/' => ParseFromSlash(lineLengths, ref lineStart, ref data),
-                '[' or ']' or '(' or ')' or '{' or '}' => new BracketToken(data.Pos++, c),
-                '\'' or '"' => ParseLiteralString(c, ref data),
-                '#' => ParseHashtagComment(ref data),
-                _ => TryParseOperator(c, Grammar.GetOperatorType(c), ref data)
-            });
+                ';' => new SemicolonToken(pos++),
+                ':' => new ColonToken(pos++),
+                '?' => new TernaryOpToken(pos++),
+                '[' or ']' or '(' or ')' or '{' or '}'
+                    => new BracketToken(pos++, c),
+                >= '0' and <= '9' => ParseNumber(c),
+                '=' => ParseOnEqualsSign(),
+                '.' => ParseOnDot(),
+                '/' => ParseFromSlash(),
+                '\'' or '"' => ParseLiteralString(c),
+                '#' => ParseHashtagComment(),
+                _ => TryParseOperator(c, Grammar.GetOperatorType(c))
+            };
         }
-        lineLengths.Add(data.Pos - lineStart);
-        return (tokens, lineLengths);
-    }
-
-    private static Token ParseOnDot(ref LexData data)
-    {
-        if (data.isAtLastChar)
-        {
-            return new UnknownToken(data.Pos++);
-        }
-        ++data.Pos;
-        return data.currentChar is '.'
-            ? new RangeToken(data.Pos++ - 1)
-            : new UnknownToken(data.Pos - 1);
+        Complete();
+        tokenStart = -1;
+        return null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseOnEqualsSign()
+    private Token ParseOnDot()
     {
-        if (data.isAtLastChar || data.nextChar is not '=')
+        if (isAtLastChar)
         {
-            return new AssignmentToken(data.Pos++);
+            return new UnknownToken(pos++);
         }
-        var result = new BinaryOpToken(data.Pos, ++data.Pos, OperatorType.Eq);
-        ++data.Pos;
+        ++pos;
+        return currentChar is '.'
+            ? new RangeToken(pos++ - 1)
+            : new UnknownToken(pos - 1);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Token ParseOnEqualsSign()
+    {
+        if (isAtLastChar || nextChar is not '=')
+        {
+            return new AssignmentToken(pos++);
+        }
+        var result = new BinaryOpToken(pos, ++pos, OperatorType.Eq);
+        ++pos;
         return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token TryParseOperator(char c, OperatorType type, ref LexData data)
+    private Token TryParseOperator(char c, OperatorType type)
     {
         if (type is OperatorType.None)
         {
-            return new UnknownToken(data.Pos++);
+            return new UnknownToken(pos++);
         }
-        int start = data.Pos++;
-        if (data.isAtLastChar)
+        int start = pos++;
+        if (isAtLastChar)
         {
             return c switch
             {
                 '=' => new UnknownToken(start),
                 '!' or '~' => new UnaryOpToken(start, c),
-                _ => new BinaryOpToken(start, data.Pos, type)
+                _ => new BinaryOpToken(start, pos, type)
             };
         }
-        StringView needle = stackalloc char[2] { c, data.currentChar };
+        StringView needle = stackalloc char[2] { c, currentChar };
         var opTokenType = Grammar.GetOperatorType(needle);
         if (opTokenType is OperatorType.None)
         {
@@ -104,66 +136,64 @@ internal static class Lexer
             {
                 '=' => new UnknownToken(start),
                 '!' or '~' => new UnaryOpToken(start, c),
-                _ => new BinaryOpToken(start, data.Pos, type)
+                _ => new BinaryOpToken(start, pos, type)
             };
         }
-        if (opTokenType is not OperatorType.ShiftRight || data.isAtLastChar)
+        if (opTokenType is not OperatorType.ShiftRight || isAtLastChar)
         {
-            return new BinaryOpToken(start, ++data.Pos, opTokenType);
+            return new BinaryOpToken(start, ++pos, opTokenType);
         }
-        ++data.Pos;
-        return data.currentChar is '>'
-            ? new BinaryOpToken(start, ++data.Pos, OperatorType.ShiftRightFunky)
-            : new BinaryOpToken(start, data.Pos, opTokenType);
+        ++pos;
+        return currentChar is '>'
+            ? new BinaryOpToken(start, ++pos, OperatorType.ShiftRightFunky)
+            : new BinaryOpToken(start, pos, opTokenType);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static CommentToken ParseHashtagComment(ref LexData data)
+    private CommentToken ParseHashtagComment()
     {
-        int start = data.Pos++;
-        while (data.isInBounds)
+        int start = pos++;
+        while (isInBounds)
         {
-            char c = data.currentChar;
+            char c = currentChar;
             if (c == '\n')
             {
                 break;
             }
-            data.Pos++;
+            pos++;
         }
-        return new CommentToken(start, data.Pos);
+        return new CommentToken(start, pos);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseFromSlash(ICollection<int> lineLengths, ref int lineStart, ref LexData data)
+    private Token ParseFromSlash()
     {
-        int start = data.Pos++;
-        if (data.isAtLastChar)
+        if (isAtLastChar)
         {
-            return new BinaryOpToken(start, data.Pos, OperatorType.Divide);
+            return new BinaryOpToken(pos, ++pos, OperatorType.Divide);
         }
-        switch (data.currentChar)
+        int start = pos++;
+        switch (currentChar)
         {
             case '*':
-                ++data.Pos;
-                while (data.isInBounds && data.Pos - start < 3)
+                ++pos;
+                while (isInBounds && pos - start < 3)
                 {
-                    if (data.currentChar is '\n')
+                    if (currentChar is '\n')
                     {
-                        lineLengths.Add(++data.Pos - lineStart);
-                        lineStart = data.Pos;
+                        AddLine();
                         continue;
                     }
-                    ++data.Pos;
+                    ++pos;
                 }
-                char prev = data.Content[data.Pos - 1];
-                while (data.isInBounds)
+                char prev = _content[pos - 1];
+                while (isInBounds)
                 {
-                    var current = data.currentChar;
+                    var current = currentChar;
                     if (current is '\n')
                     {
                         prev = '\n';
-                        lineLengths.Add(data.Pos - lineStart);
-                        lineStart = ++data.Pos;
+                        AddLine();
                         continue;
                     }
                     if (prev is '*' && current is '/')
@@ -171,75 +201,87 @@ internal static class Lexer
                         break;
                     }
                     prev = current;
-                    ++data.Pos;
+                    ++pos;
                 }
-                return new CommentToken(start, ++data.Pos);
+                return new CommentToken(start, ++pos);
 
             case '/':
-                ++data.Pos;
-                while (data.isInBounds)
+                ++pos;
+                while (isInBounds && currentChar is not '\n')
                 {
-                    if (data.currentChar is '\n')
-                    {
-                        break;
-                    }
-                    ++data.Pos;
+                    ++pos;
                 }
-                return new CommentToken(start, data.Pos);
+                return new CommentToken(start, pos);
 
             default:
-                return new BinaryOpToken(start, data.Pos, OperatorType.Divide);
+                return new BinaryOpToken(start, pos, OperatorType.Divide);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseLiteralString(char openingQuote, ref LexData data)
+    private void AddLine()
     {
-        int start = data.Pos++;
-        while (data.isInBounds)
+        ++pos;
+        _lineLengths.Add(pos - _lineStart);
+        _lineStart = pos;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Complete() => _lineLengths.Add(pos - _lineStart);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private StringToken ParseLiteralString(char openingQuote)
+    {
+        int start = pos++;
+        while (isInBounds)
         {
-            char c = data.currentChar;
-            ++data.Pos;
-            if (c == openingQuote || c is '\n')
+            char c = currentChar;
+            if (c == openingQuote)
+            {
+                ++pos;
+                break;
+            }
+            if (c is '\n')
             {
                 break;
             }
+            ++pos;
         }
-        return new StringToken(start, data.Pos);
+        return new StringToken(start, pos);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Token ParseIdentifier(ref LexData data)
+    private Token ParseIdentifier()
     {
-        int start = data.Pos++;
+        int start = pos++;
         char current = '\0';
-        for (; data.isInBounds; ++data.Pos)
+        for (; isInBounds; ++pos)
         {
-            current = data.currentChar;
-            if (!IsValidIdentifierCharacter(current))
+            current = currentChar;
+            if (!current.IsValidIdentifierCharacter())
             {
                 break;
             }
         }
-        var value = data.Content[start..data.Pos];
+        var value = _content[start..pos];
         switch (current)
         {
-            case '/' when data.MaxPos - data.Pos == 1:
-            case '/' when data.MaxPos - data.Pos > 1 && !IsValidIdentifierCharacter(data.Content[data.Pos + 2]):
-                switch (data.Pos - start)
+            case '/' when _maxPos - pos == 1:
+            case '/' when _maxPos - pos > 1 && !_content[pos + 2].IsValidIdentifierCharacter():
+                switch (pos - start)
                 {
-                    case 1 when value is "m" && data.nextChar is 's':
-                        data.Pos += 2;
+                    case 1 when value is "m" && nextChar is 's':
+                        pos += 2;
                         return new UnitToken(start, UnitType.MPS);
 
-                    case 2 when value is "km" && data.nextChar is 'h':
-                        data.Pos += 2;
+                    case 2 when value is "km" && nextChar is 'h':
+                        pos += 2;
                         return new UnitToken(start, UnitType.KMPH);
                 }
                 break;
 
             case '%' when value is "snow":
-                ++data.Pos;
+                ++pos;
                 return new UnitToken(start, UnitType.Snow);
         }
 
@@ -249,13 +291,10 @@ internal static class Lexer
         }
         for (var (keywordType, kind) = CheckKeyword(value); keywordType is not KeywordType.None;)
         {
-            return new KeywordToken(start, data.Pos, keywordType, kind);
+            return new KeywordToken(start, pos, keywordType, kind);
         }
-        return new IdentifierToken(start, data.Pos, value);
+        return new IdentifierToken(start, pos, value);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsValidIdentifierCharacter(char c) => c is '_' || char.IsLetterOrDigit(c);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private NumericToken ParseNumber(char c)
@@ -270,10 +309,10 @@ internal static class Lexer
         var innerState = c is '0'
             ? startingZero
             : onInt;
-        int start = data.Pos++;
-        for (; data.isInBounds; ++data.Pos)
+        int start = pos++;
+        for (; isInBounds; ++pos)
         {
-            c = data.currentChar;
+            c = currentChar;
             switch (innerState)
             {
                 case startingZero:
@@ -325,7 +364,7 @@ internal static class Lexer
                 case floatOnDot:
                     if (c is '.')
                     {
-                        --data.Pos;
+                        --pos;
                         goto label_End;
                     }
                     if (!char.IsDigit(c))
@@ -344,7 +383,7 @@ internal static class Lexer
             }
         }
         label_End:
-        return new NumericToken(start, data.Pos);
+        return new NumericToken(start, pos);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -406,27 +445,4 @@ internal static class Lexer
             "alternative_sprites" => (KeywordType.AlternativeSprites, KeywordKind.BlockDefining),
             _ => (KeywordType.None, KeywordKind.None)
         };
-
-    private ref struct LexData
-    {
-        public readonly int MaxPos;
-        public int Pos;
-        public readonly ReadOnlySpan<char> Content;
-
-        public char currentChar => Content[Pos];
-
-        public char nextChar => Content[Pos + 1];
-
-        public bool isAtLastChar => Pos == MaxPos;
-
-        public bool isInBounds => Pos <= MaxPos;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public LexData(ReadOnlySpan<char> content)
-        {
-            MaxPos = content.Length - 1;
-            Pos = 0;
-            Content = content;
-        }
-    }
 }

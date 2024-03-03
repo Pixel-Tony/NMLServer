@@ -39,7 +39,6 @@ internal static class Grammar
         [BinaryNot] = 11
     };
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OperatorType GetOperatorType(StringView needle)
         => needle switch
