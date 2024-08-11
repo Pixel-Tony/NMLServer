@@ -2,7 +2,8 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Expression;
 
-internal sealed class Identifier : BaseValueNode<IdentifierToken>
+internal sealed class Identifier(ExpressionAST? parent, IdentifierToken token)
+    : BaseValueNode<IdentifierToken>(parent, token)
 {
     public SymbolKind kind
     {
@@ -11,7 +12,4 @@ internal sealed class Identifier : BaseValueNode<IdentifierToken>
     }
 
     public new IdentifierToken token => Token;
-
-    public Identifier(ExpressionAST? parent, IdentifierToken token) : base(parent, token)
-    { }
 }

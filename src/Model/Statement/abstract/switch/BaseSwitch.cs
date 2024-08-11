@@ -2,5 +2,5 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal abstract partial class BaseSwitch(ParsingState state, KeywordToken keyword)
-    : BaseStatementWithBlockOf<BaseSwitch.Line>(state, keyword);
+internal abstract partial class BaseSwitch(ref ParsingState state, KeywordToken keyword)
+    : StatementWithBlockOf<BaseSwitch.Line>(ref state, keyword);

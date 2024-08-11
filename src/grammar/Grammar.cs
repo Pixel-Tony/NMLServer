@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Text;
 using NMLServer.Lexing;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -38,59 +37,6 @@ internal static class Grammar
         [LogicalNot] = 11,
         [BinaryNot] = 11
     };
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OperatorType GetOperatorType(StringView needle)
-        => needle switch
-        {
-            "," => Comma,
-            "?" => QuestionMark,
-            ":" => Colon,
-            "||" => LogicalOr,
-            "&&" => LogicalAnd,
-            "|" => BinaryOr,
-            "^" => BinaryXor,
-            "&" => BinaryAnd,
-            "==" => Eq,
-            "!=" => Ne,
-            "<=" => Le,
-            ">=" => Ge,
-            "<" => Lt,
-            ">" => Gt,
-            "<<" => ShiftLeft,
-            ">>" => ShiftRight,
-            ">>>" => ShiftRightFunky,
-            "+" => Plus,
-            "-" => Minus,
-            "*" => Multiply,
-            "/" => Divide,
-            "%" => Modula,
-            "!" => LogicalNot,
-            "~" => BinaryNot,
-            _ => None
-        };
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OperatorType GetOperatorType(char needle)
-        => needle switch
-        {
-            ',' => Comma,
-            '?' => QuestionMark,
-            ':' => Colon,
-            '|' => BinaryOr,
-            '^' => BinaryXor,
-            '&' => BinaryAnd,
-            '<' => Lt,
-            '>' => Gt,
-            '+' => Plus,
-            '-' => Minus,
-            '*' => Multiply,
-            '/' => Divide,
-            '%' => Modula,
-            '!' => LogicalNot,
-            '~' => BinaryNot,
-            _ => None
-        };
 
     private static readonly Dictionary<string, SymbolKind> _definedSymbols = new();
 

@@ -9,16 +9,16 @@ internal sealed class ParentedExpression(
     BracketToken? closingBracket = null)
     : ExpressionAST(parent)
 {
-    public readonly BracketToken? OpeningBracket = openingBracket;
+    private readonly BracketToken? _openingBracket = openingBracket;
     public ExpressionAST? Expression = expression;
     public BracketToken? ClosingBracket = closingBracket;
 
-    public override int start => OpeningBracket?.start ?? Expression?.start ?? ClosingBracket!.start;
+    public override int start => _openingBracket?.start ?? Expression?.start ?? ClosingBracket!.start;
 
     public override int end
         => ClosingBracket is not null
             ? ClosingBracket.start + 1
-            : Expression?.end ?? OpeningBracket!.start + 1;
+            : Expression?.end ?? _openingBracket!.start + 1;
 
     protected override void Replace(ExpressionAST target, FunctionCall value)
     {
@@ -27,7 +27,7 @@ internal sealed class ParentedExpression(
 
     public bool Matches(BracketToken closingBracket)
     {
-        return closingBracket.Bracket == OpeningBracket!.Bracket switch
+        return closingBracket.Bracket == _openingBracket!.Bracket switch
         {
             '(' => ')',
             '[' => ']',

@@ -8,7 +8,7 @@ internal sealed class UnaryOperation(ExpressionAST? parent, UnaryOpToken operati
 
     public override int start => operation.start;
 
-    public override int end => Expression?.end ?? operation.start + 1;
+    public override int end => Expression?.end ?? operation.end;
 
     protected override void Replace(ExpressionAST target, FunctionCall value)
     {

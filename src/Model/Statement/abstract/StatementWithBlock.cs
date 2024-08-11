@@ -3,12 +3,12 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal abstract class BaseStatementWithBlock : BaseStatement
+internal abstract class StatementWithBlock : StatementAST
 {
     private readonly KeywordToken _keyword;
     private readonly ExpressionAST? _parameters;
     protected readonly BracketToken? OpeningBracket;
-    protected BracketToken? ClosingBracket;
+    public BracketToken? ClosingBracket;
 
     public sealed override int start => _keyword.start;
 
@@ -29,11 +29,11 @@ internal abstract class BaseStatementWithBlock : BaseStatement
 
     protected abstract int middleEnd { get; }
 
-    protected BaseStatementWithBlock(ParsingState state, KeywordToken keyword)
+    protected StatementWithBlock(ref ParsingState state, KeywordToken keyword)
     {
         _keyword = keyword;
         state.IncrementSkippingComments();
-        _parameters = ExpressionAST.TryParse(state);
+        _parameters = ExpressionAST.TryParse(ref state);
         for (var token = state.currentToken; token is not null; token = state.nextToken)
         {
             switch (token)

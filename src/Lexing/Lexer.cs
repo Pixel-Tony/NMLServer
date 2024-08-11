@@ -18,19 +18,9 @@ internal ref struct Lexer(StringView content, in List<int> lineLengths, int pos,
     public Lexer(StringView content, in List<int> lineLengths) : this(content, in lineLengths, 0, content.Length)
     { }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ProcessUntilFileEnd(in List<Token> tokens)
     {
         for (var token = LexToken(out _); token is not null; token = LexToken(out _))
-        {
-            tokens.Add(token);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ProcessUntilFileEnd(ref Token? token, in List<Token> tokens)
-    {
-        for (token = LexToken(out _); token is not null; token = LexToken(out _))
         {
             tokens.Add(token);
         }
@@ -70,15 +60,30 @@ internal ref struct Lexer(StringView content, in List<int> lineLengths, int pos,
                 ';' => new SemicolonToken(pos++),
                 ':' => new ColonToken(pos++),
                 '?' => new TernaryOpToken(pos++),
-                '[' or ']' or '(' or ')' or '{' or '}'
-                    => new BracketToken(pos++, c),
+                '[' or ']' or '(' or ')' or '{' or '}' => new BracketToken(pos++, c),
+                '~' => new UnaryOpToken(pos++, c),
+
+                ',' => new BinaryOpToken(pos, ++pos, OperatorType.Comma),
+                '^' => new BinaryOpToken(pos, ++pos, OperatorType.BinaryXor),
+                '+' => new BinaryOpToken(pos, ++pos, OperatorType.Plus),
+                '-' => new BinaryOpToken(pos, ++pos, OperatorType.Minus),
+                '*' => new BinaryOpToken(pos, ++pos, OperatorType.Multiply),
+                '%' => new BinaryOpToken(pos, ++pos, OperatorType.Modula),
+
+                '|' => TryParseOperator(OperatorType.BinaryOr),
+                '&' => TryParseOperator(OperatorType.BinaryAnd),
+                '<' => TryParseOperator(OperatorType.Lt),
+                '>' => TryParseOperator(OperatorType.Gt),
+                '!' => TryParseOperator(OperatorType.LogicalNot),
+
                 >= '0' and <= '9' => ParseNumber(c),
+                '/' => ParseFromSlash(),
                 '=' => ParseOnEqualsSign(),
                 '.' => ParseOnDot(),
-                '/' => ParseFromSlash(),
                 '\'' or '"' => ParseLiteralString(c),
                 '#' => ParseHashtagComment(),
-                _ => TryParseOperator(c, Grammar.GetOperatorType(c))
+
+                _ => new UnknownToken(pos++)
             };
         }
         Complete();
@@ -89,64 +94,57 @@ internal ref struct Lexer(StringView content, in List<int> lineLengths, int pos,
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseOnDot()
     {
-        if (isAtLastChar)
+        if (isAtLastChar || nextChar is not '.')
         {
             return new UnknownToken(pos++);
         }
-        ++pos;
-        return currentChar is '.'
-            ? new RangeToken(pos++ - 1)
-            : new UnknownToken(pos - 1);
+        RangeToken result = new(pos);
+        pos += 2;
+        return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Token ParseOnEqualsSign()
     {
-        if (isAtLastChar || nextChar is not '=')
-        {
-            return new AssignmentToken(pos++);
-        }
-        var result = new BinaryOpToken(pos, ++pos, OperatorType.Eq);
-        ++pos;
-        return result;
+        return isAtLastChar || nextChar is not '='
+            ? new AssignmentToken(pos++)
+            : new BinaryOpToken(pos, pos += 2, OperatorType.Eq);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Token TryParseOperator(char c, OperatorType type)
+    private BinaryOpToken TryParseOperator(OperatorType type)
     {
-        if (type is OperatorType.None)
-        {
-            return new UnknownToken(pos++);
-        }
-        int start = pos++;
         if (isAtLastChar)
         {
-            return c switch
-            {
-                '=' => new UnknownToken(start),
-                '!' or '~' => new UnaryOpToken(start, c),
-                _ => new BinaryOpToken(start, pos, type)
-            };
+            return new BinaryOpToken(pos, ++pos, type);
         }
-        StringView needle = stackalloc char[2] { c, currentChar };
-        var opTokenType = Grammar.GetOperatorType(needle);
-        if (opTokenType is OperatorType.None)
-        {
-            return c switch
-            {
-                '=' => new UnknownToken(start),
-                '!' or '~' => new UnaryOpToken(start, c),
-                _ => new BinaryOpToken(start, pos, type)
-            };
-        }
-        if (opTokenType is not OperatorType.ShiftRight || isAtLastChar)
-        {
-            return new BinaryOpToken(start, ++pos, opTokenType);
-        }
+        int start = pos++;
         ++pos;
-        return currentChar is '>'
-            ? new BinaryOpToken(start, ++pos, OperatorType.ShiftRightFunky)
-            : new BinaryOpToken(start, pos, opTokenType);
+        return currentChar switch
+        {
+            '|' when type is OperatorType.BinaryOr
+                => new BinaryOpToken(start, ++pos, OperatorType.LogicalOr),
+
+            '&' when type is OperatorType.BinaryAnd
+                => new BinaryOpToken(start, ++pos, OperatorType.LogicalAnd),
+
+            '=' => type switch
+            {
+                OperatorType.Lt => new BinaryOpToken(start, ++pos, OperatorType.Le),
+                OperatorType.Gt => new BinaryOpToken(start, ++pos, OperatorType.Ge),
+                OperatorType.BinaryNot => new BinaryOpToken(start, ++pos, OperatorType.Ne),
+                _ => new BinaryOpToken(start, pos, type)
+            },
+
+            '<' when type is OperatorType.Lt
+                => new BinaryOpToken(start, ++pos, OperatorType.ShiftRight),
+
+            '>' when type is OperatorType.Gt
+                => isAtLastChar || nextChar is not '>'
+                    ? new BinaryOpToken(start, ++pos, OperatorType.ShiftRight)
+                    : new BinaryOpToken(start, pos += 2, OperatorType.ShiftRightFunky),
+
+            _ => new BinaryOpToken(start, pos, type)
+        };
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -236,16 +234,15 @@ internal ref struct Lexer(StringView content, in List<int> lineLengths, int pos,
         while (isInBounds)
         {
             char c = currentChar;
-            if (c == openingQuote)
-            {
-                ++pos;
-                break;
-            }
             if (c is '\n')
             {
                 break;
             }
             ++pos;
+            if (c == openingQuote)
+            {
+                break;
+            }
         }
         return new StringToken(start, pos);
     }

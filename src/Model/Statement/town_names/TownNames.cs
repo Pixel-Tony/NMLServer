@@ -2,27 +2,27 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class TownNames : BaseStatementWithBlock
+internal sealed partial class TownNames : StatementWithBlock
 {
-    private readonly IReadOnlyList<NMLAttribute>? _attributes;
-    private readonly IReadOnlyList<Part>? _parts;
+    private readonly List<NMLAttribute>? _attributes;
+    private readonly List<Part>? _parts;
 
     protected override int middleEnd => Extensions.LastOf(_attributes, _parts);
 
-    public TownNames(ParsingState state, KeywordToken keyword) : base(state, keyword)
+    public TownNames(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
     {
         if (ClosingBracket is not null)
         {
             return;
         }
-        List<NMLAttribute> attributes = new();
-        List<Part> parts = new();
+        List<NMLAttribute> attributes = [];
+        List<Part> parts = [];
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
                 case BracketToken { Bracket: '{' } openingInnerBracket:
-                    parts.Add(new Part(state, openingInnerBracket));
+                    parts.Add(new Part(ref state, openingInnerBracket));
                     break;
 
                 case BracketToken { Bracket: '}' } closingBracket:
@@ -31,7 +31,7 @@ internal sealed partial class TownNames : BaseStatementWithBlock
                     goto label_End;
 
                 case IdentifierToken identifier:
-                    attributes.Add(new NMLAttribute(state, identifier));
+                    attributes.Add(new NMLAttribute(ref state, identifier));
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:

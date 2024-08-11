@@ -16,7 +16,7 @@ internal sealed partial class TileLayout
 
         public int end => _semicolon?.end ?? (_value?.end ?? (_colon?.end ?? (_y?.end ?? (_comma?.end ?? _x!.end))));
 
-        public Entry(ParsingState state, NumericToken? x, BinaryOpToken? comma = null)
+        public Entry(ref ParsingState state, NumericToken? x, BinaryOpToken? comma = null)
         {
             _x = x;
             _comma = comma;
@@ -29,14 +29,12 @@ internal sealed partial class TileLayout
                         _comma = foundComma;
                         goto label_ParsingY;
 
-                    case BracketToken { Bracket: '}' }:
-                        return;
-
                     case ColonToken colon:
                         _colon = colon;
                         state.IncrementSkippingComments();
                         goto label_ParsingValue;
 
+                    case BracketToken { Bracket: '}' }:
                     case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                         return;
 
@@ -51,21 +49,19 @@ internal sealed partial class TileLayout
             {
                 switch (token)
                 {
-                    case BracketToken { Bracket: '}' }:
-                        return;
+                    case NumericToken y:
+                        _y = y;
+                        token = state.nextToken;
+                        goto label_ParsingColon;
 
                     case ColonToken colon:
                         _colon = colon;
                         state.IncrementSkippingComments();
                         goto label_ParsingValue;
 
+                    case BracketToken { Bracket: '}' }:
                     case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                         return;
-
-                    case NumericToken y:
-                        _y = y;
-                        token = state.nextToken;
-                        goto label_ParsingColon;
 
                     default:
                         state.AddUnexpected(token);
@@ -78,14 +74,12 @@ internal sealed partial class TileLayout
             {
                 switch (token)
                 {
-                    case BracketToken { Bracket: '}' }:
-                        return;
-
                     case ColonToken colon:
                         _colon = colon;
                         state.IncrementSkippingComments();
                         goto label_ParsingValue;
 
+                    case BracketToken { Bracket: '}' }:
                     case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                         return;
 
@@ -96,7 +90,7 @@ internal sealed partial class TileLayout
                 }
             }
             label_ParsingValue:
-            _value = ExpressionAST.TryParse(state);
+            _value = ExpressionAST.TryParse(ref state);
             _semicolon = state.ExpectSemicolon();
         }
     }

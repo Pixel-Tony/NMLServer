@@ -2,8 +2,5 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed class ItemBlock : BaseBlockWithChildren
-{
-    public ItemBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
-    { }
-}
+internal sealed class ItemBlock(InnerStatementNode? parent, ref ParsingState state, KeywordToken keyword)
+    : InnerStatementNode(parent, ref state, keyword);

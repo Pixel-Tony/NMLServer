@@ -16,22 +16,21 @@ internal partial class TracktypeTable
         public int end => _comma?.end ?? (_closingBracket?.end ?? (_fallback?[^1].end ?? (_openingBracket?.end
             ?? (_colon?.end ?? _identifier.end))));
 
-        public FallbackEntry(ParsingState state, BaseValueToken identifier, ColonToken colon)
+        public FallbackEntry(ref ParsingState state, BaseValueToken identifier, ColonToken colon)
         {
             _identifier = identifier;
             _colon = colon;
-            List<ValueWithComma<BaseValueToken>> fallbacks = new();
+            List<ValueWithComma<BaseValueToken>> fallbacks = [];
             BaseValueToken? current = null;
             for (var token = state.nextToken; token is not null; token = state.nextToken)
             {
                 switch (token)
                 {
                     case BracketToken { Bracket: '}' }:
-                        _fallback = fallbacks.ToMaybeList();
-                        return;
+                        goto label_End;
 
                     case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
-                        fallbacks.Add(new(current, commaToken));
+                        fallbacks.Add(new ValueWithComma<BaseValueToken>(current, commaToken));
                         current = null;
                         break;
 
@@ -52,8 +51,7 @@ internal partial class TracktypeTable
                         break;
 
                     case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
-                        _fallback = fallbacks.ToMaybeList();
-                        return;
+                        goto label_End;
 
                     default:
                         state.AddUnexpected(token);
@@ -67,20 +65,19 @@ internal partial class TracktypeTable
                 {
                     case BracketToken { Bracket: '}' }:
                     case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
-                        _fallback = fallbacks.ToMaybeList();
-                        return;
+                        goto label_End;
 
                     case BinaryOpToken { Type: OperatorType.Comma } commaToken:
                         _comma = commaToken;
                         state.Increment();
-                        _fallback = fallbacks.ToMaybeList();
-                        return;
+                        goto label_End;
 
                     default:
                         state.AddUnexpected(token);
                         break;
                 }
             }
+            label_End:
             _fallback = fallbacks.ToMaybeList();
         }
     }

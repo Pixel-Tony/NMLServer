@@ -20,7 +20,7 @@ internal partial class BaseSwitch
         public readonly int end => _semicolon?.end ?? (_returnValue?.end ?? (_returnKeyword?.end ?? (_colon?.end
             ?? (_patternRightSide?.end ?? (_range?.end ?? _pattern!.end)))));
 
-        static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ParsingState state,
+        static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)
         {
             List<Line> content = [];
@@ -46,7 +46,7 @@ internal partial class BaseSwitch
                         }
                         current._returnKeyword = returnKeyword;
                         state.IncrementSkippingComments();
-                        current._returnValue = ExpressionAST.TryParse(state);
+                        current._returnValue = ExpressionAST.TryParse(ref state);
                         current._semicolon = state.ExpectSemicolon();
                         content.Add(current);
                         current = new Line();
@@ -64,7 +64,7 @@ internal partial class BaseSwitch
                         switch (innerState)
                         {
                             case InnerState.ExpectingAnything:
-                                current._pattern = ExpressionAST.TryParse(state);
+                                current._pattern = ExpressionAST.TryParse(ref state);
                                 innerState = current._pattern is UnitTerminatedExpression
                                     ? InnerState.ExpectingColonSemicolon
                                     : InnerState.ExpectingRangeColonSemicolon;
@@ -72,13 +72,13 @@ internal partial class BaseSwitch
                                 continue;
 
                             case InnerState.ExpectingAfterRange:
-                                current._patternRightSide = ExpressionAST.TryParse(state);
+                                current._patternRightSide = ExpressionAST.TryParse(ref state);
                                 innerState = InnerState.ExpectingColon;
                                 token = state.currentToken;
                                 continue;
 
                             case InnerState.ExpectingValue:
-                                current._returnValue = ExpressionAST.TryParse(state);
+                                current._returnValue = ExpressionAST.TryParse(ref state);
                                 current._semicolon = state.ExpectSemicolon();
                                 content.Add(current);
                                 current = new Line();

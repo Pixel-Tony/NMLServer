@@ -13,16 +13,16 @@ internal abstract class ExpressionAST(ExpressionAST? parent) : IAllowsParseInsid
     protected virtual void Replace(ExpressionAST target, FunctionCall value)
         => throw new Exception("Cannot replace child at the bottom-level node");
 
-    public static List<ExpressionAST>? ParseSomeInBlock(ParsingState state, ref BracketToken? closingBracket)
+    public static List<ExpressionAST>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {
-        var expression = TryParse(state);
+        var expression = TryParse(ref state);
         if (expression is not null)
         {
             List<ExpressionAST> result = [];
             while (expression is not null)
             {
                 result.Add(expression);
-                expression = TryParse(state);
+                expression = TryParse(ref state);
             }
             closingBracket = state.ExpectClosingCurlyBracket();
             return result;
@@ -40,10 +40,10 @@ internal abstract class ExpressionAST(ExpressionAST? parent) : IAllowsParseInsid
     /// <param name="state">The current parsing state.</param>
     /// <param name="parseUntilOuterComma">The flag to stop parsing if top-level comma is encountered.</param>
     /// <returns>The root of parsed expression, if any; null otherwise.</returns>
-    public static ExpressionAST? TryParse(ParsingState state, bool parseUntilOuterComma = false)
+    public static ExpressionAST? TryParse(ref ParsingState state, bool parseUntilOuterComma = false)
     {
         var token = state.currentToken;
-        if (token is null || parseUntilOuterComma && token is BinaryOpToken { Type: OperatorType.Comma })
+        if (token is null || (parseUntilOuterComma && token is BinaryOpToken { Type: OperatorType.Comma }))
         {
             return null;
         }

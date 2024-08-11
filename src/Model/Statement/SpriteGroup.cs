@@ -2,5 +2,5 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed class SpriteGroup(ParsingState state, KeywordToken keyword)
-    : BaseStatementWithBlockOf<NMLAttribute>(state, keyword);
+internal sealed class SpriteGroup(ref ParsingState state, KeywordToken keyword)
+    : StatementWithBlockOf<NMLAttribute>(ref state, keyword);

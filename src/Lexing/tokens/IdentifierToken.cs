@@ -5,7 +5,7 @@ internal sealed class IdentifierToken(int start, int end, StringView value) : Ba
     public readonly int Hash = string.GetHashCode(value);
     public SymbolKind kind { get; set; } = Grammar.GetSymbolKind(new string(value));
 
-    public bool ContextuallyEqual(IdentifierToken obj, StringView context)
+    public bool Equals(IdentifierToken obj, StringView context)
     {
         var value = context.Slice(start, length);
         var tokenValue = context.Slice(obj.start, obj.length);

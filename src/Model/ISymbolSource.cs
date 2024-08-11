@@ -3,9 +3,9 @@ using NMLServer.Lexing;
 namespace NMLServer.Model;
 
 /// <summary>
-/// The interface describing top-level structures like switches or parameter assignments,
-/// capable of defining new symbols.
+/// The interface for describing top-level structures capable of defining new symbols: switches, spritesets, items, etc.
 /// </summary>
+// TODO: implement support for all statements that define symbols
 internal interface ISymbolSource
 {
     public IdentifierToken? symbol { get; }

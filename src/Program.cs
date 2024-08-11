@@ -8,13 +8,12 @@ namespace NMLServer;
 
 internal class Program
 {
-    public static readonly TextDocumentSelector NMLSelector = new(
-        new TextDocumentFilter { Language = "nml", Scheme = "file" }
-    );
+    public static readonly TextDocumentSelector NMLSelector
+        = new(new TextDocumentFilter { Language = "nml", Scheme = "file" });
 
     public static ILanguageServer Server = null!;
 
-    public static async Task Main()
+    private static async Task Main()
     {
         SourceStorage storage = new();
 
@@ -24,12 +23,9 @@ internal class Program
                 .WithOutput(Console.OpenStandardOutput())
                 .WithServices(services => services.AddSingleton(storage))
                 .AddHandler<TextDocumentSyncHandler>()
-                // .AddHandler<DocumentDiagnosticHandler>()
-                // .AddHandler<SemanticTokensHandler>()
-                // .AddHandler<DefinitionHandler>()
+                .AddHandler<DefinitionHandler>()
+                .AddHandler<SemanticTokensHandler>()
         ).ConfigureAwait(false);
-
-        // storage.ShouldPublishDiagnostics += Server.PublishDiagnostics;
 
         await Server.WaitForExit.ConfigureAwait(false);
     }

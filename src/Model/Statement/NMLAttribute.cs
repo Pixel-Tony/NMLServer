@@ -20,16 +20,16 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
         _semicolon = semicolon;
     }
 
-    public NMLAttribute(ParsingState state, ColonToken colon)
+    public NMLAttribute(ref ParsingState state, ColonToken colon)
     {
         _key = null;
         _colon = colon;
         state.IncrementSkippingComments();
-        _value = ExpressionAST.TryParse(state);
+        _value = ExpressionAST.TryParse(ref state);
         _semicolon = state.ExpectSemicolon();
     }
 
-    public NMLAttribute(ParsingState state, BaseMulticharToken key)
+    public NMLAttribute(ref ParsingState state, BaseMulticharToken key)
     {
         _key = key;
         for (var token = state.nextToken; token is not null; token = state.nextToken)
@@ -39,7 +39,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                 case ColonToken colonToken:
                     _colon = colonToken;
                     state.IncrementSkippingComments();
-                    _value = ExpressionAST.TryParse(state);
+                    _value = ExpressionAST.TryParse(ref state);
                     _semicolon = state.ExpectSemicolon();
                     return;
 
@@ -59,28 +59,28 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
         }
     }
 
-    public static List<NMLAttribute>? ParseSomeInBlock(ParsingState state, ref BracketToken? closingBracket)
+    public static List<NMLAttribute>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {
-        List<NMLAttribute> attributes = new();
+        List<NMLAttribute> attributes = [];
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
                 case ColonToken colonToken:
-                    attributes.Add(new NMLAttribute(state, colonToken));
+                    attributes.Add(new NMLAttribute(ref state, colonToken));
                     break;
 
                 case IdentifierToken identifierToken:
-                    attributes.Add(new NMLAttribute(state, identifierToken));
+                    attributes.Add(new NMLAttribute(ref state, identifierToken));
                     break;
 
                 case BracketToken { Bracket: '}' } expectedClosingBracket:
                     closingBracket = expectedClosingBracket;
                     state.Increment();
-                    return attributes.ToMaybeList();
+                    goto label_End;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
-                    break;
+                    goto label_End;
 
                 default:
                     state.AddUnexpected(token);
@@ -88,6 +88,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                     break;
             }
         }
+        label_End:
         return attributes.ToMaybeList();
     }
 }

@@ -2,37 +2,36 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class GRFBlock : BaseStatementWithBlock
+internal sealed partial class GRFBlock : StatementWithBlock
 {
-    private readonly IReadOnlyList<NMLAttribute>? _attributes;
-    private readonly IReadOnlyList<Parameter>? _parameters;
+    private readonly List<NMLAttribute>? _attributes;
+    private readonly List<Parameter>? _parameters;
 
     protected override int middleEnd => Extensions.LastOf(_attributes, _parameters);
 
-    public GRFBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
+    public GRFBlock(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
     {
         if (ClosingBracket is not null)
         {
             return;
         }
-
-        List<NMLAttribute> attributes = new();
-        List<Parameter> parameters = new();
+        List<NMLAttribute> attributes = [];
+        List<Parameter> parameters = [];
 
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
                 case IdentifierToken identifierToken:
-                    attributes.Add(new NMLAttribute(state, identifierToken));
+                    attributes.Add(new NMLAttribute(ref state, identifierToken));
                     break;
 
                 case ColonToken colonToken:
-                    attributes.Add(new NMLAttribute(state, colonToken));
+                    attributes.Add(new NMLAttribute(ref state, colonToken));
                     break;
 
                 case KeywordToken { Type: KeywordType.Param } paramToken:
-                    parameters.Add(new Parameter(state, paramToken));
+                    parameters.Add(new Parameter(ref state, paramToken));
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:

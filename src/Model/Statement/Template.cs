@@ -2,4 +2,4 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed class Template(ParsingState state, KeywordToken keyword) : BaseSpriteHolder(state, keyword);
+internal sealed class Template(ref ParsingState state, KeywordToken keyword) : BaseSpriteHolder(ref state, keyword);

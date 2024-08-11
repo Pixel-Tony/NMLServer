@@ -13,10 +13,10 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
 
     public int end => _semicolon?.end ?? (_value?.end ?? (_returnKeyword?.end ?? (_colon?.end ?? _identifier!.end)));
 
-    public static List<ItemGraphicsAttribute>? ParseSomeInBlock(ParsingState state,
+    public static List<ItemGraphicsAttribute>? ParseSomeInBlock(ref ParsingState state,
         ref BracketToken? expectedClosingBracket)
     {
-        List<ItemGraphicsAttribute> attributes = new();
+        List<ItemGraphicsAttribute> attributes = [];
 
         for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
@@ -25,18 +25,18 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                 case BracketToken { Bracket: '}' } closingBracket:
                     expectedClosingBracket = closingBracket;
                     state.Increment();
-                    return attributes.ToMaybeList();
+                    goto label_End;
 
                 case ColonToken colonToken:
-                    attributes.Add(new ItemGraphicsAttribute(state, colonToken));
+                    attributes.Add(new ItemGraphicsAttribute(ref state, colonToken));
                     break;
 
                 case IdentifierToken identifierToken:
-                    attributes.Add(new ItemGraphicsAttribute(state, identifierToken));
+                    attributes.Add(new ItemGraphicsAttribute(ref state, identifierToken));
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
-                    return attributes.ToMaybeList();
+                    goto label_End;
 
                 default:
                     state.AddUnexpected(token);
@@ -44,10 +44,11 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                     break;
             }
         }
+        label_End:
         return attributes.ToMaybeList();
     }
 
-    private ItemGraphicsAttribute(ParsingState state, IdentifierToken identifier)
+    private ItemGraphicsAttribute(ref ParsingState state, IdentifierToken identifier)
     {
         _identifier = identifier;
         for (var token = state.nextToken; token is not null; token = state.nextToken)
@@ -66,7 +67,7 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                         _returnKeyword = returnKeyword;
                         state.IncrementSkippingComments();
                     }
-                    _value = ExpressionAST.TryParse(state);
+                    _value = ExpressionAST.TryParse(ref state);
                     _semicolon = state.ExpectSemicolon();
                     return;
 
@@ -85,11 +86,11 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
         }
     }
 
-    private ItemGraphicsAttribute(ParsingState state, ColonToken colon)
+    private ItemGraphicsAttribute(ref ParsingState state, ColonToken colon)
     {
         _colon = colon;
         state.IncrementSkippingComments();
-        _value = ExpressionAST.TryParse(state);
+        _value = ExpressionAST.TryParse(ref state);
         _semicolon = state.ExpectSemicolon();
     }
 }

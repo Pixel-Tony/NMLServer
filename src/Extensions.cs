@@ -2,38 +2,17 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
+// TODO docstrings
 namespace NMLServer;
 
-// TODO docstrings
-internal static class Extensions
+internal static class RangeExtensions
 {
-    public static List<T>? ToMaybeList<T>(this List<T> target)
-    {
-        return target.Count > 0
-            ? target
-            : null;
-    }
+    public static Range RangeFromRaw(int line, int @char, int length) => new(line, @char, line, @char + length);
+}
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsValidIdentifierCharacter(this char c) => c is '_' || char.IsLetterOrDigit(c);
-
-    public static int LastOf<T1, T2>(IReadOnlyList<T1>? first, IReadOnlyList<T2>? second)
-        where T1 : IHasEnd where T2 : IHasEnd
-        => int.Max(first?[^1].end ?? 0, second?[^1].end ?? 0);
-
-    public static SemanticTokenType? ToSemanticType(this SymbolKind target)
-    {
-        return (target & (SymbolKind)0x0F) switch
-        {
-            SymbolKind.Feature => SemanticTokenType.Type,
-            SymbolKind.Switch => SemanticTokenType.Function,
-            SymbolKind.Macro => SemanticTokenType.Macro,
-            SymbolKind.Variable => SemanticTokenType.Variable,
-            SymbolKind.Parameter => SemanticTokenType.Parameter,
-            SymbolKind.Constant => SemanticTokenType.EnumMember,
-            _ => null as SemanticTokenType?
-        };
-    }
+internal static class SpanExtensions
+{
+    public static Span<T> AsSpan<T>(this List<T> list) => CollectionsMarshal.AsSpan(list);
 
     private static Span<T> CreateFullListSpan<T>(List<T> list)
         => MemoryMarshal.CreateSpan(ref CollectionsMarshal.AsSpan(list)[0], list.Capacity);
@@ -74,7 +53,6 @@ internal static class Extensions
             destination.InsertRange(0, source);
             return;
         }
-
         var capacity = destination.Count - end + source.Count;
         destination.EnsureCapacity(capacity);
         var span = CreateFullListSpan(destination);
@@ -86,17 +64,40 @@ internal static class Extensions
     // note: destination.Count >= 1
     public static void ComplementEndByRange<T>(this List<T> destination, in List<T> source, int start)
     {
-        if (source.Count <= 1)
-        {
-            destination[start] = source[0];
-            destination.RemoveRange(start + 1, destination.Count - (start + 1));
-            return;
-        }
         var capacity = start + source.Count;
         destination.EnsureCapacity(capacity);
         var span = CreateFullListSpan(destination);
         CollectionsMarshal.AsSpan(source).CopyTo(span[start..]);
         CollectionsMarshal.SetCount(destination, capacity);
-        destination.RemoveRange(capacity, destination.Count - capacity);
+    }
+}
+
+internal static class Extensions
+{
+    public static List<T>? ToMaybeList<T>(this List<T> target)
+        => target.Count > 0
+            ? target
+            : null;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsValidIdentifierCharacter(this char c) => c is '_' || char.IsLetterOrDigit(c);
+
+    public static int LastOf<T1, T2>(IReadOnlyList<T1>? first, IReadOnlyList<T2>? second)
+        where T1 : IHasEnd
+        where T2 : IHasEnd
+        => int.Max(first?[^1].end ?? 0, second?[^1].end ?? 0);
+
+    public static SemanticTokenType? ToSemanticType(this SymbolKind target)
+    {
+        return (target & (SymbolKind)0x0F) switch
+        {
+            SymbolKind.Feature => SemanticTokenType.Type,
+            SymbolKind.Switch => SemanticTokenType.Function,
+            SymbolKind.Macro => SemanticTokenType.Macro,
+            SymbolKind.Variable => SemanticTokenType.Variable,
+            SymbolKind.Parameter => SemanticTokenType.Parameter,
+            SymbolKind.Constant => SemanticTokenType.EnumMember,
+            _ => null as SemanticTokenType?
+        };
     }
 }

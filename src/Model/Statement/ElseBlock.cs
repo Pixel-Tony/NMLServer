@@ -2,4 +2,5 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal class ElseBlock(ParsingState state, KeywordToken keyword) : BaseBlockWithChildren(state, keyword);
+internal class ElseBlock(InnerStatementNode? parent, ref ParsingState state, KeywordToken keyword)
+    : InnerStatementNode(parent, ref state, keyword);

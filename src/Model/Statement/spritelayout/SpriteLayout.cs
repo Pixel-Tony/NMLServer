@@ -2,8 +2,5 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class SpriteLayout : BaseStatementWithBlockOf<SpriteLayout.Entry>
-{
-    public SpriteLayout(ParsingState state, KeywordToken keyword) : base(state, keyword)
-    { }
-}
+internal sealed partial class SpriteLayout(ref ParsingState state, KeywordToken keyword)
+    : StatementWithBlockOf<SpriteLayout.Entry>(ref state, keyword);

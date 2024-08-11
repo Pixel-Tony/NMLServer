@@ -13,14 +13,14 @@ internal sealed partial class SpriteLayout
 
         public int end => _closingBracket?.end ?? (_attributes?[^1].end ?? (_openingBracket?.end ?? _identifier!.end));
 
-        private Entry(ParsingState state, BracketToken openingBracket)
+        private Entry(ref ParsingState state, BracketToken openingBracket)
         {
             _openingBracket = openingBracket;
             state.Increment();
-            _attributes = NMLAttribute.ParseSomeInBlock(state, ref _closingBracket);
+            _attributes = NMLAttribute.ParseSomeInBlock(ref state, ref _closingBracket);
         }
 
-        private Entry(ParsingState state, IdentifierToken identifier)
+        private Entry(ref ParsingState state, IdentifierToken identifier)
         {
             _identifier = identifier;
             for (var token = state.nextToken; token is not null; token = state.nextToken)
@@ -30,7 +30,7 @@ internal sealed partial class SpriteLayout
                     case BracketToken { Bracket: '{' } openingBracket:
                         _openingBracket = openingBracket;
                         state.Increment();
-                        _attributes = NMLAttribute.ParseSomeInBlock(state, ref _closingBracket);
+                        _attributes = NMLAttribute.ParseSomeInBlock(ref state, ref _closingBracket);
                         return;
 
                     case BracketToken { Bracket: '}' } closingBracket:
@@ -48,29 +48,29 @@ internal sealed partial class SpriteLayout
             }
         }
 
-        static List<Entry>? IAllowsParseInsideBlock<Entry>.ParseSomeInBlock(ParsingState state,
+        static List<Entry>? IAllowsParseInsideBlock<Entry>.ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)
         {
-            List<Entry> entries = new();
+            List<Entry> entries = [];
             for (var token = state.currentToken; token is not null; token = state.currentToken)
             {
                 switch (token)
                 {
                     case BracketToken { Bracket: '{' } openingBracket:
-                        entries.Add(new Entry(state, openingBracket));
+                        entries.Add(new Entry(ref state, openingBracket));
                         break;
 
                     case BracketToken { Bracket: '}' } expectedClosingBracket:
                         closingBracket = expectedClosingBracket;
                         state.Increment();
-                        return entries.ToMaybeList();
+                        goto label_End;
 
                     case IdentifierToken identifierToken:
-                        entries.Add(new Entry(state, identifierToken));
+                        entries.Add(new Entry(ref state, identifierToken));
                         break;
 
                     case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
-                        return entries.ToMaybeList();
+                        goto label_End;
 
                     default:
                         state.AddUnexpected(token);
@@ -78,7 +78,8 @@ internal sealed partial class SpriteLayout
                         break;
                 }
             }
-            return entries;
+            label_End:
+            return entries.ToMaybeList();
         }
     }
 }

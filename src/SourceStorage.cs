@@ -1,52 +1,34 @@
 using OmniSharp.Extensions.LanguageServer.Protocol;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Window;
 
 namespace NMLServer;
 
 internal class SourceStorage
 {
-    public event Action<PublishDiagnosticsParams>? ShouldPublishDiagnostics;
-
     private readonly Dictionary<DocumentUri, Document> _documents = new();
 
-    public TextDocumentAttributes this[DocumentUri uri] => _documents[uri].Attributes;
+    public Document this[DocumentUri uri]
+        => _documents.TryGetValue(uri, out var result)
+            ? result
+            : throw new ArgumentException($"No document is present with given uri: {uri}");
+
+    public Document GetDocument<T>(T identifier) where T : ITextDocumentIdentifierParams
+        => this[identifier.TextDocument.Uri];
 
     public void Add(TextDocumentItem target)
     {
-        var document = new Document(target);
-        _documents.Add(target.Uri, document);
-        Analyze(document);
+        _documents.Add(target.Uri, new Document(target));
+        Program.Server.LogInfo($"Opened new file; Text - \"{target.Text[..20]}\"");
+        // TODO: analyze document
     }
 
     public void Remove(TextDocumentIdentifier item) => _documents.Remove(item.Uri);
-
-    private void Analyze(Document document) => ShouldPublishDiagnostics?.Invoke(new PublishDiagnosticsParams
-    {
-        Uri = document.Uri,
-        Diagnostics = document.ProvideDiagnostics()
-    });
 
     public void ApplyChanges(DidChangeTextDocumentParams request)
     {
         var document = _documents[request.TextDocument.Uri];
         document.UpdateFrom(request);
-        Analyze(document);
-    }
-
-    public void ProvideSemanticTokens(SemanticTokensBuilder builder, DocumentUri uri)
-    {
-        _documents[uri].ProvideSemanticTokens(builder);
-    }
-
-    public IEnumerable<Diagnostic> GetDiagnostics(TextDocumentIdentifier identifier)
-    {
-        return _documents[identifier.Uri].ProvideDiagnostics();
-    }
-
-    public LocationOrLocationLinks? ProvideDefinition(DefinitionParams request)
-    {
-        var document = _documents[request.TextDocument.Uri];
-        return document.ProvideDefinitions(request.Position);
+        // TODO: analyze document
     }
 }

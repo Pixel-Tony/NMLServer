@@ -2,27 +2,27 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class TileLayout : BaseStatementWithBlock
+internal sealed partial class TileLayout : StatementWithBlock
 {
-    private readonly IReadOnlyList<NMLAttribute>? _attributes;
-    private readonly IReadOnlyList<Entry>? _entries;
+    private readonly List<NMLAttribute>? _attributes;
+    private readonly List<Entry>? _entries;
 
     protected override int middleEnd => Extensions.LastOf(_attributes, _entries);
 
-    public TileLayout(ParsingState state, KeywordToken keyword) : base(state, keyword)
+    public TileLayout(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
     {
         if (ClosingBracket is not null)
         {
             return;
         }
-        List<NMLAttribute> attributes = new();
-        List<Entry> entries = new();
+        List<NMLAttribute> attributes = [];
+        List<Entry> entries = [];
         for (var token = state.nextToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
                 case BinaryOpToken { Type: OperatorType.Comma } comma:
-                    entries.Add(new Entry(state, null, comma));
+                    entries.Add(new Entry(ref state, null, comma));
                     break;
 
                 case BracketToken { Bracket: '}' } closingBracket:
@@ -31,14 +31,14 @@ internal sealed partial class TileLayout : BaseStatementWithBlock
                     goto label_End;
 
                 case IdentifierToken identifier:
-                    attributes.Add(new NMLAttribute(state, identifier));
+                    attributes.Add(new NMLAttribute(ref state, identifier));
                     break;
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     goto label_End;
 
                 case NumericToken numericToken:
-                    entries.Add(new Entry(state, numericToken));
+                    entries.Add(new Entry(ref state, numericToken));
                     break;
 
                 default:

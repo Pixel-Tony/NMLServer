@@ -13,16 +13,28 @@ internal partial class Document
 {
     private string _source;
     private int _version;
-    private bool _isActualVersionOfDiagnostics;
-    private readonly List<Diagnostic> _diagnostics = [];
-    private readonly List<Token> _unexpectedTokens = [];
-    private readonly List<int> _lineLengths = [];
+
     private List<Token> _tokens = [];
-    private List<BaseStatement> _statements = null!;
+    private List<StatementAST>? _statements = [];
+    private readonly List<int> _lineLengths = [];
     private readonly DefinitionsMap _definedSymbols;
     private readonly IdentifierComparer _symbolComparer;
+    private readonly List<Token> _unexpectedTokens = [];
+
     public readonly TextDocumentAttributes Attributes;
     public readonly DocumentUri Uri;
+
+    private string source
+    {
+        get => _source;
+        set
+        {
+            _source = value;
+            _symbolComparer.context = value;
+        }
+    }
+
+    public PositionConverter GetConverter() => new(_lineLengths);
 
     public Document(TextDocumentItem item)
     {
@@ -32,36 +44,95 @@ internal partial class Document
         _source = item.Text;
         _symbolComparer = new IdentifierComparer(_source);
         _definedSymbols = new DefinitionsMap(_symbolComparer);
-        Initialize();
+        MakeTokensFromScratch();
+        MakeStatementsFromScratch();
+        MakeDefinitionsFromScratch();
     }
 
-    // TODO: remove after adding support for incremental updates
-    private void Initialize()
+    // TODO: full -> incremental; extract to handler
+    public void ProvideSemanticTokens(SemanticTokensBuilder builder)
     {
-        MakeTokens();
-        MakeStatements();
-        MakeDefinitions();
+        var converter = GetConverter();
+        foreach (var token in _tokens)
+        {
+            if (!Grammar.GetTokenSemanticType(token, out var type))
+            {
+                continue;
+            }
+            // only comments can span multiple lines
+            if (token is not CommentToken)
+            {
+                var (line, @char) = converter.LocalToProtocol(token.start);
+                builder.Push(line, @char, token.length, type);
+                continue;
+            }
+            foreach (var (line, @char, length) in converter.LocalToProtocol(token.start, token.length))
+            {
+                builder.Push(line, @char, length, type);
+            }
+        }
     }
 
-    private void MakeTokens()
+    public IReadOnlyList<IdentifierToken>? GetDefinitions(IdentifierToken symbol)
+    {
+        _definedSymbols.TryGetValue(symbol, out var definitions);
+        return definitions;
+    }
+
+    public Token? GetToken(Position pos) => GetTokenAt(ProtocolToLocal(pos));
+
+    private Token? GetTokenAt(int coordinate)
+    {
+        for (int left = 0, right = _tokens.Count - 1; left <= right;)
+        {
+            int mid = left + (right - left) / 2;
+            var current = _tokens[mid];
+            if (coordinate < current.start)
+            {
+                right = mid - 1;
+                continue;
+            }
+            if (coordinate <= current.end)
+            {
+                return current;
+            }
+            left = mid + 1;
+        }
+        return null;
+    }
+
+    private int ProtocolToLocal(Position position)
+    {
+        var start = position.Character;
+        for (int i = 0; i < position.Line; ++i)
+        {
+            start += _lineLengths[i];
+        }
+        return start;
+    }
+
+    private void MakeTokensFromScratch()
     {
         _tokens.Clear();
         _lineLengths.Clear();
-        new Lexer(_source, _lineLengths).ProcessUntilFileEnd(in _tokens);
+        Lexer lexer  = new (source, in _lineLengths);
+        lexer.ProcessUntilFileEnd(in _tokens);
     }
 
-    private void MakeStatements()
+    private void MakeStatementsFromScratch()
     {
-        BracketToken? ignored = null;
         _unexpectedTokens.Clear();
-        var state = new ParsingState(_tokens, in _unexpectedTokens);
-        _statements = BaseStatement.ParseSomeInBlock(state, ref ignored, isInner: false)
-                      ?? [];
+        ParsingState state = new(_tokens, in _unexpectedTokens);
+        _statements = StatementAST.Build(ref state);
     }
 
-    private void MakeDefinitions()
+    private void MakeDefinitionsFromScratch()
     {
         _definedSymbols.Clear();
+        if (_statements is null)
+        {
+            return;
+        }
         foreach (var child in _statements)
         {
             if (child is not ISymbolSource { symbol: { } symbol })

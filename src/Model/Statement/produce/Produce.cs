@@ -3,7 +3,8 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class Produce : BaseStatement
+
+internal sealed partial class Produce : StatementAST
 {
     private readonly KeywordToken _keyword;
     private readonly BracketToken? _openingBracket;
@@ -35,7 +36,7 @@ internal sealed partial class Produce : BaseStatement
         ClosingBracket
     }
 
-    public Produce(ParsingState state, KeywordToken keyword)
+    public Produce(ref ParsingState state, KeywordToken keyword)
     {
         _keyword = keyword;
         var token = state.currentToken;
@@ -60,13 +61,13 @@ internal sealed partial class Produce : BaseStatement
                 case BracketToken { Bracket: '[' } openingBracket:
                     if (innerState is InnerState.Consumptions)
                     {
-                        _consumptions = new CargoList(state, openingBracket);
+                        _consumptions = new CargoList(ref state, openingBracket);
                         innerState = InnerState.SecondComma;
                         break;
                     }
                     if (innerState is InnerState.Productions)
                     {
-                        _productions = new CargoList(state, openingBracket);
+                        _productions = new CargoList(ref state, openingBracket);
                         innerState = InnerState.ThirdComma;
                         break;
                     }
@@ -121,7 +122,7 @@ internal sealed partial class Produce : BaseStatement
                     or BaseValueToken
                     when innerState is InnerState.RunAgain:
 
-                    _runAgain = ExpressionAST.TryParse(state);
+                    _runAgain = ExpressionAST.TryParse(ref state);
                     /* Expression parser will consume final ')' paren as part of expression, we have to undo this */
                     if (_runAgain is ParentedExpression parented)
                     {

@@ -2,5 +2,5 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed class SnowLine(ParsingState state, KeywordToken keyword)
-    : BaseStatementWithBlockOf<NMLAttribute>(state, keyword);
+internal sealed class SnowLine(ref ParsingState state, KeywordToken keyword)
+    : StatementWithBlockOf<NMLAttribute>(ref state, keyword);

@@ -7,7 +7,7 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
 {
     public int end => comma?.end ?? identifier.end;
 
-    public static List<ValueWithComma<T>>? ParseSomeInBlock(ParsingState state, ref BracketToken? closingBracket)
+    public static List<ValueWithComma<T>>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {
         List<ValueWithComma<T>> chain = [];
         T? current = null;

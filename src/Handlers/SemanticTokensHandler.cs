@@ -6,8 +6,8 @@ namespace NMLServer.Analysis;
 
 internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHandlerBase
 {
-    protected override SemanticTokensRegistrationOptions CreateRegistrationOptions(
-        SemanticTokensCapability capability, ClientCapabilities clientCapabilities)
+    protected override SemanticTokensRegistrationOptions CreateRegistrationOptions(SemanticTokensCapability capability,
+        ClientCapabilities clientCapabilities)
         => new()
         {
             DocumentSelector = Program.NMLSelector,
@@ -22,7 +22,8 @@ internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHand
     protected override Task Tokenize(SemanticTokensBuilder builder, ITextDocumentIdentifierParams identifier,
         CancellationToken cancellationToken)
     {
-        storage.ProvideSemanticTokens(builder, identifier.TextDocument.Uri);
+        var document = storage.GetDocument(identifier);
+        document.ProvideSemanticTokens(builder);
         return Task.CompletedTask;
     }
 

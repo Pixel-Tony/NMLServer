@@ -11,14 +11,14 @@ internal partial class GRFBlock
             private readonly IdentifierToken? _name;
             private readonly ColonToken? _colon;
             private readonly BracketToken _openingBracket;
-            private readonly IReadOnlyList<NMLAttribute>? _items;
+            private readonly List<NMLAttribute>? _items;
             private readonly BracketToken? _closingBracket;
             private readonly SemicolonToken? _semicolon;
 
             public int end => _semicolon?.end ?? (_closingBracket?.end ?? (_items?[^1].end ?? (_openingBracket?.end
                 ?? (_colon?.end ?? _name!.end))));
 
-            public Names(ParsingState state, IdentifierToken? name, ColonToken? colon,
+            public Names(ref ParsingState state, IdentifierToken? name, ColonToken? colon,
                 BracketToken openingBracket)
             {
                 _name = name;
@@ -30,11 +30,11 @@ internal partial class GRFBlock
                     switch (token)
                     {
                         case NumericToken numericToken:
-                            attributes.Add(new NMLAttribute(state, numericToken));
+                            attributes.Add(new NMLAttribute(ref state, numericToken));
                             continue;
 
                         case ColonToken colonToken:
-                            attributes.Add(new NMLAttribute(state, colonToken));
+                            attributes.Add(new NMLAttribute(ref state, colonToken));
                             continue;
 
                         case BracketToken { Bracket: '}' } closingBracket:

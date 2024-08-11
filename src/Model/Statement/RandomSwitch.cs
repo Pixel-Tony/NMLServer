@@ -2,4 +2,4 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed class RandomSwitch(ParsingState state, KeywordToken keyword) : BaseSwitch(state, keyword);
+internal sealed class RandomSwitch(ref ParsingState state, KeywordToken keyword) : BaseSwitch(ref state, keyword);

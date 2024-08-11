@@ -2,23 +2,23 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class TracktypeTable : BaseStatementWithBlock
+internal sealed partial class TracktypeTable : StatementWithBlock
 {
-    private readonly IReadOnlyList<ValueWithComma<BaseValueToken>>? _entries;
-    private readonly IReadOnlyList<FallbackEntry>? _fallbackEntries;
+    private readonly List<ValueWithComma<BaseValueToken>>? _entries;
+    private readonly List<FallbackEntry>? _fallbackEntries;
 
     protected override int middleEnd => Extensions.LastOf(_entries, _fallbackEntries);
 
-    public TracktypeTable(ParsingState state, KeywordToken keyword) : base(state, keyword)
+    public TracktypeTable(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
     {
         if (ClosingBracket is not null)
         {
             return;
         }
-        List<ValueWithComma<BaseValueToken>> entries = new();
-        List<FallbackEntry> fallbacks = new();
+        List<ValueWithComma<BaseValueToken>> entries = [];
+        List<FallbackEntry> fallbacks = [];
         IdentifierToken? current = null;
-        for (var token = state.currentToken; token is not null;)
+        for (var token = state.currentToken; token is not null; token = state.currentToken)
         {
             switch (token)
             {
@@ -28,14 +28,13 @@ internal sealed partial class TracktypeTable : BaseStatementWithBlock
                     goto label_End;
 
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
-                    entries.Add(new(current, commaToken));
+                    entries.Add(new ValueWithComma<BaseValueToken>(current, commaToken));
                     current = null;
                     break;
 
                 case ColonToken colonToken when current is not null:
-                    fallbacks.Add(new FallbackEntry(state, current, colonToken));
+                    fallbacks.Add(new FallbackEntry(ref state, current, colonToken));
                     current = null;
-                    token = state.currentToken;
                     continue;
 
                 case IdentifierToken identifierToken when current is null:
@@ -45,7 +44,7 @@ internal sealed partial class TracktypeTable : BaseStatementWithBlock
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
                     if (current is not null)
                     {
-                        entries.Add(new(current, null));
+                        entries.Add(new ValueWithComma<BaseValueToken>(current, null));
                     }
                     goto label_End;
 
@@ -53,7 +52,7 @@ internal sealed partial class TracktypeTable : BaseStatementWithBlock
                     state.AddUnexpected(token);
                     break;
             }
-            token = state.nextToken;
+            state.Increment();
         }
         label_End:
         _entries = entries.ToMaybeList();

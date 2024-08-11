@@ -5,7 +5,7 @@ namespace NMLServer.Model.Statement;
 
 internal partial class GRFBlock
 {
-    private sealed partial class Parameter : BaseStatementWithBlock
+    private sealed partial class Parameter : StatementWithBlock
     {
         private readonly IdentifierToken? _name;
         private readonly BracketToken? _innerOpeningBracket;
@@ -29,7 +29,7 @@ internal partial class GRFBlock
             }
         }
 
-        public Parameter(ParsingState state, KeywordToken keyword) : base(state, keyword)
+        public Parameter(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
         {
             if (ClosingBracket is not null)
             {
@@ -63,8 +63,8 @@ internal partial class GRFBlock
                 }
             }
 
-            List<NMLAttribute> attributes = new();
-            List<Names> names = new();
+            List<NMLAttribute> attributes = [];
+            List<Names> names = [];
 
             IdentifierToken? identifier = null;
             ColonToken? colon = null;
@@ -136,7 +136,7 @@ internal partial class GRFBlock
                             case UnaryOpToken:
                             case BaseValueToken:
                             case BinaryOpToken:
-                                var expr = ExpressionAST.TryParse(state);
+                                var expr = ExpressionAST.TryParse(ref state);
                                 var semicolon = state.ExpectSemicolon();
                                 token = state.currentToken;
                                 attributes.Add(new NMLAttribute(identifier, colon, expr, semicolon));
@@ -146,7 +146,7 @@ internal partial class GRFBlock
                                 continue;
 
                             case BracketToken { Bracket: '{' } openingNamesBracket:
-                                names.Add(new Names(state, identifier, colon, openingNamesBracket));
+                                names.Add(new Names(ref state, identifier, colon, openingNamesBracket));
                                 identifier = null;
                                 colon = null;
                                 innerState = InnerState.ExpectingIdentifier;

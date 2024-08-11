@@ -3,21 +3,11 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model;
 
-// TODO -> ref struct
-internal class ParsingState
+internal ref struct ParsingState(IReadOnlyList<Token> tokens, in List<Token> unexpectedTokens, int offset = 0)
 {
-    private int _pointer;
-    private readonly int _max;
-    private readonly IReadOnlyList<Token> _tokens;
-    private readonly List<Token> _unexpectedTokens;
-
-    public ParsingState(IReadOnlyList<Token> tokens, in List<Token> unexpectedTokens)
-    {
-        _unexpectedTokens = unexpectedTokens;
-        _tokens = tokens;
-        _pointer = 0;
-        _max = _tokens.Count - 1;
-    }
+    private readonly int _max = tokens.Count - 1;
+    private readonly IReadOnlyList<Token> _tokens = tokens;
+    private readonly List<Token> _unexpectedTokens = unexpectedTokens;
 
     public void AddUnexpected(Token? token)
     {
@@ -28,14 +18,15 @@ internal class ParsingState
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Increment() => ++_pointer;
+    public void Increment() => ++offset;
 
-    public Token? currentToken => _pointer <= _max
-        ? _tokens[_pointer]
+    // TODO: replace bounds check with additional 'null' value in the end of a list
+    public Token? currentToken => offset <= _max
+        ? _tokens[offset]
         : null;
 
-    public Token? nextToken => ++_pointer <= _max
-        ? _tokens[_pointer]
+    public Token? nextToken => ++offset <= _max
+        ? _tokens[offset]
         : null;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -87,10 +78,10 @@ internal class ParsingState
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void IncrementSkippingComments()
     {
-        Increment();
-        while (currentToken is CommentToken)
+        do
         {
             Increment();
         }
+        while (currentToken is CommentToken);
     }
 }

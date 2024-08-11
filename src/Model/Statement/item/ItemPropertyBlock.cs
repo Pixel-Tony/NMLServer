@@ -2,8 +2,5 @@ using NMLServer.Lexing;
 
 namespace NMLServer.Model.Statement;
 
-internal class ItemPropertyBlock : BaseStatementWithBlockOf<NMLAttribute>
-{
-    public ItemPropertyBlock(ParsingState state, KeywordToken keyword) : base(state, keyword)
-    { }
-}
+internal class ItemPropertyBlock(ref ParsingState state, KeywordToken keyword)
+    : StatementWithBlockOf<NMLAttribute>(ref state, keyword);
