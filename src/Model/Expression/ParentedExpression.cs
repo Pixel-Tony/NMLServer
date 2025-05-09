@@ -1,4 +1,4 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
 
@@ -9,16 +9,13 @@ internal sealed class ParentedExpression(
     BracketToken? closingBracket = null)
     : ExpressionAST(parent)
 {
-    private readonly BracketToken? _openingBracket = openingBracket;
+    public readonly BracketToken? OpeningBracket = openingBracket;
     public ExpressionAST? Expression = expression;
     public BracketToken? ClosingBracket = closingBracket;
 
-    public override int start => _openingBracket?.start ?? Expression?.start ?? ClosingBracket!.start;
+    public override int start => OpeningBracket?.start ?? Expression?.start ?? ClosingBracket!.start;
 
-    public override int end
-        => ClosingBracket is not null
-            ? ClosingBracket.start + 1
-            : Expression?.end ?? _openingBracket!.start + 1;
+    public override int end => ClosingBracket?.end ?? Expression?.end ?? OpeningBracket!.end;
 
     protected override void Replace(ExpressionAST target, FunctionCall value)
     {
@@ -27,7 +24,7 @@ internal sealed class ParentedExpression(
 
     public bool Matches(BracketToken closingBracket)
     {
-        return closingBracket.Bracket == _openingBracket!.Bracket switch
+        return closingBracket.Bracket == OpeningBracket!.Bracket switch
         {
             '(' => ')',
             '[' => ']',

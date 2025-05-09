@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -7,7 +8,7 @@ internal sealed partial class TileLayout : StatementWithBlock
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Entry>? _entries;
 
-    protected override int middleEnd => Extensions.LastOf(_attributes, _entries);
+    protected override int middleEnd => IHasEnd.LastOf(_attributes, _entries);
 
     public TileLayout(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
     {
@@ -34,7 +35,7 @@ internal sealed partial class TileLayout : StatementWithBlock
                     attributes.Add(new NMLAttribute(ref state, identifier));
                     break;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     goto label_End;
 
                 case NumericToken numericToken:

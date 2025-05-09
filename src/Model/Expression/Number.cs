@@ -1,4 +1,4 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
 

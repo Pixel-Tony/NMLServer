@@ -1,32 +1,32 @@
-using Microsoft.Extensions.DependencyInjection;
-using NMLServer.Analysis;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using OmniSharp.Extensions.LanguageServer.Server;
+using EmmyLua.LanguageServer.Framework.Server;
+using NMLServer.Handlers;
 
 namespace NMLServer;
 
-internal class Program
+internal static class Program
 {
-    public static readonly TextDocumentSelector NMLSelector
-        = new(new TextDocumentFilter { Language = "nml", Scheme = "file" });
+    private const string Name = "NewGRF Meta Language";
+    private const string Version = "1.0.0";
 
-    public static ILanguageServer Server = null!;
+    public static LanguageServer Server = null!;
 
-    private static async Task Main()
+    private static async Task Main(string[] args)
     {
         SourceStorage storage = new();
+        Server = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
 
-        Server = await LanguageServer.From(
-            new LanguageServerOptions()
-                .WithInput(Console.OpenStandardInput())
-                .WithOutput(Console.OpenStandardOutput())
-                .WithServices(services => services.AddSingleton(storage))
-                .AddHandler<TextDocumentSyncHandler>()
-                .AddHandler<DefinitionHandler>()
-                .AddHandler<SemanticTokensHandler>()
-        ).ConfigureAwait(false);
+        Server.OnInitialize((initParams, info) =>
+        {
+            info.Name = Name;
+            info.Version = Version;
+            return Task.CompletedTask;
+        });
+        Server.AddHandler(new TextDocumentSyncHandler(storage))
+            .AddHandler(new DefinitionHandler(storage))
+            .AddHandler(new SemanticTokensHandler(storage))
+            .AddHandler(new CompletionHandler(storage))
+            .AddHandler(new DiagnosticsHandler(storage));
 
-        await Server.WaitForExit.ConfigureAwait(false);
+        await Server.Run().ConfigureAwait(false);
     }
 }

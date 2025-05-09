@@ -1,3 +1,6 @@
-global using IIdentifierTokenComparer = System.Collections.Generic.IEqualityComparer<NMLServer.Lexing.IdentifierToken>;
-global using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
+global using Range = EmmyLua.LanguageServer.Framework.Protocol.Model.DocumentRange;
 global using StringView = System.ReadOnlySpan<char>;
+global using SourceStorage = System.Collections.Generic.Dictionary<
+    EmmyLua.LanguageServer.Framework.Protocol.Model.DocumentUri,
+    NMLServer.Model.Document
+>;

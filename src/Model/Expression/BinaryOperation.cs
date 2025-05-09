@@ -1,4 +1,4 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
 
@@ -6,9 +6,11 @@ internal sealed class BinaryOperation(ExpressionAST? parent, BinaryOpToken op) :
 {
     private ExpressionAST? _left;
     public ExpressionAST? Right;
+    public OperatorType operatorType => op.Type;
 
-    public override int start => _left?.start ?? op.start;
-    public override int end => Right?.end ?? op.start + op.length;
+    public override int start => Left?.start ?? op.start;
+
+    public override int end => Right?.end ?? op.end;
 
     public uint precedence => op.Precedence;
 

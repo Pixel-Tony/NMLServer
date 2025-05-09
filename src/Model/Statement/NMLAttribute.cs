@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
@@ -10,7 +11,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
     private readonly ExpressionAST? _value;
     private readonly SemicolonToken? _semicolon;
 
-    public int end => _semicolon?.end ?? (_value?.end ?? (_colon?.end ?? _key!.end));
+    public int end => _semicolon?.end ?? _value?.end ?? _colon?.end ?? _key!.end;
 
     public NMLAttribute(BaseMulticharToken? key, ColonToken? colon, ExpressionAST? value, SemicolonToken? semicolon)
     {
@@ -49,7 +50,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                     return;
 
                 case BracketToken { Bracket: '{' or '}' }:
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     return;
 
                 default:
@@ -79,7 +80,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                     state.Increment();
                     goto label_End;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     goto label_End;
 
                 default:

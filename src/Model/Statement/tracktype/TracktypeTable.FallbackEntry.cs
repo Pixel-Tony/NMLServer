@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -9,12 +10,12 @@ internal partial class TracktypeTable
         private readonly BaseValueToken _identifier;
         private readonly ColonToken? _colon;
         private readonly BracketToken? _openingBracket;
-        private readonly IReadOnlyList<ValueWithComma<BaseValueToken>>? _fallback;
+        private readonly List<ValueWithComma<BaseValueToken>>? _fallback;
         private readonly BracketToken? _closingBracket;
         private readonly BinaryOpToken? _comma;
 
-        public int end => _comma?.end ?? (_closingBracket?.end ?? (_fallback?[^1].end ?? (_openingBracket?.end
-            ?? (_colon?.end ?? _identifier.end))));
+        public int end => _comma?.end ?? _closingBracket?.end ?? _fallback?[^1].end ?? _openingBracket?.end
+            ?? _colon?.end ?? _identifier.end;
 
         public FallbackEntry(ref ParsingState state, BaseValueToken identifier, ColonToken colon)
         {
@@ -50,7 +51,7 @@ internal partial class TracktypeTable
                         current = valueToken;
                         break;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         goto label_End;
 
                     default:
@@ -64,7 +65,7 @@ internal partial class TracktypeTable
                 switch (token)
                 {
                     case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         goto label_End;
 
                     case BinaryOpToken { Type: OperatorType.Comma } commaToken:

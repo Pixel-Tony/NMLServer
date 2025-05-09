@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -29,7 +30,7 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
                     state.Increment();
                     goto label_End;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     goto label_End;
 
                 default:

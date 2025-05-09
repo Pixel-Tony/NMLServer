@@ -1,10 +1,17 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Diagnostics;
+using NMLServer.Model.Lexis;
 using NMLServer.Model.Statement;
 
 namespace NMLServer.Model.Expression;
 
-internal abstract class ExpressionAST(ExpressionAST? parent) : IAllowsParseInsideBlock<ExpressionAST>
+internal abstract class ExpressionAST(ExpressionAST? parent)
+    : IHasStart, IAllowsParseInsideBlock<ExpressionAST>, IDiagnosticProvider
 {
+    protected static class ErrorStrings
+    {
+        public const string ErrorMissingExpr = "Missing expression";
+    }
+
     private ExpressionAST? _parent = parent;
 
     public abstract int start { get; }
@@ -31,22 +38,19 @@ internal abstract class ExpressionAST(ExpressionAST? parent) : IAllowsParseInsid
         return null;
     }
 
-    // TODO: possibly provide Parse(ParsingState, bool, Token) method for parsing from already checked token
     /// <summary>
-    /// <para>Try to parse an NML expression.</para>
-    /// Any NML expression can only contain ONE unit token. If if does, it is always the last token, and corresponding
-    /// <see cref="UnitTerminatedExpression"/> node is the root of result.
+    /// Try to parse an NML expression.
     /// </summary>
     /// <param name="state">The current parsing state.</param>
     /// <param name="parseUntilOuterComma">The flag to stop parsing if top-level comma is encountered.</param>
     /// <returns>The root of parsed expression, if any; null otherwise.</returns>
+    /// <remarks>Any NML expression can only contain ONE unit token. If if does, it is always the last token,
+    /// and corresponding <see cref="UnitTerminatedExpression"/> node is the root of result.</remarks>
     public static ExpressionAST? TryParse(ref ParsingState state, bool parseUntilOuterComma = false)
     {
         var token = state.currentToken;
         if (token is null || (parseUntilOuterComma && token is BinaryOpToken { Type: OperatorType.Comma }))
-        {
             return null;
-        }
 
         var result = TokenToAST(token);
         switch (result)
@@ -82,9 +86,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent) : IAllowsParseInsid
                         break;
                     }
                     if (current._parent is null)
-                    {
                         return result;
-                    }
                     current = current._parent;
                     continue;
                 }
@@ -303,7 +305,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent) : IAllowsParseInsid
             }
             state.Increment();
         }
-        return null;
+        return result;
     }
 
     private static ExpressionAST? TokenToAST(Token token)

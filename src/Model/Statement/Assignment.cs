@@ -1,4 +1,6 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Diagnostics;
+using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
@@ -13,7 +15,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource
     public IdentifierToken? symbol { get; }
 
     public override int start => _leftHandSide.start;
-    public override int end => _semicolon?.end ?? (_rightHandSide?.end ?? (_equalsSign?.end ?? _leftHandSide.end));
+    public override int end => _semicolon?.end ?? _rightHandSide?.end ?? _equalsSign?.end ?? _leftHandSide.end;
 
     public Assignment(ref ParsingState state)
     {
@@ -28,7 +30,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource
             switch (token)
             {
                 case BracketToken { Bracket: '{' or '}' }:
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     return;
 
                 case AssignmentToken equalsSign:
@@ -52,17 +54,17 @@ internal sealed class Assignment : StatementAST, ISymbolSource
     }
 
     // TODO
-    // public override void ProvideDiagnostics(dynamic context)
+    // public void ProvideDiagnostics(ref readonly DiagnosticContext context)
     // {
     //     if (_equalsSign is null)
     //     {
-    //         context.AddError("Unexpected expression at top level of the script", _leftHandSide);
+    //         context.AddError(Errors.UnexpectedTopLevelExpr, _leftHandSide);
     //         return;
     //     }
     //     switch (_leftHandSide)
     //     {
     //         // TODO: add support for previously defined param names
-    //         case Identifier { kind: var kind } when kind.HasFlag(SymbolKind.UserDefined):
+    //         case Identifier { kind: var kind } when kind.IsFlaggedBy(SymbolKind.UserDefined):
     //             break;
     //
     //         case FunctionCall
@@ -73,35 +75,37 @@ internal sealed class Assignment : StatementAST, ISymbolSource
     //         {
     //             if (opening!.Bracket is not '[')
     //             {
-    //                 context.AddError("Expected square bracket for var/param invocation", opening.start, 1);
+    //                 context.AddError(Errors.ExpectedSquareBracket, opening.start, 1);
     //             }
     //             if (closing is null)
     //             {
-    //                 context.AddError("Missing closing bracket", arguments.end);
+    //                 context.AddError(Errors.MissingClosingBracket, arguments.end);
     //             }
     //             else if (closing.Bracket is not ']')
     //             {
-    //                 context.AddError("Expected square bracket for var/param invocation", closing.start, 1);
+    //                 int closingStart = closing.start;
+    //                 context.AddError(Errors.ExpectedSquareBracket, closingStart, closingStart + 1);
     //             }
     //             break;
     //         }
+    //
     //         default:
-    //             context.AddError("Invalid parameter assignment target", _leftHandSide);
+    //             context.AddError(Errors.InvalidTarget, _leftHandSide);
     //             break;
     //     }
     //     if (_rightHandSide is null)
     //     {
-    //         context.AddError("Missing assigned value", _equalsSign.start + 1);
+    //         context.AddError(Errors.MissingAssignedValue, _equalsSign.start + 1);
     //         if (_semicolon is null)
     //         {
-    //             context.AddError("Missing semicolon", _equalsSign.start + 1);
+    //             context.AddError(Errors.MissingSemicolon, _equalsSign.start + 1);
     //         }
     //         return;
     //     }
-    //     // _rightHandSide.ProvideDiagnostics(context);
+    //     // TODO _rightHandSide.ProvideDiagnostics(ref context);
     //     if (_semicolon is null)
     //     {
-    //         context.AddError("Missing semicolon", _rightHandSide);
+    //         context.AddError(Errors.MissingSemicolon, _rightHandSide);
     //     }
     // }
 }

@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -7,7 +8,7 @@ internal sealed partial class TracktypeTable : StatementWithBlock
     private readonly List<ValueWithComma<BaseValueToken>>? _entries;
     private readonly List<FallbackEntry>? _fallbackEntries;
 
-    protected override int middleEnd => Extensions.LastOf(_entries, _fallbackEntries);
+    protected override int middleEnd => IHasEnd.LastOf(_entries, _fallbackEntries);
 
     public TracktypeTable(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
     {
@@ -41,7 +42,7 @@ internal sealed partial class TracktypeTable : StatementWithBlock
                     current = identifierToken;
                     break;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     if (current is not null)
                     {
                         entries.Add(new ValueWithComma<BaseValueToken>(current, null));

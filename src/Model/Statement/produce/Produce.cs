@@ -1,4 +1,4 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
@@ -23,7 +23,7 @@ internal sealed partial class Produce : StatementAST
         => _closingBracket?.end ?? (_runAgain?.end ?? (_thirdComma?.end ?? (_productions.end ?? (_secondComma?.end
             ?? (_consumptions.end ?? _firstComma?.end ?? _id?.end ?? _openingBracket?.end ?? _keyword.end)))));
 
-    private enum InnerState : byte
+    private enum InnerState
     {
         OpeningBracket,
         Id,
@@ -45,7 +45,7 @@ internal sealed partial class Produce : StatementAST
         {
             switch (token)
             {
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     return;
 
                 case BracketToken { Bracket: '(' } openingBracket when innerState is InnerState.OpeningBracket:

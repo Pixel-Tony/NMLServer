@@ -1,4 +1,4 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
@@ -6,7 +6,7 @@ namespace NMLServer.Model.Statement;
 internal abstract class StatementWithBlock : StatementAST
 {
     private readonly KeywordToken _keyword;
-    private readonly ExpressionAST? _parameters;
+    protected readonly ExpressionAST? Parameters;
     protected readonly BracketToken? OpeningBracket;
     public BracketToken? ClosingBracket;
 
@@ -23,7 +23,7 @@ internal abstract class StatementWithBlock : StatementAST
             int middle = middleEnd;
             return middle > 0
                 ? middle
-                : OpeningBracket?.end ?? (_parameters?.end ?? _keyword.end);
+                : OpeningBracket?.end ?? (Parameters?.end ?? _keyword.end);
         }
     }
 
@@ -33,7 +33,7 @@ internal abstract class StatementWithBlock : StatementAST
     {
         _keyword = keyword;
         state.IncrementSkippingComments();
-        _parameters = ExpressionAST.TryParse(ref state);
+        Parameters = ExpressionAST.TryParse(ref state);
         for (var token = state.currentToken; token is not null; token = state.nextToken)
         {
             switch (token)
@@ -48,7 +48,7 @@ internal abstract class StatementWithBlock : StatementAST
                     state.IncrementSkippingComments();
                     return;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     return;
 
                 default:

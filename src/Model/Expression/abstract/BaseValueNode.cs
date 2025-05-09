@@ -1,4 +1,4 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
 
@@ -7,13 +7,11 @@ internal abstract class BaseValueNode(ExpressionAST? parent) : ExpressionAST(par
     public abstract BaseValueToken token { get; }
 }
 
-internal abstract class BaseValueNode<T>(ExpressionAST? parent, T token) : BaseValueNode(parent)
+internal abstract class BaseValueNode<T>(ExpressionAST? parent, T value) : BaseValueNode(parent)
     where T : BaseValueToken
 {
-    protected readonly T Token = token;
+    public sealed override T token => value;
 
-    public sealed override BaseValueToken token => Token;
-
-    public sealed override int start => Token.start;
-    public sealed override int end => Token.start + Token.length;
+    public sealed override int start => value.start;
+    public sealed override int end => value.end;
 }

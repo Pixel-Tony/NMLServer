@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
@@ -9,25 +10,15 @@ internal partial class GRFBlock
     {
         private readonly IdentifierToken? _name;
         private readonly BracketToken? _innerOpeningBracket;
-        private readonly IReadOnlyList<NMLAttribute>? _attributes;
-        private readonly IReadOnlyList<Names>? _names;
+        private readonly List<NMLAttribute>? _attributes;
+        private readonly List<Names>? _names;
         private readonly BracketToken? _innerClosingBracket;
 
         protected override int middleEnd
-        {
-            get
-            {
-                if (_innerClosingBracket is not null)
-                {
-                    return _innerClosingBracket.end;
-                }
-                return Extensions.LastOf(_names, _attributes) switch
-                {
-                    0 => _innerOpeningBracket?.end ?? _name?.end ?? 0,
-                    var v => v
-                };
-            }
-        }
+            => _innerClosingBracket?.end ?? (IHasEnd.LastOf(_names, _attributes, out var value)
+                    ? value
+                    : _innerOpeningBracket?.end ?? _name?.end ?? 0
+                );
 
         public Parameter(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
         {
@@ -35,14 +26,13 @@ internal partial class GRFBlock
             {
                 return;
             }
-            bool inside = false;
-            for (var token = state.currentToken; !inside && token is not null; token = state.nextToken)
+            for (var token = state.currentToken; token is not null; token = state.nextToken)
             {
                 switch (token)
                 {
                     case IdentifierToken identifierToken when _name is null:
                         _name = identifierToken;
-                        break;
+                        continue;
 
                     case BracketToken { Bracket: '}' } closingBracket:
                         ClosingBracket = closingBracket;
@@ -51,16 +41,17 @@ internal partial class GRFBlock
 
                     case BracketToken { Bracket: '{' } innerOpeningBracket:
                         _innerOpeningBracket = innerOpeningBracket;
-                        inside = true;
+                        // exit loop
                         break;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         return;
 
                     default:
                         state.AddUnexpected(token);
-                        break;
+                        continue;
                 }
+                break;
             }
 
             List<NMLAttribute> attributes = [];
@@ -91,7 +82,7 @@ internal partial class GRFBlock
                                 innerState = InnerState.ExpectingColon;
                                 break;
 
-                            case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                            case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                                 goto label_End;
 
                             default:
@@ -112,7 +103,7 @@ internal partial class GRFBlock
                                 innerState = InnerState.ExpectingBody;
                                 break;
 
-                            case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                            case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                                 goto label_End;
 
                             case SemicolonToken semicolonToken:

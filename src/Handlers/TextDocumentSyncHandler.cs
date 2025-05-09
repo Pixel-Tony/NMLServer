@@ -1,45 +1,56 @@
-using MediatR;
-using OmniSharp.Extensions.LanguageServer.Protocol;
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Window;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
+using NMLServer.Model;
 
-namespace NMLServer.Analysis;
+namespace NMLServer.Handlers;
 
-internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentSyncHandlerBase
+internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHandlerBase
 {
-    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) => storage[uri].Attributes;
-
-    public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken _)
+    private static async Task PublishDiagnostics(Document doc)
     {
-        storage.Add(request.TextDocument);
-        Program.Server.LogInfo($"Opened file at {request.TextDocument.Uri}");
-        return Unit.Task;
+        var content = doc.ProvideDiagnostics();
+        PublishDiagnosticsParams response = new() { Diagnostics = content, Uri = doc.Uri, Version = doc.version };
+        await Program.Server.Client.PublishDiagnostics(response).ConfigureAwait(false);
     }
 
-    public override Task<Unit> Handle(DidChangeTextDocumentParams request, CancellationToken _)
+    protected override async Task Handle(DidOpenTextDocumentParams p, CancellationToken _)
     {
-        storage.ApplyChanges(request);
-        Program.Server.LogInfo($"Changed file at {request.TextDocument.Uri}");
-        return Unit.Task;
+        var item = p.TextDocument;
+        Document doc = new(item);
+        storage[item.Uri] = doc;
+        await PublishDiagnostics(doc);
     }
 
-    public override Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken _)
-        => Unit.Task;
-
-    public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken _)
+    protected override async Task Handle(DidChangeTextDocumentParams p, CancellationToken _)
     {
-        storage.Remove(request.TextDocument);
-        Program.Server.LogInfo($"Closed file at {request.TextDocument.Uri}");
-        return Unit.Task;
+        var doc = storage[p.TextDocument.Uri];
+        doc.UpdateFrom(p);
+        await PublishDiagnostics(doc);
     }
 
-    protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(
-        TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) => new()
+    protected override Task Handle(WillSaveTextDocumentParams p, CancellationToken _) => Task.CompletedTask;
+
+    protected override Task<List<TextEdit>?> HandleRequest(WillSaveTextDocumentParams p, CancellationToken _)
+        => Task.FromResult<List<TextEdit>?>(null);
+
+    public override void RegisterCapability(ServerCapabilities server, ClientCapabilities _)
     {
-        DocumentSelector = Program.NMLSelector,
-        Change = TextDocumentSyncKind.Incremental
-    };
+        server.TextDocumentSync = new TextDocumentSyncOptions
+        {
+            Change = TextDocumentSyncKind.Incremental,
+            OpenClose = true
+        };
+    }
+
+    protected override Task Handle(DidCloseTextDocumentParams p, CancellationToken _)
+    {
+        storage.Remove(p.TextDocument.Uri);
+        return Task.CompletedTask;
+    }
 }

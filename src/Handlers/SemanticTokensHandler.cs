@@ -1,32 +1,50 @@
-using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabilities;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Common;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
+using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
+using EmmyLua.LanguageServer.Framework.Server.Handler;
+using NMLServer.Model;
 
-namespace NMLServer.Analysis;
+namespace NMLServer.Handlers;
 
 internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHandlerBase
 {
-    protected override SemanticTokensRegistrationOptions CreateRegistrationOptions(SemanticTokensCapability capability,
-        ClientCapabilities clientCapabilities)
-        => new()
-        {
-            DocumentSelector = Program.NMLSelector,
-            Legend = new SemanticTokensLegend
-            {
-                TokenModifiers = capability.TokenModifiers,
-                TokenTypes = capability.TokenTypes
-            },
-            Full = true
-        };
-
-    protected override Task Tokenize(SemanticTokensBuilder builder, ITextDocumentIdentifierParams identifier,
-        CancellationToken cancellationToken)
+    protected override Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken _)
     {
-        var document = storage.GetDocument(identifier);
-        document.ProvideSemanticTokens(builder);
-        return Task.CompletedTask;
+        SemanticTokensBuilder builder = new(Grammar.TokenTypes, Grammar.TokenModifiers);
+        var document = storage[request.TextDocument.Uri];
+        document.ProvideSemanticTokens(in builder);
+        SemanticTokens result = new() { Data = builder.Build() };
+        return Task.FromResult<SemanticTokens?>(result);
     }
 
-    protected override Task<SemanticTokensDocument> GetSemanticTokensDocument(ITextDocumentIdentifierParams @params,
-        CancellationToken _) => Task.FromResult(new SemanticTokensDocument(RegistrationOptions.Legend));
+    protected override Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken _)
+    {
+        SemanticTokensBuilder builder = new(Grammar.TokenTypes, Grammar.TokenModifiers);
+        var document = storage[request.TextDocument.Uri];
+        document.ProvideSemanticTokens(in builder, request.Range);
+        SemanticTokens result = new() { Data = builder.Build() };
+        return Task.FromResult<SemanticTokens?>(result);
+    }
+
+    protected override Task<SemanticTokensDeltaResponse?> Handle(SemanticTokensDeltaParams request, CancellationToken _)
+        => throw new NotImplementedException("The server does not support incremental SemanticTokens requests.");
+
+    public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities _)
+    {
+        serverCapabilities.SemanticTokensProvider = new SemanticTokensOptions
+        {
+            Full = new SemanticTokensCapabilitiesFull
+            {
+                Delta = false
+            },
+            Range = true,
+            Legend = new SemanticTokensLegend
+            {
+                TokenTypes = Grammar.TokenTypes,
+                TokenModifiers = Grammar.TokenModifiers
+            }
+        };
+    }
 }

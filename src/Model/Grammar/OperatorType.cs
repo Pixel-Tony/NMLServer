@@ -1,0 +1,30 @@
+namespace NMLServer.Model;
+
+internal enum OperatorType
+{
+    None = 0,
+    Comma,
+    QuestionMark,
+    Colon,
+    LogicalOr,
+    LogicalAnd,
+    BinaryOr,
+    BinaryXor,
+    BinaryAnd,
+    Eq,
+    Ne,
+    Le,
+    Ge,
+    Lt,
+    Gt,
+    ShiftLeft,
+    ShiftRight,
+    ShiftRightFunky,
+    Plus,
+    Minus,
+    Multiply,
+    Divide,
+    Modula,
+    LogicalNot,
+    BinaryNot,
+}

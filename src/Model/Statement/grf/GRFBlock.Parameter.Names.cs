@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -44,7 +45,7 @@ internal partial class GRFBlock
                             _semicolon = state.ExpectSemicolon();
                             return;
 
-                        case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                        case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                             _items = attributes.ToMaybeList();
                             return;
 

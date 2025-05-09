@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -39,7 +40,7 @@ internal partial class Produce
                         content.Add(new NMLAttribute(ref state, identifierToken));
                         break;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         goto label_End;
 
                     default:

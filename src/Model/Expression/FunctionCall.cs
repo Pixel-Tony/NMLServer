@@ -1,11 +1,12 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
 
 internal sealed class FunctionCall(ExpressionAST? parent, BaseMulticharToken function) : ExpressionAST(parent)
 {
     public readonly BaseMulticharToken Function = function;
-    /* has opening paren if not null */
+
+    /// <remarks>If not null, has not null opening paren.</remarks>
     public ParentedExpression? Arguments;
 
     public override int start => Function.start;

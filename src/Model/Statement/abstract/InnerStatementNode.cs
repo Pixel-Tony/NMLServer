@@ -1,9 +1,10 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
 internal abstract class InnerStatementNode : StatementWithBlock
 {
+    // TODO remove if not used, previously used only while constructing ast, can be replaced with a stack
     public readonly InnerStatementNode? Parent;
     public readonly List<StatementAST>? Children;
 

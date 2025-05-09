@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -38,7 +39,7 @@ internal sealed partial class SpriteLayout
                         state.Increment();
                         return;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         return;
 
                     default:
@@ -69,7 +70,7 @@ internal sealed partial class SpriteLayout
                         entries.Add(new Entry(ref state, identifierToken));
                         break;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         goto label_End;
 
                     default:

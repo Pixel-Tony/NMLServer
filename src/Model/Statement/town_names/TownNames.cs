@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -7,7 +8,7 @@ internal sealed partial class TownNames : StatementWithBlock
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Part>? _parts;
 
-    protected override int middleEnd => Extensions.LastOf(_attributes, _parts);
+    protected override int middleEnd => IHasEnd.LastOf(_attributes, _parts);
 
     public TownNames(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
     {
@@ -34,7 +35,7 @@ internal sealed partial class TownNames : StatementWithBlock
                     attributes.Add(new NMLAttribute(ref state, identifier));
                     break;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     goto label_End;
 
                 default:

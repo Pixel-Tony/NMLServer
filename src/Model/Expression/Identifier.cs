@@ -1,15 +1,14 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
 
 internal sealed class Identifier(ExpressionAST? parent, IdentifierToken token)
     : BaseValueNode<IdentifierToken>(parent, token)
 {
-    public SymbolKind kind
-    {
-        get => Token.kind;
-        set => Token.kind = value;
-    }
+    public SymbolKind kind => token.Kind;
 
-    public new IdentifierToken token => Token;
+    public override void VerifySyntax(ref readonly DiagnosticContext context)
+    {
+        // TODO
+    }
 }

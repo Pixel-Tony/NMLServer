@@ -1,4 +1,4 @@
-using NMLServer.Lexing;
+using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
@@ -35,7 +35,7 @@ internal sealed partial class TileLayout
                         goto label_ParsingValue;
 
                     case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         return;
 
                     default:
@@ -60,7 +60,7 @@ internal sealed partial class TileLayout
                         goto label_ParsingValue;
 
                     case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         return;
 
                     default:
@@ -80,7 +80,7 @@ internal sealed partial class TileLayout
                         goto label_ParsingValue;
 
                     case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         return;
 
                     default:

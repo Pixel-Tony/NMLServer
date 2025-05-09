@@ -1,4 +1,5 @@
-using NMLServer.Lexing;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
@@ -12,21 +13,12 @@ internal sealed partial class TownNames
         private readonly List<SubEntry>? _subParts;
         private readonly BracketToken? _closingBracket;
 
-        public int end
-        {
-            get
-            {
-                if (_closingBracket is not null)
-                {
-                    return _closingBracket.end;
-                }
-                for (var last = Extensions.LastOf(_texts, _subParts); last > 0;)
-                {
-                    return last;
-                }
-                return _openingBracket.end;
-            }
-        }
+        public int end =>
+            _closingBracket?.end
+            ?? (IHasEnd.LastOf(_texts, _subParts, out int v)
+                ? v
+                : _openingBracket.end
+            );
 
         public Part(ref ParsingState state, BracketToken openingBracket)
         {
@@ -66,7 +58,7 @@ internal sealed partial class TownNames
                         subParts.Add(new SubEntry(townNames, args));
                         continue;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.FunctionBlockDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         goto label_End;
 
                     default:
