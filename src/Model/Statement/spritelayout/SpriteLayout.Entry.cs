@@ -13,7 +13,7 @@ internal sealed partial class SpriteLayout
         private readonly List<NMLAttribute>? _attributes;
         private readonly BracketToken? _closingBracket;
 
-        public int end => _closingBracket?.end ?? (_attributes?[^1].end ?? (_openingBracket?.end ?? _identifier!.end));
+        public int end => _closingBracket?.end ?? _attributes?[^1].end ?? _openingBracket?.end ?? _identifier!.end;
 
         private Entry(ref ParsingState state, BracketToken openingBracket)
         {

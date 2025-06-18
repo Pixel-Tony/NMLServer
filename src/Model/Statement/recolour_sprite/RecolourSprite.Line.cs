@@ -18,8 +18,8 @@ internal partial class RecolourSprite
         private readonly ExpressionAST? _rightRight;
         private readonly SemicolonToken? _semicolon;
 
-        public int end => _semicolon?.end ?? (_rightRight?.end ?? (_rightRange?.end ?? (_rightLeft?.end ??
-            (_colon?.end ?? (_leftRight?.end ?? (_leftRange?.end ?? _leftLeft.end))))));
+        public int end => _semicolon?.end ?? _rightRight?.end ?? _rightRange?.end ?? _rightLeft?.end ?? _colon?.end
+            ?? _leftRight?.end ?? _leftRange?.end ?? _leftLeft.end;
 
         static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)

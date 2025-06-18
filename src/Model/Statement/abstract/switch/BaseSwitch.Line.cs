@@ -24,8 +24,8 @@ internal partial class BaseSwitch
         private ExpressionAST? _returnValue = returnValue;
         private SemicolonToken? _semicolon = semicolon;
 
-        public readonly int end => _semicolon?.end ?? (_returnValue?.end ?? (_returnKeyword?.end ?? (_colon?.end
-            ?? (_patternRightSide?.end ?? (_range?.end ?? _pattern!.end)))));
+        public readonly int end => _semicolon?.end ?? _returnValue?.end ?? _returnKeyword?.end ?? _colon?.end
+            ?? _patternRightSide?.end ?? _range?.end ?? _pattern!.end;
 
         static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)

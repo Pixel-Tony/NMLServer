@@ -190,7 +190,10 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
 
                         case FunctionCall:
                         case ParentedExpression:
-                            return result;
+                            if (current._parent is null) // For templates and realsprites usage, TODO process separately
+                                return result;
+                            state.AddUnexpected(token);
+                            break;
                     }
                     break;
                 }
@@ -256,11 +259,17 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                             break;
 
                         case BaseValueNode:
-                        case FunctionCall:
-                        case UnaryOperation:
+                            state.AddUnexpected(token);
+                            break;
+
                         case BinaryOperation:
                         case ParentedExpression:
-                            return result;
+                        case FunctionCall:
+                        case UnaryOperation:
+                            if (current._parent is null)
+                                return result;
+                            state.AddUnexpected(token);
+                            break;
                     }
                     break;
 

@@ -16,8 +16,8 @@ internal partial class GRFBlock
             private readonly BracketToken? _closingBracket;
             private readonly SemicolonToken? _semicolon;
 
-            public int end => _semicolon?.end ?? (_closingBracket?.end ?? (_items?[^1].end ?? (_openingBracket?.end
-                ?? (_colon?.end ?? _name!.end))));
+            public int end => _semicolon?.end ?? _closingBracket?.end
+                ?? _items?[^1].end ?? _openingBracket?.end ?? _colon?.end ?? _name!.end;
 
             public Names(ref ParsingState state, IdentifierToken? name, ColonToken? colon,
                 BracketToken openingBracket)

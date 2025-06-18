@@ -18,9 +18,9 @@ internal sealed partial class Produce : StatementAST
 
     public override int start => _keyword.start;
 
-    public override int end
-        => _closingBracket?.end ?? (_runAgain?.end ?? (_thirdComma?.end ?? (_productions.end ?? (_secondComma?.end
-            ?? (_consumptions.end ?? _firstComma?.end ?? _id?.end ?? _openingBracket?.end ?? _keyword.end)))));
+    public override int end => _closingBracket?.end ?? _runAgain?.end ?? _thirdComma?.end ?? _productions.end
+        ?? _secondComma?.end
+        ?? _consumptions.end ?? _firstComma?.end ?? _id?.end ?? _openingBracket?.end ?? _keyword.end;
 
     private enum InnerState
     {

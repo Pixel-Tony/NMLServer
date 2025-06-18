@@ -11,7 +11,7 @@ internal partial class Produce
         private readonly List<NMLAttribute>? _content;
         private readonly BracketToken? _closingBracket;
 
-        public int? end => _closingBracket?.end ?? (_content?[^1].end ?? _openingBracket?.end);
+        public int? end => _closingBracket?.end ?? _content?[^1].end ?? _openingBracket?.end;
 
         public CargoList(BracketToken closingBracket)
         {

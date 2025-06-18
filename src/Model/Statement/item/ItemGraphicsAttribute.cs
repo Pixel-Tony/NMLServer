@@ -13,7 +13,7 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
     private readonly ExpressionAST? _value;
     private readonly SemicolonToken? _semicolon;
 
-    public int end => _semicolon?.end ?? (_value?.end ?? (_returnKeyword?.end ?? (_colon?.end ?? _identifier!.end)));
+    public int end => _semicolon?.end ?? _value?.end ?? _returnKeyword?.end ?? _colon?.end ?? _identifier!.end;
 
     public static List<ItemGraphicsAttribute>? ParseSomeInBlock(ref ParsingState state,
         ref BracketToken? expectedClosingBracket)

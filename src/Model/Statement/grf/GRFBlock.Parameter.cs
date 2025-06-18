@@ -42,8 +42,8 @@ internal partial class GRFBlock
 
                     case BracketToken { Bracket: '{' } innerOpeningBracket:
                         _innerOpeningBracket = innerOpeningBracket;
-                        // exit loop
-                        break;
+                        state.Increment();
+                        break; // exit loop
 
                     case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         return;

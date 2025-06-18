@@ -14,7 +14,7 @@ internal sealed partial class TileLayout
         private readonly ExpressionAST? _value;
         private readonly SemicolonToken? _semicolon;
 
-        public int end => _semicolon?.end ?? (_value?.end ?? (_colon?.end ?? (_y?.end ?? (_comma?.end ?? _x!.end))));
+        public int end => _semicolon?.end ?? _value?.end ?? _colon?.end ?? _y?.end ?? _comma?.end ?? _x!.end;
 
         public Entry(ref ParsingState state, NumericToken? x, BinaryOpToken? comma = null)
         {
