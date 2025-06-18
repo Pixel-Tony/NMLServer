@@ -1,3 +1,4 @@
+using DotNetGraph.Core;
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -93,5 +94,16 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
         state.IncrementSkippingComments();
         _value = ExpressionAST.TryParse(ref state);
         _semicolon = state.ExpectSemicolon();
+    }
+
+    public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    {
+        var n = VizExtensions.MakeNode(graph, parent, "GraphicsBlock").WithStmtFeatures();
+        _identifier.MaybeVisualize(graph, n, ctx);
+        _colon.MaybeVisualize(graph, n, ctx);
+        _returnKeyword.MaybeVisualize(graph, n, ctx);
+        _value.MaybeVisualize(graph, n, ctx);
+        _semicolon.MaybeVisualize(graph, n, ctx);
+        return n;
     }
 }

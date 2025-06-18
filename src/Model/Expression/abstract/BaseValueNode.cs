@@ -1,3 +1,4 @@
+using DotNetGraph.Core;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
@@ -5,6 +6,9 @@ namespace NMLServer.Model.Expression;
 internal abstract class BaseValueNode(ExpressionAST? parent) : ExpressionAST(parent)
 {
     public abstract BaseValueToken token { get; }
+
+    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+        => token.Visualize(graph, parent, ctx);
 }
 
 internal abstract class BaseValueNode<T>(ExpressionAST? parent, T value) : BaseValueNode(parent)

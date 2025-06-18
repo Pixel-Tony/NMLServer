@@ -6,7 +6,7 @@ namespace NMLServer.Model.Statement;
 
 internal partial class GRFBlock
 {
-    private sealed partial class Parameter : StatementWithBlock
+    private sealed partial class Parameter : BlockStatement
     {
         private readonly IdentifierToken? _name;
         private readonly BracketToken? _innerOpeningBracket;
@@ -20,7 +20,8 @@ internal partial class GRFBlock
                     : _innerOpeningBracket?.end ?? _name?.end ?? 0
                 );
 
-        public Parameter(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
+        public Parameter(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
+            new ParamInfo(1, 1, -1, false))
         {
             if (ClosingBracket is not null)
             {

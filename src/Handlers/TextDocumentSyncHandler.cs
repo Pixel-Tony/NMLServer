@@ -3,7 +3,6 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
-using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using NMLServer.Model;
@@ -30,7 +29,7 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
     protected override async Task Handle(DidChangeTextDocumentParams p, CancellationToken _)
     {
         var doc = storage[p.TextDocument.Uri];
-        doc.UpdateFrom(p);
+        doc.Handle(p);
         await PublishDiagnostics(doc);
     }
 
@@ -39,6 +38,13 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
     protected override Task<List<TextEdit>?> HandleRequest(WillSaveTextDocumentParams p, CancellationToken _)
         => Task.FromResult<List<TextEdit>?>(null);
 
+    protected override Task Handle(DidCloseTextDocumentParams p, CancellationToken _)
+    {
+        if (storage.Remove(p.TextDocument.Uri, out var item))
+            item.Dispose();
+        return Task.CompletedTask;
+    }
+
     public override void RegisterCapability(ServerCapabilities server, ClientCapabilities _)
     {
         server.TextDocumentSync = new TextDocumentSyncOptions
@@ -46,11 +52,5 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
             Change = TextDocumentSyncKind.Incremental,
             OpenClose = true
         };
-    }
-
-    protected override Task Handle(DidCloseTextDocumentParams p, CancellationToken _)
-    {
-        storage.Remove(p.TextDocument.Uri);
-        return Task.CompletedTask;
     }
 }

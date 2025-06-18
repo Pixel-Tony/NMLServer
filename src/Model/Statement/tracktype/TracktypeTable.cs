@@ -3,14 +3,14 @@ using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class TracktypeTable : StatementWithBlock
+internal sealed partial class TracktypeTable : BlockStatement
 {
     private readonly List<ValueWithComma<BaseValueToken>>? _entries;
     private readonly List<FallbackEntry>? _fallbackEntries;
 
     protected override int middleEnd => IHasEnd.LastOf(_entries, _fallbackEntries);
 
-    public TracktypeTable(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
+    public TracktypeTable(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword, ParamInfo.None)
     {
         if (ClosingBracket is not null)
         {

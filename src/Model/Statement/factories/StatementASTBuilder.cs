@@ -6,15 +6,14 @@ namespace NMLServer.Model.Statement;
 
 internal struct StatementASTBuilder
 {
-    private readonly List<StatementAST> _root;
     private InnerStatementNode? _current;
     private List<StatementAST> _children;
 
-    public List<StatementAST>? root => _root.ToMaybeList();
+    public List<StatementAST> root { get; }
 
     public StatementASTBuilder()
     {
-        _children = _root = [];
+        _children = root = [];
     }
 
     public bool Make(ref ParsingState state) => Make(ref state, out _);
@@ -52,7 +51,7 @@ internal struct StatementASTBuilder
             case BracketToken { Bracket: '}' } closingBracket when _current is not null:
                 _current.ClosingBracket = closingBracket;
                 _current = _current.Parent;
-                _children = _current?.Children ?? _root;
+                _children = _current?.Children ?? root;
                 state.Increment();
                 output = null;
                 return true;
@@ -80,7 +79,7 @@ internal struct StatementASTBuilder
             KeywordType.If
                 or KeywordType.Else
                 or KeywordType.While
-                => new FlowControlBlock(parent, ref state, keyword, type),
+                => new FlowControlBlock(parent, ref state, keyword),
 
             KeywordType.Item => new ItemBlock(parent, ref state, keyword),
             _ => null

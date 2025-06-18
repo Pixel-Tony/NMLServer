@@ -103,7 +103,7 @@ internal static class Grammar
             ["alternative_sprites"] = (KeywordType.AlternativeSprites, KeywordKind.BlockDefining)
         }.ToFrozenDictionary().GetAlternateLookup<StringView>();
 
-    public static readonly FrozenDictionary<string, (SymbolKind kind, int hash)>.AlternateLookup<StringView>
+    public static readonly FrozenDictionary<string, SymbolKind>.AlternateLookup<StringView>
         DefinedSymbols;
 
     static Grammar()
@@ -118,7 +118,7 @@ internal static class Grammar
             ("features.txt", SymbolKind.Feature)
         ];
 
-        Dictionary<string, (SymbolKind kind, int hash)> allSymbols = new();
+        Dictionary<string, SymbolKind> allSymbols = new();
         foreach (var (filename, kind) in entries)
         {
             var path = Path.Join(AppContext.BaseDirectory, "grammar", filename);
@@ -126,17 +126,15 @@ internal static class Grammar
             allSymbols.EnsureCapacity(allSymbols.Count + symbols.Length);
             foreach (var symbol in symbols)
             {
-                allSymbols[symbol] = (kind, string.GetHashCode(symbol));
+                allSymbols[symbol] = kind;
             }
         }
         allSymbols.TrimExcess();
         DefinedSymbols = allSymbols.ToFrozenDictionary().GetAlternateLookup<StringView>();
     }
 
-    public static (SymbolKind kind, int hash) GetSymbolInfo(StringView needle)
-        => DefinedSymbols.TryGetValue(needle, out var value)
-            ? value
-            : (SymbolKind.Undefined, string.GetHashCode(needle));
+    public static SymbolKind GetSymbolInfo(StringView needle)
+        => DefinedSymbols.TryGetValue(needle, out var value) ? value : SymbolKind.Undefined;
 
     public static readonly List<string> TokenTypes =
     [

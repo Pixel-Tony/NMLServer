@@ -2,16 +2,16 @@ using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model;
 
-internal struct ParsingState(IReadOnlyList<Token> tokens, in List<Token> unexpectedTokens, int offset = 0)
+internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
 {
     private readonly int _max = tokens.Count - 1;
-    private readonly List<Token> _unexpectedTokens = unexpectedTokens;
+    public readonly List<Token> UnexpectedTokens = [];
     private int _offset = offset;
 
     public void AddUnexpected(Token? token)
     {
         if (token is not (null or CommentToken))
-            _unexpectedTokens.Add(token);
+            UnexpectedTokens.Add(token);
     }
 
     public void Increment() => ++_offset;

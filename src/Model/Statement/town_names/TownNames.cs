@@ -1,16 +1,23 @@
 using NMLServer.Extensions;
+using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class TownNames : StatementWithBlock
+internal sealed partial class TownNames : BlockStatement
 {
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Part>? _parts;
 
     protected override int middleEnd => IHasEnd.LastOf(_attributes, _parts);
 
-    public TownNames(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
+    public override void VerifySyntax(ref readonly DiagnosticContext context)
+    {
+        // TODO parameter syntax requires additional handling
+    }
+
+    public TownNames(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
+        new ParamInfo(0, 1, -1, false))
     {
         if (ClosingBracket is not null)
         {

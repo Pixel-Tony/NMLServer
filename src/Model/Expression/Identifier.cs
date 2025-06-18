@@ -1,3 +1,4 @@
+using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;

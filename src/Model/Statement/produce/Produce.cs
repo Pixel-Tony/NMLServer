@@ -3,7 +3,6 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-
 internal sealed partial class Produce : StatementAST
 {
     private readonly KeywordToken _keyword;

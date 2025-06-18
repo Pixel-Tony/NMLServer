@@ -1,3 +1,6 @@
+using DotNetGraph.Core;
+using NMLServer.Extensions;
+using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
@@ -35,5 +38,22 @@ internal sealed class TernaryOperation(ExpressionAST? parent, TernaryOpToken que
         {
             FalseBranch = value;
         }
+    }
+
+    public override void VerifySyntax(ref readonly DiagnosticContext context)
+    {
+        // TODO
+    }
+
+    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    {
+        var n = VizExtensions.MakeNode(graph, parent, "TernaryOp").WithExprStyle();
+
+        _condition.MaybeVisualize(graph, n, ctx);
+        questionMark.Visualize(graph, n, ctx);
+        TrueBranch.MaybeVisualize(graph, n, ctx);
+        Colon.MaybeVisualize(graph, n, ctx);
+        FalseBranch.MaybeVisualize(graph, n, ctx);
+        return n;
     }
 }

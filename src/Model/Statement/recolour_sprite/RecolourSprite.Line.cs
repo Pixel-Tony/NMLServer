@@ -1,3 +1,4 @@
+using DotNetGraph.Core;
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -181,6 +182,20 @@ internal partial class RecolourSprite
                         break;
                 }
             }
+        }
+
+        public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+        {
+            var n = VizExtensions.MakeNode(graph, parent, "Line").WithStmtFeatures();
+            _leftLeft.Visualize(graph, n, ctx);
+            _leftRange.MaybeVisualize(graph, n, ctx);
+            _leftRight.MaybeVisualize(graph, n, ctx);
+            _colon.MaybeVisualize(graph, n, ctx);
+            _rightLeft.MaybeVisualize(graph, n, ctx);
+            _rightRange.MaybeVisualize(graph, n, ctx);
+            _rightRight.MaybeVisualize(graph, n, ctx);
+            _semicolon.MaybeVisualize(graph, n, ctx);
+            return n;
         }
     }
 }

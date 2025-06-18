@@ -4,27 +4,22 @@ using System.Runtime.InteropServices;
 namespace NMLServer.Model.Lexis;
 
 // TODO docstrings
-internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0, int lineLength = 0)
+internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
 {
+    public readonly List<int> LineLengths = [];
     private int _pos = pos;
-    private int _lineStart = pos - lineLength;
-    private readonly StringView _content = content;
-    private readonly int _maxPos = content.Length - 1;
+    private int _lineStart = pos - firstLineLength;
+    private readonly StringView _content = view;
+    private readonly int _maxPos = view.Length - 1;
 
-    private readonly char currentChar => FastAccess(_content, _pos);
-    private readonly char nextChar => FastAccess(_content, _pos + 1);
+    private readonly char currentChar => FastAccess(_pos);
+    private readonly char nextChar => FastAccess(_pos + 1);
     private readonly bool isAtLastChar => _pos == _maxPos;
     private readonly bool isInBounds => _pos <= _maxPos;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static T FastAccess<T>(ReadOnlySpan<T> view, nint offset)
-        => Unsafe.Add(ref MemoryMarshal.GetReference(view), offset);
-
-    public void ProcessUntilFileEnd(in List<Token> tokens)
-    {
-        while (LexToken(out _) is { } token)
-            tokens.Add(token);
-    }
+    private readonly char FastAccess(nint offset)
+        => Unsafe.Add(ref MemoryMarshal.GetReference(_content), offset);
 
     /// <summary>Try to lex a token at current Lexer state in source code span.</summary>
     /// <param name="tokenStart">
@@ -33,7 +28,7 @@ internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0
     /// <returns>The lexed token, if any; null otherwise.</returns>
     /// <remarks>
     /// This method should not be called after previous call returned null, as currently calculated line length is added
-    /// to <see cref="lineLengths"/> list in that case.
+    /// to <see cref="LineLengths"/> list in that case.
     /// </remarks>
     public Token? LexToken(out int tokenStart)
     {
@@ -109,7 +104,7 @@ internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0
             : new BinaryOpToken(_pos, _pos += 2, OperatorType.Eq);
     }
 
-    private BinaryOpToken TryParseOperator(OperatorType type)
+    private Token TryParseOperator(OperatorType type)
     {
         if (isAtLastChar)
         {
@@ -161,7 +156,9 @@ internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0
         ++_pos;
 
         label_Return:
-        return new BinaryOpToken(start, _pos, type);
+        return type == OperatorType.LogicalNot
+            ? new UnaryOpToken(start, '!')
+            : new BinaryOpToken(start, _pos, type);
     }
 
     private CommentToken ParseHashtagComment()
@@ -189,7 +186,7 @@ internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0
                 {
                     switch (currentChar)
                     {
-                        case '/' when _pos - start >= 3 && FastAccess(_content, _pos - 1) is '*':
+                        case '/' when _pos - start >= 3 && FastAccess(_pos - 1) is '*':
                             break;
 
                         case '\n':
@@ -222,12 +219,12 @@ internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0
     private void AddLine()
     {
         ++_pos;
-        lineLengths.Add(_pos - _lineStart);
+        LineLengths.Add(_pos - _lineStart);
         _lineStart = _pos;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void CompleteLine() => lineLengths.Add(_pos - _lineStart);
+    public void CompleteLine() => LineLengths.Add(_pos - _lineStart);
 
     private StringToken ParseLiteralString(char openingQuote)
     {
@@ -236,14 +233,11 @@ internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0
         {
             char c = currentChar;
             if (c is '\n')
-            {
                 break;
-            }
+
             ++_pos;
             if (c == openingQuote)
-            {
                 break;
-            }
         }
         return new StringToken(start, _pos);
     }
@@ -265,7 +259,7 @@ internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0
         switch (current)
         {
             case '/' when charsLeft == 1
-                          || (charsLeft > 1 && !IsIdentifierChar(FastAccess(_content, _pos + 2))):
+                          || (charsLeft > 1 && !IsIdentifierChar(FastAccess(_pos + 2))):
                 var next = nextChar;
                 UnitType unitType = value switch
                 {
@@ -289,8 +283,8 @@ internal ref struct Lexer(StringView content, List<int> lineLengths, int pos = 0
         if (Grammar.Keywords.TryGetValue(value, out var data))
             return new KeywordToken(start, _pos, data.type, data.kind);
 
-        var (kind, hash) = Grammar.GetSymbolInfo(value);
-        return new IdentifierToken(start, _pos, kind, hash);
+        var kind = Grammar.GetSymbolInfo(value);
+        return new IdentifierToken(start, _pos, kind);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

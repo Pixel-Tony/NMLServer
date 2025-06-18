@@ -1,0 +1,290 @@
+using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
+using EmmyLua.LanguageServer.Framework.Protocol.Model;
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
+
+namespace NMLServer.Model;
+
+using TokenInfo = (int index, int offset);
+using RangeInfo = (int start, int end);
+
+internal partial struct TokenStorage
+{
+    public TokenStorage(string initialSource)
+    {
+        source = initialSource;
+        List = [];
+        Lexer lexer = new(source);
+        while (lexer.LexToken(out _) is { } token)
+            List.Add(token);
+        _lineLengths = lexer.LineLengths;
+    }
+
+    public readonly StringView GetSymbolContext(Token token) => source.AsSpan(token.start, token.length);
+
+    public readonly PositionConverter MakeConverter() => new(_lineLengths);
+
+    public readonly Token? TryGetAt(Position pos) => TryGetAt(ProtocolToLocal(pos));
+
+    public readonly StringView GetPrefix(Position position)
+    {
+        var offset = ProtocolToLocal(position);
+        return TryGetAt(offset) is not { } token
+            ? StringView.Empty
+            : source.AsSpan(token.start, offset - token.start);
+    }
+
+    public readonly void ProvideSemanticTokens(in SemanticTokensBuilder builder, IDefinitionsBag bag)
+        => ProvideSemanticTokens(in builder, (0, List.Count), bag);
+
+    public readonly void ProvideSemanticTokens(in SemanticTokensBuilder builder, Range range, IDefinitionsBag bag)
+    {
+        FindRangeOuterBounds(ProtocolToLocal(range), out var left, out var right);
+        ProvideSemanticTokens(in builder, (int.Max(left.index, 0), right.index), bag);
+    }
+
+    public void Rebuild(Range replacedRange, string replacement)
+    {
+        var range = ProtocolToLocal(replacedRange);
+        StringView sourceSpan = source;
+        source = replacement is ""
+            ? string.Concat(sourceSpan[..range.start], sourceSpan[range.end..])
+            : string.Concat(sourceSpan[..range.start], replacement, sourceSpan[range.end..]);
+
+        FindRangeOuterBounds(range, out var firstTokenToReplace, out var firstTokenAfterRange);
+
+        // Shift tokens after the range
+        var shift = replacement.Length - (range.end - range.start);
+        for (int i = firstTokenAfterRange.index, max = List.Count; i < max; ++i)
+            List[i].start += shift;
+        firstTokenToReplace.offset = int.Max(firstTokenToReplace.offset, 0);
+
+        var converter = MakeConverter();
+        var startOffset = converter.LocalToProtocol(firstTokenToReplace.offset);
+        Lexer lexer = new(source, firstTokenToReplace.offset, startOffset.Character);
+
+        List<Token> lexedTokens = [];
+        // Short-circuit if replaced text chunk is at the end of source.
+        if (firstTokenAfterRange.index == List.Count)
+        {
+            while (lexer.LexToken(out _) is { } tok)
+                lexedTokens.Add(tok);
+            goto label_ReachedEOF;
+        }
+
+        Token? token;
+        int tokenStart;
+        do
+        {
+            token = lexer.LexToken(out tokenStart);
+            // Token can be null in case last lexed token consumed last existing one before as its own part. Example:
+            //   range end ↓    ↓ EOF
+            // . . . .    123abc -> (num 123) A; (id 'abc') B;
+            // . . . .   a123abc -> (id 'a123abc') C;
+            // In this example C.start < B.start, but EOF was reached.
+            if (token is null)
+                goto label_ReachedEOF;
+
+            if (tokenStart >= firstTokenAfterRange.offset)
+                break;
+
+            lexedTokens.Add(token);
+        }
+        while (true);
+
+        // Until we run out of old tokens, compare to current one to check if we are repeating previous result
+        for (var oldTokenIndex = firstTokenAfterRange.index; oldTokenIndex < List.Count; ++oldTokenIndex)
+        {
+            var oldToken = List[oldTokenIndex];
+            var oldStart = oldToken.start;
+            // Lex tokens while any are left and last lexed token is 'behind' existing one.
+            while (tokenStart < oldStart)
+            {
+                lexedTokens.Add(token);
+                token = lexer.LexToken(out tokenStart);
+                if (token is null)
+                    goto label_ReachedEOF;
+            }
+            // If overshot, increase index of token compared with. We do not check the type equality, because it's
+            // impossible for two tokens with different types to have the same offset.
+            if (tokenStart > oldStart)
+                continue;
+
+            // Add current piece of parsed line to the list of lengths.
+            lexer.CompleteLine();
+
+            // Add remaining line length (first line was shifted in by Lexer already).
+            // We use old lengths for calculations, so token.end must be corrected.
+            var (endLine, character) = converter.LocalToProtocol(token.end - shift);
+            var lexedLineLengths = lexer.LineLengths;
+            lexedLineLengths[^1] += _lineLengths[endLine] - character;
+            _lineLengths.ReplaceRange(lexedLineLengths, startOffset.Line, endLine + 1);
+            if (firstTokenToReplace.index < 1)
+                List.ComplementStartByRange(in lexedTokens, oldTokenIndex);
+            else
+                List.ReplaceRange(lexedTokens, firstTokenToReplace.index, oldTokenIndex);
+            return;
+        }
+
+        // If reached end of old token list, run lexer until EOF, then complement the end part.
+        // Do not forget to add current token, which has first start after range end and thus was not added earlier
+        for (; token is not null; token = lexer.LexToken(out _))
+            lexedTokens.Add(token);
+
+        label_ReachedEOF:
+        _lineLengths.ComplementEndByRange(in lexer.LineLengths, startOffset.Line);
+        List.ComplementEndByRange(in lexedTokens, firstTokenToReplace.index);
+    }
+
+    private readonly Token? TryGetAt(int offset)
+    {
+        for (int left = 0, right = List.Count - 1; left <= right;)
+        {
+            var mid = left + (right - left) / 2;
+            var current = List[mid];
+            if (offset < current.start)
+            {
+                right = mid - 1;
+                continue;
+            }
+            if (offset <= current.end)
+                return current;
+            left = mid + 1;
+        }
+        return null;
+    }
+
+    private readonly int ProtocolToLocal(Position position)
+    {
+        var start = position.Character;
+        for (int i = 0; i < position.Line; ++i)
+            start += _lineLengths[i];
+        return start;
+    }
+
+    private readonly RangeInfo ProtocolToLocal(Range range)
+    {
+        var start = 0;
+        var line = 0;
+        for (var startLine = range.Start.Line; line < startLine; ++line)
+            start += _lineLengths[line];
+
+        var end = start;
+        for (var endLine = range.End.Line; line < endLine; ++line)
+            end += _lineLengths[line];
+
+        return (start + range.Start.Character, end + range.End.Character);
+    }
+
+    /// <summary>
+    /// Find range bounds in terms of not directly adjacent tokens.
+    /// </summary>
+    /// <param name="range">The range describing replaced text chunk.</param>
+    /// <param name="firstBeforeRange">
+    /// The tuple (index in token list, start offset), describing last token before the range, or (-1, -1) if such token
+    /// is not present.
+    /// </param>
+    /// <param name="firstAfterRange">
+    /// The tuple (index in token list, start offset), describing first token after the range, or (list.Count, -1)
+    /// if such token is not present.
+    /// </param>
+    private readonly void FindRangeOuterBounds(RangeInfo range, out TokenInfo firstBeforeRange,
+        out TokenInfo firstAfterRange)
+    {
+        // To replace tokens, we first find the last token before and not touching replaced range.
+        // We use its end position as a start for Lexer run.
+        var maxTokenPos = List.Count - 1;
+        firstBeforeRange = (-1, 0);
+        for (int left = 0, right = maxTokenPos; left <= right;)
+        {
+            var mid = left + (right - left) / 2;
+            var current = List[mid];
+            var start = current.start;
+            if (current.end < range.start)
+            {
+                // We only remember position of rightmost token to the left side of range.
+                firstBeforeRange = (mid, start);
+                left = mid + 1;
+                continue;
+            }
+            if (start > range.end)
+            {
+                // Ignore position after range. If the range does not intersect with tokens, the last one before it
+                // would be captured earlier. If no token is to the left of the range, index will be left with valid -1.
+                right = mid - 1;
+                continue;
+            }
+            if (mid == 0)
+            {
+                firstBeforeRange = (-1, -1);
+                break;
+            }
+            right = mid - 1;
+            for (var prev = List[right]; prev.end < range.start;)
+            {
+                firstBeforeRange = (right, prev.start);
+                break;
+            }
+        }
+
+        firstAfterRange = (List.Count, -1);
+        for (int left = firstBeforeRange.index + 1, right = maxTokenPos; left <= right;)
+        {
+            var mid = left + (right - left) / 2;
+            var current = List[mid];
+            if (current.end < range.start)
+            {
+                // Similar situation: now we only record rightmost tokens to the right of the range.
+                left = mid + 1;
+                continue;
+            }
+            var start = current.start;
+            if (start > range.end)
+            {
+                firstAfterRange = (mid, start);
+                right = mid - 1;
+                continue;
+            }
+            if (mid == maxTokenPos)
+            {
+                firstAfterRange = (mid + 1, -1);
+                break;
+            }
+            left = mid + 1;
+            var nextStart = List[left].start;
+            if (nextStart > range.end)
+            {
+                firstAfterRange = (left, nextStart);
+            }
+        }
+    }
+
+    // TODO incremental
+    private readonly void ProvideSemanticTokens(in SemanticTokensBuilder builder, RangeInfo bounds,
+        IDefinitionsBag bag)
+    {
+        var converter = MakeConverter();
+        for (int i = bounds.start; i < bounds.end; ++i)
+        {
+            var token = List[i];
+            if (token is CommentToken comment)
+            {
+                foreach (var (offset, length) in converter.LocalToProtocol(comment))
+                    builder.Push(offset, length, comment.semanticType);
+                continue;
+            }
+            var type = token switch
+            {
+                IdentifierToken id when bag.Has(id, out _) => SemanticTokenTypes.Function,
+                { semanticType: { } semanticType } => semanticType,
+                _ => null
+            };
+            if (type is not null)
+                builder.Push(converter.LocalToProtocol(token.start), token.length, type);
+        }
+    }
+
+    public string source { get; private set; }
+    public readonly List<Token> List;
+    private readonly List<int> _lineLengths;
+}

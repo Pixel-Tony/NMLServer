@@ -8,7 +8,7 @@ internal partial class Produce
     private readonly struct CargoList
     {
         private readonly BracketToken? _openingBracket;
-        private readonly IReadOnlyList<NMLAttribute>? _content;
+        private readonly List<NMLAttribute>? _content;
         private readonly BracketToken? _closingBracket;
 
         public int? end => _closingBracket?.end ?? (_content?[^1].end ?? _openingBracket?.end);

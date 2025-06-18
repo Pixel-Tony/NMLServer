@@ -1,3 +1,4 @@
+using DotNetGraph.Core;
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Statement;
@@ -19,6 +20,8 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
 
     protected virtual void Replace(ExpressionAST target, FunctionCall value)
         => throw new Exception("Cannot replace child at the bottom-level node");
+
+    public abstract DotNode Visualize(DotGraph graph, DotNode parent, string ctx);
 
     public static List<ExpressionAST>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {
@@ -340,4 +343,6 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
             _ => throw new ArgumentOutOfRangeException(nameof(token), "Unexpected token type")
         };
     }
+
+    public abstract void VerifySyntax(ref readonly DiagnosticContext context);
 }

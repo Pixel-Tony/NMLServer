@@ -5,7 +5,7 @@ namespace NMLServer.Model;
 
 using TRangeInfo = (Position offset, int length);
 
-internal partial class Document
+internal partial struct TokenStorage
 {
     /// <summary>
     /// The wrapper entity to optimize converting ranges of sorted positions.

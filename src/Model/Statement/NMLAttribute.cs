@@ -1,3 +1,4 @@
+using DotNetGraph.Core;
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -91,5 +92,15 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
         }
         label_End:
         return attributes.ToMaybeList();
+    }
+
+    public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    {
+        var n = VizExtensions.MakeNode(graph, parent, "Attr").WithStmtFeatures();
+        _key.MaybeVisualize(graph, n, ctx);
+        _colon.MaybeVisualize(graph, n, ctx);
+        _value.MaybeVisualize(graph, n, ctx);
+        _semicolon.MaybeVisualize(graph, n, ctx);
+        return n;
     }
 }

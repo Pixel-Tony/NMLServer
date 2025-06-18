@@ -1,3 +1,4 @@
+using DotNetGraph.Core;
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 
@@ -9,7 +10,7 @@ internal sealed partial class SpriteLayout
     {
         private readonly IdentifierToken? _identifier;
         private readonly BracketToken? _openingBracket;
-        private readonly IReadOnlyList<NMLAttribute>? _attributes;
+        private readonly List<NMLAttribute>? _attributes;
         private readonly BracketToken? _closingBracket;
 
         public int end => _closingBracket?.end ?? (_attributes?[^1].end ?? (_openingBracket?.end ?? _identifier!.end));
@@ -81,6 +82,17 @@ internal sealed partial class SpriteLayout
             }
             label_End:
             return entries.ToMaybeList();
+        }
+
+        public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+        {
+            var n = VizExtensions.MakeNode(graph, parent, "Entry").WithStmtFeatures();
+            _identifier.MaybeVisualize(graph, n, ctx);
+            _openingBracket.MaybeVisualize(graph, n, ctx);
+            foreach (var a in _attributes ?? [])
+                a.Visualize(graph, n, ctx);
+            _closingBracket.MaybeVisualize(graph, n, ctx);
+            return n;
         }
     }
 }

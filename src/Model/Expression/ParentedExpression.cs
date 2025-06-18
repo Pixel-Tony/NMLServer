@@ -1,3 +1,6 @@
+using DotNetGraph.Core;
+using NMLServer.Extensions;
+using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
@@ -31,5 +34,30 @@ internal sealed class ParentedExpression(
             '{' => '}',
             _ => '\0'
         };
+    }
+
+    public override void VerifySyntax(ref readonly DiagnosticContext context)
+    {
+        if (OpeningBracket is null)
+            context.Add("Missing opening paren", start);
+        else if (ClosingBracket is null)
+            context.Add("Missing closing paren", end);
+
+        if (Expression is null)
+        {
+            context.Add("Missing expression in parens", this);
+            return;
+        }
+        Expression.VerifySyntax(in context);
+    }
+
+    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    {
+        var n = VizExtensions.MakeNode(graph, parent, "ParentedExpr")
+            .WithExprStyle();
+        OpeningBracket.MaybeVisualize(graph, n, ctx);
+        Expression.MaybeVisualize(graph, n, ctx);
+        ClosingBracket.MaybeVisualize(graph, n, ctx);
+        return n;
     }
 }

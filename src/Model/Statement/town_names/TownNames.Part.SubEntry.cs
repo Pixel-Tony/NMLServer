@@ -7,10 +7,10 @@ internal partial class TownNames
 {
     private partial struct Part
     {
-        private readonly struct SubEntry(KeywordToken townNamesKeyword, ExpressionAST? args,
-            BinaryOpToken? comma = null) : IHasEnd
+        private readonly struct SubEntry(KeywordToken townNames, ExpressionAST? args, BinaryOpToken? comma = null)
+            : IHasEnd
         {
-            public int end => comma?.end ?? (args?.end ?? townNamesKeyword.end);
+            public int end => comma?.end ?? args?.end ?? townNames.end;
         }
     }
 }

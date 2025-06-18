@@ -1,16 +1,18 @@
+using DotNetGraph.Core;
+using DotNetGraph.Extensions;
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class GRFBlock : StatementWithBlock
+internal sealed partial class GRFBlock : BlockStatement
 {
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Parameter>? _parameters;
 
     protected override int middleEnd => IHasEnd.LastOf(_attributes, _parameters);
 
-    public GRFBlock(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
+    public GRFBlock(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword, ParamInfo.None)
     {
         if (ClosingBracket is not null)
         {
@@ -52,5 +54,16 @@ internal sealed partial class GRFBlock : StatementWithBlock
         label_End:
         _attributes = attributes.ToMaybeList();
         _parameters = parameters.ToMaybeList();
+    }
+
+    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    {
+        var n = base.Visualize(graph, parent, ctx).WithLabel("GRF");
+        foreach (var p in _parameters ?? [])
+            p.Visualize(graph, n, ctx);
+        foreach (var a in _attributes ?? [])
+            a.Visualize(graph, n, ctx);
+        ClosingBracket.MaybeVisualize(graph, n, ctx);
+        return n;
     }
 }

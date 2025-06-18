@@ -3,14 +3,15 @@ using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
-internal sealed partial class TileLayout : StatementWithBlock
+internal sealed partial class TileLayout : BlockStatement
 {
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Entry>? _entries;
 
     protected override int middleEnd => IHasEnd.LastOf(_attributes, _entries);
 
-    public TileLayout(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword)
+    public TileLayout(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
+        new ParamInfo(1, 1, 0, false))
     {
         if (ClosingBracket is not null)
         {
