@@ -35,7 +35,7 @@ internal sealed partial class TileLayout
                         goto label_ParsingValue;
 
                     case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         return;
 
                     default:
@@ -60,7 +60,7 @@ internal sealed partial class TileLayout
                         goto label_ParsingValue;
 
                     case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         return;
 
                     default:
@@ -80,7 +80,7 @@ internal sealed partial class TileLayout
                         goto label_ParsingValue;
 
                     case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         return;
 
                     default:

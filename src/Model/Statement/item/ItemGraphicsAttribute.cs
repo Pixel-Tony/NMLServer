@@ -37,7 +37,7 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                     attributes.Add(new ItemGraphicsAttribute(ref state, identifierToken));
                     break;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     goto label_End;
 
                 default:
@@ -70,7 +70,7 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                     _value = ExpressionAST.TryParse(ref state);
                     _semicolon = state.ExpectSemicolon();
                     return;
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     return;
                 case SemicolonToken semicolonToken:
                     _semicolon = semicolonToken;

@@ -41,7 +41,7 @@ internal sealed partial class TracktypeTable : BlockStatement
                     current = identifierToken;
                     break;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     if (current is not null)
                     {
                         entries.Add(new ValueWithComma<BaseValueToken>(current, null));

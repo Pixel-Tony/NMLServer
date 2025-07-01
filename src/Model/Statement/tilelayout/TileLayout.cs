@@ -36,7 +36,7 @@ internal sealed partial class TileLayout : BlockStatement
                     attributes.Add(new NMLAttribute(ref state, identifier));
                     break;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     goto label_End;
 
                 case NumericToken numericToken:

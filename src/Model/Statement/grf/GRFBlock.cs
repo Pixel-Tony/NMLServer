@@ -37,7 +37,7 @@ internal sealed partial class GRFBlock : BlockStatement
                     parameters.Add(new Parameter(ref state, paramToken));
                     break;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     goto label_End;
 
                 case BracketToken { Bracket: '}' } closingBracket:

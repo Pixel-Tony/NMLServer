@@ -27,7 +27,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
             switch (token)
             {
                 case BracketToken { Bracket: '{' or '}' }:
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     return;
                 case AssignmentToken equalsSign:
                     _equalsSign = equalsSign;

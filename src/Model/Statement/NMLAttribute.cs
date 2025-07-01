@@ -50,7 +50,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                     return;
 
                 case BracketToken { Bracket: '{' or '}' }:
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     return;
 
                 default:
@@ -79,7 +79,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                     state.Increment();
                     goto label_End;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     goto label_End;
 
                 default:

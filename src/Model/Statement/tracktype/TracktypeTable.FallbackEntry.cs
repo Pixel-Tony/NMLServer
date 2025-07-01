@@ -50,7 +50,7 @@ internal partial class TracktypeTable
                         current = valueToken;
                         break;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         goto label_End;
 
                     default:
@@ -64,7 +64,7 @@ internal partial class TracktypeTable
                 switch (token)
                 {
                     case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         goto label_End;
 
                     case BinaryOpToken { Type: OperatorType.Comma } commaToken:

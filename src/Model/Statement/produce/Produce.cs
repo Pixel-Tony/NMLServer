@@ -44,7 +44,7 @@ internal sealed partial class Produce : StatementAST
         {
             switch (token)
             {
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     return;
 
                 case BracketToken { Bracket: '(' } openingBracket when innerState is InnerState.OpeningBracket:

@@ -39,7 +39,7 @@ internal sealed partial class SpriteLayout
                         state.Increment();
                         return;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         return;
 
                     default:
@@ -69,7 +69,7 @@ internal sealed partial class SpriteLayout
                         entries.Add(new Entry(ref state, identifierToken));
                         break;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         goto label_End;
 
                     default:

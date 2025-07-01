@@ -45,7 +45,7 @@ internal partial class GRFBlock
                             _semicolon = state.ExpectSemicolon();
                             return;
 
-                        case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                        case KeywordToken { Kind: KeywordKind.BlockDefining }:
                             _items = attributes.ToMaybeList();
                             return;
 

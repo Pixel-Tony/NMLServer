@@ -27,7 +27,7 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
                     closingBracket = expectedClosingBracket;
                     state.Increment();
                     goto label_End;
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     goto label_End;
                 default:
                     state.AddUnexpected(token);

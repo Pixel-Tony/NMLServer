@@ -29,7 +29,7 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
                     Increment();
                     return semicolon;
                 case BracketToken { Bracket: '}' }:
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     return null;
                 default:
                     AddUnexpected(token);
@@ -46,7 +46,7 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
                 case BracketToken { Bracket: '}' } closingBracket:
                     Increment();
                     return closingBracket;
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                 case BracketToken { Bracket: '{' }:
                     return null;
                 default:

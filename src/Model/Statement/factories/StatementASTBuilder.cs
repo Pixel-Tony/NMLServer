@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
@@ -26,11 +25,6 @@ internal struct StatementASTBuilder
             case null:
                 output = null;
                 return false;
-
-            case KeywordToken { Kind: KeywordKind.CallDefining } keyword:
-                output = new CallStatement(ref state, keyword);
-                _children.Add(output);
-                return true;
 
             case KeywordToken { Kind: KeywordKind.BlockDefining } keyword:
                 if (ParseStatement(_current, ref state, keyword, out var leaf, out var innerNode))
@@ -92,6 +86,8 @@ internal struct StatementASTBuilder
         leaf = type switch
         {
             KeywordType.Grf => new GRFBlock(ref state, keyword),
+            KeywordType.Sort => new CallStatement(ref state, keyword),
+            KeywordType.Error => new CallStatement(ref state, keyword),
             KeywordType.Switch => new Switch(ref state, keyword),
             KeywordType.Produce => new Produce(ref state, keyword),
             KeywordType.Replace => new Replace(ref state, keyword),
@@ -103,9 +99,11 @@ internal struct StatementASTBuilder
             KeywordType.SpriteSet => new Spriteset(ref state, keyword),
             KeywordType.FontGlyph => new FontGlyph(ref state, keyword),
             KeywordType.TownNames => new TownNames(ref state, keyword),
+            KeywordType.Deactivate => new CallStatement(ref state, keyword),
             KeywordType.ReplaceNew => new ReplaceNew(ref state, keyword),
             KeywordType.CargoTable => new Cargotable(ref state, keyword),
             KeywordType.TileLayout => new TileLayout(ref state, keyword),
+            KeywordType.DisableItem => new CallStatement(ref state, keyword),
             KeywordType.SpriteGroup => new SpriteGroup(ref state, keyword),
             KeywordType.BaseGraphics => new BaseGraphics(ref state, keyword),
             KeywordType.RandomSwitch => new RandomSwitch(ref state, keyword),
@@ -113,6 +111,7 @@ internal struct StatementASTBuilder
             KeywordType.TramTypeTable => new TracktypeTable(ref state, keyword),
             KeywordType.RailTypeTable => new TracktypeTable(ref state, keyword),
             KeywordType.RoadTypeTable => new TracktypeTable(ref state, keyword),
+            KeywordType.EngineOverride => new CallStatement(ref state, keyword),
             KeywordType.RecolourSprite => new RecolourSprite(ref state, keyword),
             KeywordType.LiveryOverride => new ItemLiveryOverrideBlock(ref state, keyword),
             KeywordType.AlternativeSprites => new AlternativeSprites(ref state, keyword),

@@ -45,7 +45,7 @@ internal partial class GRFBlock
                         state.Increment();
                         break; // exit loop
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         return;
 
                     default:
@@ -83,7 +83,7 @@ internal partial class GRFBlock
                                 innerState = InnerState.ExpectingColon;
                                 break;
 
-                            case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                            case KeywordToken { Kind: KeywordKind.BlockDefining }:
                                 goto label_End;
 
                             default:
@@ -104,7 +104,7 @@ internal partial class GRFBlock
                                 innerState = InnerState.ExpectingBody;
                                 break;
 
-                            case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                            case KeywordToken { Kind: KeywordKind.BlockDefining }:
                                 goto label_End;
 
                             case SemicolonToken semicolonToken:

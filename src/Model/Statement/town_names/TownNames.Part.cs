@@ -54,7 +54,7 @@ internal sealed partial class TownNames
                         subParts.Add(new SubEntry(townNames, args));
                         continue;
 
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         goto label_End;
 
                     default:

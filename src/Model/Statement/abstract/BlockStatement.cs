@@ -59,7 +59,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
                     state.IncrementSkippingComments();
                     return;
 
-                case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     return;
 
                 default:

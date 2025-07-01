@@ -29,7 +29,7 @@ internal partial class RecolourSprite
             {
                 switch (token)
                 {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         goto label_End;
 
                     case BracketToken { Bracket: '}' } expectedClosingBracket:
@@ -64,7 +64,7 @@ internal partial class RecolourSprite
             {
                 switch (token)
                 {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     case BracketToken { Bracket: '}' }:
                         return;
 
@@ -86,7 +86,7 @@ internal partial class RecolourSprite
             {
                 switch (token)
                 {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     case BracketToken { Bracket: '}' }:
                         return;
 
@@ -109,7 +109,7 @@ internal partial class RecolourSprite
             {
                 switch (token)
                 {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     case BracketToken { Bracket: '}' }:
                         return;
 
@@ -139,7 +139,7 @@ internal partial class RecolourSprite
             {
                 switch (token)
                 {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     case BracketToken { Bracket: '}' }:
                     case ColonToken when stopAtColon:
                     case SemicolonToken when !stopAtColon:
@@ -162,7 +162,7 @@ internal partial class RecolourSprite
             {
                 switch (token)
                 {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     case BracketToken { Bracket: '}' }:
                     case ColonToken when stopAtColon:
                     case SemicolonToken when !stopAtColon:
