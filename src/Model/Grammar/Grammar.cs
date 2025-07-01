@@ -8,7 +8,7 @@ internal static class Grammar
 {
     public const int TernaryOperatorPrecedence = 1;
 
-    public static readonly Dictionary<OperatorType, byte> OperatorPrecedences = new()
+    public static readonly FrozenDictionary<OperatorType, byte> OperatorPrecedences = new Dictionary<OperatorType, byte>
     {
         [OperatorType.Comma] = 0,
 
@@ -45,7 +45,7 @@ internal static class Grammar
 
         [OperatorType.LogicalNot] = 11,
         [OperatorType.BinaryNot] = 11
-    };
+    }.ToFrozenDictionary();
 
     public static readonly FrozenDictionary<string, UnitType>.AlternateLookup<StringView> UnitLiterals
         = new Dictionary<string, UnitType>
@@ -103,8 +103,7 @@ internal static class Grammar
             ["alternative_sprites"] = (KeywordType.AlternativeSprites, KeywordKind.BlockDefining)
         }.ToFrozenDictionary().GetAlternateLookup<StringView>();
 
-    public static readonly FrozenDictionary<string, SymbolKind>.AlternateLookup<StringView>
-        DefinedSymbols;
+    public static readonly FrozenDictionary<string, SymbolKind>.AlternateLookup<StringView> DefinedSymbols;
 
     static Grammar()
     {
@@ -134,7 +133,10 @@ internal static class Grammar
     }
 
     public static SymbolKind GetSymbolInfo(StringView needle)
-        => DefinedSymbols.TryGetValue(needle, out var value) ? value : SymbolKind.Undefined;
+    {
+        DefinedSymbols.TryGetValue(needle, out var value);
+        return value;
+    }
 
     public static readonly List<string> TokenTypes =
     [

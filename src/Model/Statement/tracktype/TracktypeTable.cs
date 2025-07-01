@@ -13,9 +13,8 @@ internal sealed partial class TracktypeTable : BlockStatement
     public TracktypeTable(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword, ParamInfo.None)
     {
         if (ClosingBracket is not null)
-        {
             return;
-        }
+
         List<ValueWithComma<BaseValueToken>> entries = [];
         List<FallbackEntry> fallbacks = [];
         IdentifierToken? current = null;

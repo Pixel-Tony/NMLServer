@@ -29,9 +29,9 @@ internal partial struct TokenStorage
     public readonly StringView GetPrefix(Position position)
     {
         var offset = ProtocolToLocal(position);
-        return TryGetAt(offset) is not { } token
-            ? StringView.Empty
-            : source.AsSpan(token.start, offset - token.start);
+        return TryGetAt(offset) is { } token
+            ? source.AsSpan(token.start, offset - token.start)
+            : StringView.Empty;
     }
 
     public readonly void ProvideSemanticTokens(in SemanticTokensBuilder builder, IDefinitionsBag bag)
@@ -47,7 +47,7 @@ internal partial struct TokenStorage
     {
         var range = ProtocolToLocal(replacedRange);
         StringView sourceSpan = source;
-        source = replacement is ""
+        source = replacement.Length is 0
             ? string.Concat(sourceSpan[..range.start], sourceSpan[range.end..])
             : string.Concat(sourceSpan[..range.start], replacement, sourceSpan[range.end..]);
 
@@ -142,7 +142,7 @@ internal partial struct TokenStorage
         {
             var mid = left + (right - left) / 2;
             var current = List[mid];
-            if (offset < current.start)
+            if (offset <= current.start)
             {
                 right = mid - 1;
                 continue;
@@ -260,8 +260,7 @@ internal partial struct TokenStorage
     }
 
     // TODO incremental
-    private readonly void ProvideSemanticTokens(in SemanticTokensBuilder builder, RangeInfo bounds,
-        IDefinitionsBag bag)
+    private readonly void ProvideSemanticTokens(in SemanticTokensBuilder builder, RangeInfo bounds, IDefinitionsBag bag)
     {
         var converter = MakeConverter();
         for (int i = bounds.start; i < bounds.end; ++i)
@@ -275,7 +274,7 @@ internal partial struct TokenStorage
             }
             var type = token switch
             {
-                IdentifierToken id when bag.Has(id, out _) => SemanticTokenTypes.Function,
+                IdentifierToken id when bag.Has(id, out var definitions) => definitions[0].semanticType,
                 { semanticType: { } semanticType } => semanticType,
                 _ => null
             };

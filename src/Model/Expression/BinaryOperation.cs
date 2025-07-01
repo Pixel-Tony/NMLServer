@@ -37,10 +37,10 @@ internal sealed class BinaryOperation(ExpressionAST? parent, BinaryOpToken op) :
         if (Left is not null)
             Left.VerifySyntax(in context);
         else if (operatorType is not (OperatorType.Plus or OperatorType.Minus))
-            context.Add(ErrorStrings.ErrorMissingExpr, int.Max(op.start - 1, 0));
+            context.Add(Errors.ErrorMissingExpr, int.Max(op.start - 1, 0));
 
         if (Right is null)
-            context.Add(ErrorStrings.ErrorMissingExpr, op.end);
+            context.Add(Errors.ErrorMissingExpr, op.end);
         else
             Right.VerifySyntax(in context);
     }

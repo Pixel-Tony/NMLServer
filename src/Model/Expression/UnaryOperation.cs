@@ -22,7 +22,7 @@ internal sealed class UnaryOperation(ExpressionAST? parent, UnaryOpToken operati
     {
         if (Expression is null)
         {
-            context.Add(ErrorStrings.ErrorMissingExpr, int.Max(start - 1, 0));
+            context.Add(Errors.ErrorMissingExpr, int.Max(start - 1, 0));
             return;
         }
         Expression.VerifySyntax(in context);

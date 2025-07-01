@@ -34,8 +34,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
     public NMLAttribute(ref ParsingState state, BaseMulticharToken key)
     {
         _key = key;
-        for (var token = state.nextToken; token is not null; token = state.nextToken)
-        {
+        while (state.nextToken is { } token)
             switch (token)
             {
                 case ColonToken colonToken:
@@ -58,7 +57,6 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                     state.AddUnexpected(token);
                     break;
             }
-        }
     }
 
     public static List<NMLAttribute>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)

@@ -17,15 +17,12 @@ internal class CompletionHandler(SourceStorage storage) : CompletionHandlerBase
 
     protected override Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token)
     {
-        return Task.FromResult(item);
+        return Task.FromResult(item); // TODO
     }
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities,
         ClientCapabilities clientCapabilities)
     {
-        serverCapabilities.CompletionProvider = new CompletionOptions
-        {
-            CompletionItem = new CompletionItemDetailOptions()
-        };
+        serverCapabilities.CompletionProvider = new CompletionOptions();
     }
 }

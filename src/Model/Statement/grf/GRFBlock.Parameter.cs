@@ -21,7 +21,7 @@ internal partial class GRFBlock
                 );
 
         public Parameter(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
-            new ParamInfo(1, 1, -1, false))
+            new ParamInfo(false, (1, 1)))
         {
             if (ClosingBracket is not null)
             {

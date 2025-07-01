@@ -25,8 +25,7 @@ internal sealed partial class SpriteLayout
         private Entry(ref ParsingState state, IdentifierToken identifier)
         {
             _identifier = identifier;
-            for (var token = state.nextToken; token is not null; token = state.nextToken)
-            {
+            while (state.nextToken is { } token)
                 switch (token)
                 {
                     case BracketToken { Bracket: '{' } openingBracket:
@@ -47,7 +46,6 @@ internal sealed partial class SpriteLayout
                         state.AddUnexpected(token);
                         break;
                 }
-            }
         }
 
         static List<Entry>? IAllowsParseInsideBlock<Entry>.ParseSomeInBlock(ref ParsingState state,

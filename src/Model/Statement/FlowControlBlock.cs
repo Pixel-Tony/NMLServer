@@ -1,6 +1,7 @@
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
 using NMLServer.Model.Diagnostics;
+using NMLServer.Model.Expression;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
@@ -8,15 +9,26 @@ namespace NMLServer.Model.Statement;
 internal class FlowControlBlock(
     InnerStatementNode? parent,
     ref ParsingState state,
-    KeywordToken keyword) : InnerStatementNode(parent, ref state, keyword, new ParamInfo(0, 1, -1, true))
+    KeywordToken keyword) : InnerStatementNode(parent, ref state, keyword, new ParamInfo(true, (0, 1)))
 {
-    private readonly KeywordType _keywordType = keyword.Type;
+    private readonly KeywordToken _keyword = keyword;
 
-    // TODO Requires special parameter handling
     public override void VerifySyntax(ref readonly DiagnosticContext context)
     {
-        if (_keywordType != KeywordType.Else)
+        if (_keyword.Type == KeywordType.Else)
+        {
+            if (Parameters is not null)
+                context.Add(Errors.UnexpectedTopLevelExpr, _keyword.end);
+        }
+        else
+        {
             base.VerifySyntax(in context);
+
+            if (Parameters is not null)
+                Parameters.VerifySyntax(in context);
+            else
+                context.Add(ExpressionAST.Errors.ErrorMissingExpr, _keyword.end);
+        }
     }
 
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)

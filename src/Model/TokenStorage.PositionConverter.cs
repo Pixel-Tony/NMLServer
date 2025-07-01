@@ -8,7 +8,7 @@ using TRangeInfo = (Position offset, int length);
 internal partial struct TokenStorage
 {
     /// <summary>
-    /// The wrapper entity to optimize converting ranges of sorted positions.
+    /// The wrapper entity to optimize converting ranges of sorted positions with O(n) time complexity.
     /// </summary>
     /// <param name="lineLengths"></param>
     public struct PositionConverter(List<int> lineLengths)
@@ -26,13 +26,10 @@ internal partial struct TokenStorage
         public Position LocalToProtocol(int offset)
         {
             if (offset == _offset)
-            {
                 return new Position(_line, _character);
-            }
+
             if (offset > _offset)
-            {
                 _character += offset - _offset;
-            }
             else
             {
                 _character = offset;
@@ -41,7 +38,6 @@ internal partial struct TokenStorage
             _offset = offset;
 
             int length = lineLengths[_line];
-
             while (_character > length)
             {
                 _character -= length;
@@ -50,7 +46,7 @@ internal partial struct TokenStorage
             if (_character == length && _line < lineLengths.Count - 1)
             {
                 ++_line;
-                _character -= length;
+                _character = 0;
             }
             return new Position(_line, _character);
         }
@@ -70,9 +66,7 @@ internal partial struct TokenStorage
                 goto label_caughtUp;
             }
             if (offset > _offset)
-            {
                 _character += offset - _offset;
-            }
             else
             {
                 _character = offset;
@@ -120,9 +114,7 @@ internal partial struct TokenStorage
                 }
             }
             else
-            {
                 _linesInfo.Add((new Position(_line, 0), _character));
-            }
             return _linesInfo;
         }
     }

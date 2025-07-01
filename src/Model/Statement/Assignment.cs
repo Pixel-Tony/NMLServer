@@ -14,10 +14,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
     private readonly ExpressionAST? _rightHandSide;
     private readonly SemicolonToken? _semicolon;
 
-    public IdentifierToken? symbol
-        => _equalsSign is not null && _leftHandSide is Identifier { kind: SymbolKind.Undefined } id
-            ? id.token
-            : null;
+    public IdentifierToken? symbol { get; }
 
     public override int start => _leftHandSide.start;
     public override int end => _semicolon?.end ?? _rightHandSide?.end ?? _equalsSign?.end ?? _leftHandSide.end;
@@ -34,6 +31,11 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
                     return;
                 case AssignmentToken equalsSign:
                     _equalsSign = equalsSign;
+                    if (_leftHandSide is Identifier { kind: SymbolKind.Undefined, token: var id })
+                    {
+                        id.Kind = SymbolKind.Variable;
+                        symbol = id;
+                    }
                     state.IncrementSkippingComments();
                     goto label_AfterSign;
                 case SemicolonToken semicolon:
@@ -97,7 +99,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("Assignment");
-        _leftHandSide.MaybeVisualize(graph, n, ctx);
+        _leftHandSide.Visualize(graph, n, ctx);
         _equalsSign.MaybeVisualize(graph, n, ctx);
         _rightHandSide.MaybeVisualize(graph, n, ctx);
         _semicolon.MaybeVisualize(graph, n, ctx);

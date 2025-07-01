@@ -8,9 +8,9 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
     public readonly List<Token> UnexpectedTokens = [];
     private int _offset = offset;
 
-    public void AddUnexpected(Token? token)
+    public void AddUnexpected(Token token)
     {
-        if (token is not (null or CommentToken))
+        if (token is not CommentToken)
             UnexpectedTokens.Add(token);
     }
 
@@ -23,7 +23,6 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
     public SemicolonToken? ExpectSemicolon()
     {
         for (var token = currentToken; token is not null; token = nextToken)
-        {
             switch (token)
             {
                 case SemicolonToken semicolon:
@@ -36,14 +35,12 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
                     AddUnexpected(token);
                     break;
             }
-        }
         return null;
     }
 
     public BracketToken? ExpectClosingCurlyBracket()
     {
         for (var token = currentToken; token is not null; token = nextToken)
-        {
             switch (token)
             {
                 case BracketToken { Bracket: '}' } closingBracket:
@@ -56,7 +53,6 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
                     AddUnexpected(token);
                     break;
             }
-        }
         return null;
     }
 

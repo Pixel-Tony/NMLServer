@@ -9,9 +9,12 @@ namespace NMLServer.Model.Statement;
 
 internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISymbolSource, IContextProvider
 {
-    protected readonly record struct ParamInfo(int minParams, int maxParams, int symbolIndex, bool areParensPresent)
+    protected readonly record struct ParamInfo(
+        bool hasParens,
+        (int min, int max) count,
+        (int index, SymbolKind kind) symbol = default)
     {
-        public static readonly ParamInfo None = new(0, 0, -1, false);
+        public static readonly ParamInfo None = new(false, (0, 0));
     }
 
     protected readonly ParamInfo ParameterInfo;
@@ -27,9 +30,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
         get
         {
             if (ClosingBracket is not null)
-            {
                 return ClosingBracket.end;
-            }
             var middle = middleEnd;
             return middle > 0 ? middle : OpeningBracket?.end ?? Parameters?.end ?? _keyword.end;
         }
@@ -43,6 +44,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
         _keyword = keyword;
         state.IncrementSkippingComments();
         Parameters = ExpressionAST.TryParse(ref state);
+        symbol = CaptureSymbol();
         for (var token = state.currentToken; token is not null; token = state.nextToken)
         {
             switch (token)
@@ -65,38 +67,36 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
                     break;
             }
         }
-    }
+        return;
 
-    public IdentifierToken? symbol
-    {
-        get
+        IdentifierToken? CaptureSymbol()
         {
-            if (ParameterInfo.symbolIndex < 0)
+            if (ParameterInfo.symbol.kind is SymbolKind.Undefined)
                 return null;
-
             if (Parameters is not ParentedExpression { Expression: var expr })
                 return null;
-
             var parameters = UnpackParams(expr);
-            if (ParameterInfo.symbolIndex > parameters.Count - 1)
+            if (ParameterInfo.symbol.index > parameters.Count - 1)
                 return null;
 
-            return parameters[^(ParameterInfo.symbolIndex + 1)] switch
-            {
-                Identifier { kind: SymbolKind.Undefined, token: var token } => token,
-                _ => null
-            };
+            if (parameters[^(ParameterInfo.symbol.index + 1)]
+                is not Identifier { kind: SymbolKind.Undefined, token: var token })
+                return null;
+            token.Kind = ParameterInfo.symbol.kind;
+            return token;
         }
     }
 
+    public IdentifierToken? symbol { get; }
+
     public virtual void VerifySyntax(ref readonly DiagnosticContext context)
     {
-        if (ParameterInfo.areParensPresent)
+        if (ParameterInfo.hasParens)
         {
             VerifySyntaxWithParens(in context);
             return;
         }
-        if (ParameterInfo.minParams > 0)
+        if (ParameterInfo.count.min > 0)
         {
             if (Parameters is null)
                 context.Add("Expected parameters for block", _keyword.end);
@@ -114,7 +114,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
     // TODO remove! params should be stored in right-associative expr AST
     private List<ExpressionAST?> UnpackParams(ExpressionAST? root)
     {
-        List<ExpressionAST?> parameters = new(ParameterInfo.minParams);
+        List<ExpressionAST?> parameters = new(ParameterInfo.count.min);
         while (root is BinaryOperation { Left: var left, operatorType: OperatorType.Comma, Right: var right })
         {
             parameters.Add(right);
@@ -153,10 +153,10 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
 
         var parameters = UnpackParams(expr);
 
-        if (ParameterInfo.maxParams > 0 && ParameterInfo.maxParams < parameters.Count)
+        if (ParameterInfo.count.max > 0 && ParameterInfo.count.max < parameters.Count)
             context.Add("Excess arguments", expr);
 
-        if (parameters.Count < ParameterInfo.minParams)
+        if (parameters.Count < ParameterInfo.count.min)
             context.Add("Not enough parameters are present", expr);
 
         // TODO
@@ -168,11 +168,9 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
         //         // int leftOffset = 0;
         //         // TODO error
         //         break;
-        //
         //     case Identifier { kind: SymbolKind.Undefined } identifier:
         //         // symbol = identifier.Token;
         //         break;
-        //
         //     default:
         //         context.AddError(errorExpectedId, id);
         //         break;
@@ -181,14 +179,11 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
 
     public void VerifyContext(ref readonly DiagnosticContext context, IDefinitionsBag definitions)
     {
-        if (symbol is not { } definition)
-            return;
-
-        if (!definitions.Has(definition, out var others))
+        if (symbol is null || !definitions.Has(symbol, out var others))
             return;
 
         if (others.IndexOf(symbol) != 0)
-            context.Add("Identifier is already defined", definition);
+            context.Add("Identifier is already defined", symbol);
     }
 
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)

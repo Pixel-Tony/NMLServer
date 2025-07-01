@@ -53,13 +53,11 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
     private ItemGraphicsAttribute(ref ParsingState state, IdentifierToken identifier)
     {
         _identifier = identifier;
-        for (var token = state.nextToken; token is not null; token = state.nextToken)
-        {
+        while (state.nextToken is { } token)
             switch (token)
             {
                 case BracketToken { Bracket: '}' }:
                     return;
-
                 case ColonToken colonToken:
                     _colon = colonToken;
                     state.IncrementSkippingComments();
@@ -72,20 +70,16 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                     _value = ExpressionAST.TryParse(ref state);
                     _semicolon = state.ExpectSemicolon();
                     return;
-
                 case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                     return;
-
                 case SemicolonToken semicolonToken:
                     _semicolon = semicolonToken;
                     state.Increment();
                     return;
-
                 default:
                     state.AddUnexpected(token);
                     break;
             }
-        }
     }
 
     private ItemGraphicsAttribute(ref ParsingState state, ColonToken colon)

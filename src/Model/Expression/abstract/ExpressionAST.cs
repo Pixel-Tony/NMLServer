@@ -8,7 +8,7 @@ namespace NMLServer.Model.Expression;
 internal abstract class ExpressionAST(ExpressionAST? parent)
     : IHasStart, IAllowsParseInsideBlock<ExpressionAST>, IDiagnosticProvider
 {
-    protected static class ErrorStrings
+    public static class Errors
     {
         public const string ErrorMissingExpr = "Missing expression";
     }

@@ -11,7 +11,7 @@ internal sealed partial class TileLayout : BlockStatement
     protected override int middleEnd => IHasEnd.LastOf(_attributes, _entries);
 
     public TileLayout(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
-        new ParamInfo(1, 1, 0, false))
+        new ParamInfo(false, (1, 1), (0, SymbolKind.Variable)))
     {
         if (ClosingBracket is not null)
         {

@@ -23,31 +23,26 @@ internal partial class Produce
             List<NMLAttribute> content = [];
             _openingBracket = openingBracket;
 
-            for (var token = state.nextToken; token is not null; token = state.nextToken)
-            {
+            while (state.nextToken is { } token)
                 switch (token)
                 {
                     case BracketToken { Bracket: ']' } closingBracket:
                         _closingBracket = closingBracket;
                         state.Increment();
                         goto label_End;
-
                     case ColonToken colonToken:
                         content.Add(new NMLAttribute(ref state, colonToken));
                         break;
-
                     case IdentifierToken identifierToken:
                         content.Add(new NMLAttribute(ref state, identifierToken));
                         break;
-
                     case KeywordToken { Kind: KeywordKind.BlockDefining or KeywordKind.CallDefining }:
                         goto label_End;
-
                     default:
                         state.AddUnexpected(token);
                         break;
                 }
-            }
+
             label_End:
             _content = content.ToMaybeList();
         }

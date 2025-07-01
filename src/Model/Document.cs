@@ -23,8 +23,6 @@ internal sealed class Document : IDefinitionsBag
     public readonly DocumentUri Uri;
     public int version { get; private set; }
 
-    public int size => _tokens.source.Length;
-
     public Document(TextDocumentItem item)
     {
         Uri = item.Uri;
@@ -69,26 +67,23 @@ internal sealed class Document : IDefinitionsBag
         var converter = _tokens.MakeConverter();
         DiagnosticContext context = new(ref converter);
         foreach (var child in _statements)
+            SupplyDiagnostics(child, ref context);
+        while (parents.TryPop(out var node))
+            if (node.Children is { } children)
+                foreach (var child in children)
+                    SupplyDiagnostics(child, ref context);
+        foreach (var unexpectedToken in _unexpectedTokens)
+            context.Add("Unexpected token", unexpectedToken);
+
+        return context.Diagnostics;
+
+        void SupplyDiagnostics(StatementAST child, ref DiagnosticContext context)
         {
             (child as IDiagnosticProvider)?.VerifySyntax(ref context);
             (child as IContextProvider)?.VerifyContext(ref context, this);
             if (child is InnerStatementNode parent)
                 parents.Push(parent);
         }
-        while (parents.TryPop(out var node))
-        {
-            foreach (var child in node.Children ?? [])
-            {
-                (child as IDiagnosticProvider)?.VerifySyntax(ref context);
-                (child as IContextProvider)?.VerifyContext(ref context, this);
-                if (child is InnerStatementNode parent)
-                    parents.Push(parent);
-            }
-        }
-        foreach (var unexpectedToken in _unexpectedTokens)
-            context.Add("Unexpected token", unexpectedToken);
-
-        return context.Diagnostics;
     }
 
     public CompletionList ProvideCompletions(Position position)
@@ -98,29 +93,20 @@ internal sealed class Document : IDefinitionsBag
         if (prefix == StringView.Empty)
             return new CompletionList();
 
-        foreach (var (id, _) in _definedSymbols)
-        {
-            if (!id.AsSpan().StartsWith(prefix))
-                continue;
-            result.Add(new CompletionItem { Label = id, Kind = CompletionItemKind.Function });
-        }
-        foreach (var (kw, _) in Grammar.Keywords.Dictionary)
-        {
-            if (!kw.AsSpan().StartsWith(prefix))
-                continue;
-            result.Add(new CompletionItem { Label = kw, Kind = CompletionItemKind.Keyword });
-        }
-        foreach (var (unit, _) in Grammar.UnitLiterals.Dictionary)
-        {
-            if (!unit.AsSpan().StartsWith(prefix))
-                continue;
-            result.Add(new CompletionItem { Label = unit, Kind = CompletionItemKind.Keyword });
-        }
+        foreach (var id in _definedSymbols.Keys)
+            if (id.AsSpan().StartsWith(prefix))
+                result.Add(new CompletionItem { Label = id, Kind = CompletionItemKind.Function });
+        foreach (var kw in Grammar.Keywords.Dictionary.Keys)
+            if (kw.AsSpan().StartsWith(prefix))
+                result.Add(new CompletionItem { Label = kw, Kind = CompletionItemKind.Keyword });
+        foreach (var unit in Grammar.UnitLiterals.Dictionary.Keys)
+            if (unit.AsSpan().StartsWith(prefix))
+                result.Add(new CompletionItem { Label = unit, Kind = CompletionItemKind.Keyword });
+
         foreach (var (label, kind) in Grammar.DefinedSymbols.Dictionary)
         {
             if (!label.AsSpan().StartsWith(prefix))
                 continue;
-
             var cik = kind switch
             {
                 SymbolKind.Feature => CompletionItemKind.Class,
@@ -153,14 +139,19 @@ internal sealed class Document : IDefinitionsBag
         {
             var text = change.Text;
             if (change.Range is { } replacedRange)
-            {
-                ProcessTextUpdateDelta(replacedRange, text);
-                continue;
-            }
-            _tokens = new TokenStorage(text);
-            (_statements, _unexpectedTokens) = MakeStatements();
+                _tokens.Rebuild(replacedRange, text);
+            else
+                _tokens = new TokenStorage(text);
         }
-        _definedSymbols = MakeDefinitions(); // TODO incremental
+        // TODO incremental
+        {
+            foreach (var v in _definedSymbols.Values)
+            foreach (var token in v)
+                token.Kind = SymbolKind.Undefined;
+            (_statements, _unexpectedTokens) = MakeStatements();
+            _definedSymbols = MakeDefinitions();
+        }
+
         version = newVersion;
     }
 
@@ -172,27 +163,30 @@ internal sealed class Document : IDefinitionsBag
 
     private async Task VisualizeAsync()
     {
-        var graph = new DotGraph().WithIdentifier("MyGraph");
-        var root = new DotNode().WithIdentifier("Root");
+        var graph = new DotGraph().WithIdentifier("MyGraph")
+            .WithAttribute("bgcolor", "transparent")
+            .WithAttribute("dpi", "400");
+        var root = new DotNode().WithIdentifier("Root")
+            .WithAttribute("fontname", "Consolas");
         graph.Add(root);
 
         foreach (var child in _statements)
             child.Visualize(graph, root, _tokens.source);
 
-        if (graph.Elements.Count >= 100)
+        if (graph.Elements.Count >= 400)
         {
             const string msg = "Graph too big, visualization aborted.";
-            await Program.Server.Client.ShowMessage(new ShowMessageParams()
+            await Program.Server.Client.ShowMessage(new ShowMessageParams
                 { Message = msg, Type = MessageType.Debug });
             return;
         }
         await using var writer = new StringWriter();
         var context = new CompilationContext(writer, new CompilationOptions());
-        await graph.CompileAsync(context);
+        await graph.CompileAsync(context).ConfigureAwait(false);
 
         var result = writer.GetStringBuilder().ToString();
-        await File.WriteAllTextAsync("graph.dot", result);
-        await Process.Start("dot", "-Tpdf graph.dot -ograph.pdf").WaitForExitAsync();
+        await File.WriteAllTextAsync("graph.dot", result).ConfigureAwait(false);
+        await Process.Start("dot", "-Tpng -ograph.png graph.dot").WaitForExitAsync().ConfigureAwait(false);
     }
 
     public void Dispose() => _visualizationTimer?.Dispose();
@@ -216,8 +210,9 @@ internal sealed class Document : IDefinitionsBag
         foreach (var child in _statements)
             TryAddDefinition(child, parents, map, ref _tokens);
         while (parents.TryPop(out var node))
-            foreach (var child in node.Children ?? [])
-                TryAddDefinition(child, parents, map, ref _tokens);
+            if (node.Children is { } children)
+                foreach (var child in children)
+                    TryAddDefinition(child, parents, map, ref _tokens);
         return map;
 
         static void TryAddDefinition(StatementAST child, Stack<InnerStatementNode> parents, DefinitionsMap map,
@@ -237,12 +232,6 @@ internal sealed class Document : IDefinitionsBag
             }
             map[new string(context)] = [symbol];
         }
-    }
-
-    private void ProcessTextUpdateDelta(Range replacedRange, string replacement)
-    {
-        _tokens.Rebuild(replacedRange, replacement);
-        (_statements, _unexpectedTokens) = MakeStatements();
     }
 
     private Timer? _visualizationTimer;

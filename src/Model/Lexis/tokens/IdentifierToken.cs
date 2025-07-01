@@ -4,7 +4,7 @@ namespace NMLServer.Model.Lexis;
 
 internal sealed class IdentifierToken(int start, int end, SymbolKind kind) : BaseValueToken(start, end)
 {
-    public readonly SymbolKind Kind = kind;
+    public SymbolKind Kind = kind;
 
     internal override string? semanticType => (Kind & SymbolKind.KindMask) switch
     {

@@ -29,7 +29,9 @@ internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHand
     }
 
     protected override Task<SemanticTokensDeltaResponse?> Handle(SemanticTokensDeltaParams request, CancellationToken _)
-        => throw new NotImplementedException("The server does not support incremental SemanticTokens requests.");
+    {
+        throw new NotImplementedException("The server does not support incremental SemanticTokens requests.");
+    }
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities, ClientCapabilities _)
     {

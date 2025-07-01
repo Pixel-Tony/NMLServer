@@ -17,7 +17,7 @@ internal sealed partial class TownNames : BlockStatement
     }
 
     public TownNames(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
-        new ParamInfo(0, 1, -1, false))
+        new ParamInfo(false, (0, 1)))
     {
         if (ClosingBracket is not null)
         {

@@ -23,8 +23,7 @@ internal partial class TracktypeTable
             _colon = colon;
             List<ValueWithComma<BaseValueToken>> fallbacks = [];
             BaseValueToken? current = null;
-            for (var token = state.nextToken; token is not null; token = state.nextToken)
-            {
+            while (state.nextToken is { } token)
                 switch (token)
                 {
                     case BracketToken { Bracket: '}' }:
@@ -58,7 +57,7 @@ internal partial class TracktypeTable
                         state.AddUnexpected(token);
                         break;
                 }
-            }
+
             label_ParsingComma:
             for (var token = state.currentToken; token is not null; token = state.nextToken)
             {
