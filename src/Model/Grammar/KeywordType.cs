@@ -9,6 +9,7 @@ internal enum KeywordType
     Item,
     Else,
     Sort,
+    Const,
     While,
     Param,
     Error,

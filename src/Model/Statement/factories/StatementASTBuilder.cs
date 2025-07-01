@@ -87,6 +87,7 @@ internal struct StatementASTBuilder
         {
             KeywordType.Grf => new GRFBlock(ref state, keyword),
             KeywordType.Sort => new CallStatement(ref state, keyword),
+            KeywordType.Const => new Constant(ref state, keyword),
             KeywordType.Error => new CallStatement(ref state, keyword),
             KeywordType.Switch => new Switch(ref state, keyword),
             KeywordType.Produce => new Produce(ref state, keyword),

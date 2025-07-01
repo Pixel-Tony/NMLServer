@@ -70,6 +70,7 @@ internal static class Grammar
             ["item"] = (KeywordType.Item, KeywordKind.BlockDefining),
             ["sort"] = (KeywordType.Sort, KeywordKind.BlockDefining),
             ["error"] = (KeywordType.Error, KeywordKind.BlockDefining),
+            ["const"] = (KeywordType.Const, KeywordKind.BlockDefining),
             ["param"] = (KeywordType.Param, KeywordKind.ExpressionUsable),
             ["while"] = (KeywordType.While, KeywordKind.BlockDefining),
             ["return"] = (KeywordType.Return, KeywordKind.ReturnKeyword),
