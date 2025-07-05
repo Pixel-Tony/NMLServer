@@ -9,9 +9,9 @@ internal sealed class UnaryOperation(ExpressionAST? parent, UnaryOpToken operati
 {
     public ExpressionAST? Expression;
 
-    public override int start => operation.start;
+    public override int Start => operation.Start;
 
-    public override int end => Expression?.end ?? operation.end;
+    public override int End => Expression?.End ?? operation.End;
 
     protected override void Replace(ExpressionAST target, FunctionCall value)
     {
@@ -22,7 +22,7 @@ internal sealed class UnaryOperation(ExpressionAST? parent, UnaryOpToken operati
     {
         if (Expression is null)
         {
-            context.Add(Errors.ErrorMissingExpr, int.Max(start - 1, 0));
+            context.Add(Errors.ErrorMissingExpr, int.Max(Start - 1, 0));
             return;
         }
         Expression.VerifySyntax(in context);

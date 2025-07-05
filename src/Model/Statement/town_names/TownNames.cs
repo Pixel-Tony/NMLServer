@@ -9,7 +9,7 @@ internal sealed partial class TownNames : BlockStatement
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Part>? _parts;
 
-    protected override int middleEnd => IHasEnd.LastOf(_attributes, _parts);
+    protected override int MiddleEnd => IHasEnd.LastOf(_attributes, _parts);
 
     public override void VerifySyntax(ref readonly DiagnosticContext context)
     {
@@ -20,12 +20,11 @@ internal sealed partial class TownNames : BlockStatement
         new ParamInfo(false, (0, 1)))
     {
         if (ClosingBracket is not null)
-        {
             return;
-        }
+
         List<NMLAttribute> attributes = [];
         List<Part> parts = [];
-        for (var token = state.currentToken; token is not null; token = state.currentToken)
+        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
         {
             switch (token)
             {
@@ -51,7 +50,7 @@ internal sealed partial class TownNames : BlockStatement
                     break;
             }
         }
-        label_End:
+    label_End:
         _attributes = attributes.ToMaybeList();
         _parts = parts.ToMaybeList();
     }

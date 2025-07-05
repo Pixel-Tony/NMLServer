@@ -10,7 +10,7 @@ internal sealed partial class GRFBlock : BlockStatement
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Parameter>? _parameters;
 
-    protected override int middleEnd => IHasEnd.LastOf(_attributes, _parameters);
+    protected override int MiddleEnd => IHasEnd.LastOf(_attributes, _parameters);
 
     public GRFBlock(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword, ParamInfo.None)
     {
@@ -21,7 +21,7 @@ internal sealed partial class GRFBlock : BlockStatement
         List<NMLAttribute> attributes = [];
         List<Parameter> parameters = [];
 
-        for (var token = state.currentToken; token is not null; token = state.currentToken)
+        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
         {
             switch (token)
             {
@@ -51,7 +51,7 @@ internal sealed partial class GRFBlock : BlockStatement
                     break;
             }
         }
-        label_End:
+    label_End:
         _attributes = attributes.ToMaybeList();
         _parameters = parameters.ToMaybeList();
     }

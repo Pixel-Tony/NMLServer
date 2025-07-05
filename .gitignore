@@ -1,8 +1,8 @@
-/.**/
-/*.**
-!/*.csproj
-!/*.md
-/bin
-/built
-/obj
-!.gitignore
+# Binaries
+built
+obj
+bin
+
+# IDE files
+.idea
+.vscode

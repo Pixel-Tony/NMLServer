@@ -56,8 +56,8 @@ internal partial struct TokenStorage
         /// </summary>
         public List<TRangeInfo> LocalToProtocol(CommentToken token)
         {
-            var offset = token.start;
-            var length = token.length;
+            var offset = token.Start;
+            var length = token.Length;
 
             int lineLength;
             if (offset == _offset)

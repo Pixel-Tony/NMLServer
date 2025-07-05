@@ -14,8 +14,8 @@ internal partial class TracktypeTable
         private readonly BracketToken? _closingBracket;
         private readonly BinaryOpToken? _comma;
 
-        public int end => _comma?.end ?? _closingBracket?.end ?? _fallback?[^1].end ?? _openingBracket?.end
-            ?? _colon?.end ?? _identifier.end;
+        public int End => _comma?.End ?? _closingBracket?.End ?? _fallback?[^1].End ?? _openingBracket?.End
+            ?? _colon?.End ?? _identifier.End;
 
         public FallbackEntry(ref ParsingState state, BaseValueToken identifier, ColonToken colon)
         {
@@ -23,7 +23,8 @@ internal partial class TracktypeTable
             _colon = colon;
             List<ValueWithComma<BaseValueToken>> fallbacks = [];
             BaseValueToken? current = null;
-            while (state.nextToken is { } token)
+            while (state.NextToken is { } token)
+            {
                 switch (token)
                 {
                     case BracketToken { Bracket: '}' }:
@@ -57,9 +58,10 @@ internal partial class TracktypeTable
                         state.AddUnexpected(token);
                         break;
                 }
+            }
 
-            label_ParsingComma:
-            for (var token = state.currentToken; token is not null; token = state.nextToken)
+        label_ParsingComma:
+            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
                 {
@@ -77,7 +79,7 @@ internal partial class TracktypeTable
                         break;
                 }
             }
-            label_End:
+        label_End:
             _fallback = fallbacks.ToMaybeList();
         }
     }

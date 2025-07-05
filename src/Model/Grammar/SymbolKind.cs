@@ -1,7 +1,7 @@
 namespace NMLServer.Model;
 
 /// <summary>
-/// The enumeration of symbol types for <see cref="NMLServer.Model.Lexis.IdentifierToken"/> token.
+/// The enumeration of symbol types for <see cref="Lexis.IdentifierToken"/> token.
 /// </summary>
 [Flags]
 internal enum SymbolKind

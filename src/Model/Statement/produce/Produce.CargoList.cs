@@ -11,7 +11,7 @@ internal partial class Produce
         private readonly List<NMLAttribute>? _content;
         private readonly BracketToken? _closingBracket;
 
-        public int? end => _closingBracket?.end ?? _content?[^1].end ?? _openingBracket?.end;
+        public int? End => _closingBracket?.End ?? _content?[^1].End ?? _openingBracket?.End;
 
         public CargoList(BracketToken closingBracket)
         {
@@ -23,7 +23,8 @@ internal partial class Produce
             List<NMLAttribute> content = [];
             _openingBracket = openingBracket;
 
-            while (state.nextToken is { } token)
+            while (state.NextToken is { } token)
+            {
                 switch (token)
                 {
                     case BracketToken { Bracket: ']' } closingBracket:
@@ -42,8 +43,9 @@ internal partial class Produce
                         state.AddUnexpected(token);
                         break;
                 }
+            }
 
-            label_End:
+        label_End:
             _content = content.ToMaybeList();
         }
     }

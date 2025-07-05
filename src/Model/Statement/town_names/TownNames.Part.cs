@@ -13,15 +13,15 @@ internal sealed partial class TownNames
         private readonly List<SubEntry>? _subParts;
         private readonly BracketToken? _closingBracket;
 
-        public int end => _closingBracket?.end
-                          ?? (IHasEnd.LastOf(_texts, _subParts, out int v) ? v : _openingBracket.end);
+        public int End => _closingBracket?.End
+                          ?? (IHasEnd.LastOf(_texts, _subParts, out int v) ? v : _openingBracket.End);
 
         public Part(ref ParsingState state, BracketToken openingBracket)
         {
             _openingBracket = openingBracket;
             List<TextEntry> texts = [];
             List<SubEntry> subParts = [];
-            for (var token = state.nextToken; token is not null;)
+            for (var token = state.NextToken; token is not null;)
             {
                 switch (token)
                 {
@@ -32,7 +32,7 @@ internal sealed partial class TownNames
 
                     case IdentifierToken:
                         var call = ExpressionAST.TryParse(ref state, true)!;
-                        token = state.currentToken;
+                        token = state.CurrentToken;
                         if (token is BinaryOpToken { Type: OperatorType.Comma } commaInText)
                         {
                             texts.Add(new TextEntry(call, commaInText));
@@ -45,7 +45,7 @@ internal sealed partial class TownNames
                         state.IncrementSkippingComments();
                         var args = ExpressionAST.TryParse(ref state, true);
 
-                        token = state.currentToken;
+                        token = state.CurrentToken;
                         if (token is BinaryOpToken { Type: OperatorType.Comma } comma)
                         {
                             subParts.Add(new SubEntry(townNames, args, comma));
@@ -61,9 +61,9 @@ internal sealed partial class TownNames
                         state.AddUnexpected(token);
                         break;
                 }
-                token = state.nextToken;
+                token = state.NextToken;
             }
-            label_End:
+        label_End:
             _texts = texts.ToMaybeList();
             _subParts = subParts.ToMaybeList();
         }

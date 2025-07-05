@@ -14,25 +14,26 @@ internal class Constant : StatementAST, ISymbolSource
     private readonly ExpressionAST? _rightHandSide;
     private readonly SemicolonToken? _semicolon;
 
-    public override int start => _keyword.start;
+    public override int Start => _keyword.Start;
 
-    public override int end
-        => _semicolon?.end ?? _rightHandSide?.end ?? _equalsSign?.end ?? _leftHandSide?.end ?? _keyword.end;
+    public override int End
+        => _semicolon?.End ?? _rightHandSide?.End ?? _equalsSign?.End ?? _leftHandSide?.End ?? _keyword.End;
 
-    public IdentifierToken? symbol { get; }
+    public IdentifierToken? Symbol { get; }
 
     public Constant(ref ParsingState state, KeywordToken keyword)
     {
         _keyword = keyword;
-        if (state.nextToken is not IdentifierToken identifier)
+        if (state.NextToken is not IdentifierToken identifier)
             return;
         _leftHandSide = identifier;
         if (identifier.Kind is SymbolKind.Undefined)
         {
             identifier.Kind = SymbolKind.Constant;
-            symbol = identifier;
+            Symbol = identifier;
         }
-        while (state.nextToken is { } token)
+        while (state.NextToken is { } token)
+        {
             switch (token)
             {
                 case BracketToken { Bracket: '{' or '}' }:
@@ -41,7 +42,9 @@ internal class Constant : StatementAST, ISymbolSource
                 case AssignmentToken equalsSign:
                     _equalsSign = equalsSign;
                     state.IncrementSkippingComments();
-                    goto label_AfterSign;
+                    _rightHandSide = ExpressionAST.TryParse(ref state);
+                    _semicolon = state.ExpectSemicolon();
+                    return;
                 case SemicolonToken semicolon:
                     _semicolon = semicolon;
                     state.Increment();
@@ -50,9 +53,7 @@ internal class Constant : StatementAST, ISymbolSource
                     state.AddUnexpected(token);
                     break;
             }
-        label_AfterSign:
-        _rightHandSide = ExpressionAST.TryParse(ref state);
-        _semicolon = state.ExpectSemicolon();
+        }
     }
 
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)

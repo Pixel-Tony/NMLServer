@@ -15,8 +15,8 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
 
     private ExpressionAST? _parent = parent;
 
-    public abstract int start { get; }
-    public abstract int end { get; }
+    public abstract int Start { get; }
+    public abstract int End { get; }
 
     protected virtual void Replace(ExpressionAST target, FunctionCall value)
         => throw new Exception("Cannot replace child at the bottom-level node");
@@ -51,7 +51,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
     /// and corresponding <see cref="UnitTerminatedExpression"/> node is the root of result.</remarks>
     public static ExpressionAST? TryParse(ref ParsingState state, bool parseUntilOuterComma = false)
     {
-        var token = state.currentToken;
+        var token = state.CurrentToken;
         if (token is null || (parseUntilOuterComma && token is BinaryOpToken { Type: OperatorType.Comma }))
             return null;
 
@@ -67,7 +67,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
         }
         ExpressionAST current = result;
 
-        for (token = state.nextToken; token is not null; token = state.currentToken)
+        for (token = state.NextToken; token is not null; token = state.CurrentToken)
         {
             ExpressionAST value;
             switch (token)
@@ -82,17 +82,17 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                     return result;
 
                 case ColonToken colonToken:
-                {
-                    if (current is TernaryOperation { Colon: null, FalseBranch: null } ternaryOp)
                     {
-                        ternaryOp.Colon = colonToken;
-                        break;
+                        if (current is TernaryOperation { Colon: null, FalseBranch: null } ternaryOp)
+                        {
+                            ternaryOp.Colon = colonToken;
+                            break;
+                        }
+                        if (current._parent is null)
+                            return result;
+                        current = current._parent;
+                        continue;
                     }
-                    if (current._parent is null)
-                        return result;
-                    current = current._parent;
-                    continue;
-                }
 
                 case TernaryOpToken questionMark:
                     switch (current)
@@ -114,7 +114,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
 
                         case FunctionCall:
                         case UnaryOperation:
-                        case BinaryOperation { precedence: > Grammar.TernaryOperatorPrecedence }:
+                        case BinaryOperation { Precedence: > Grammar.TernaryOperatorPrecedence }:
                         case BaseValueNode:
                         case ParentedExpression:
                             if (current._parent is null)
@@ -132,7 +132,6 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                     break;
 
                 case BracketToken { Bracket: '(' or '[' } openingParen:
-                {
                     value = new ParentedExpression(current, openingParen);
                     switch (current)
                     {
@@ -174,7 +173,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                             continue;
 
                         case BaseValueNode valueNode:
-                            var call = new FunctionCall(current._parent, valueNode.token);
+                            var call = new FunctionCall(current._parent, valueNode.Token);
                             var parens = new ParentedExpression(call, openingParen);
                             call.Arguments = parens;
                             if (current._parent is null)
@@ -196,7 +195,6 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                             break;
                     }
                     break;
-                }
 
                 case BracketToken { Bracket: ')' or ']' } closingParen:
                     if (current is ParentedExpression { ClosingBracket: null } openParen
@@ -234,7 +232,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                 case BaseValueToken valueToken:
                     value = MakeValueFromToken(current, valueToken);
 
-                    label_OnValue:
+                label_OnValue:
                     switch (current)
                     {
                         case UnaryOperation { Expression: null } unaryOp:
@@ -276,7 +274,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                 case BinaryOpToken binaryOpToken:
                     switch (current)
                     {
-                        case BinaryOperation binaryOp when binaryOpToken.Precedence > binaryOp.precedence:
+                        case BinaryOperation binaryOp when binaryOpToken.Precedence > binaryOp.Precedence:
                             current = binaryOp.Right = new BinaryOperation(current, binaryOp.Right, binaryOpToken);
                             break;
 

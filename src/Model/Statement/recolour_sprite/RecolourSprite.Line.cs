@@ -18,14 +18,14 @@ internal partial class RecolourSprite
         private readonly ExpressionAST? _rightRight;
         private readonly SemicolonToken? _semicolon;
 
-        public int end => _semicolon?.end ?? _rightRight?.end ?? _rightRange?.end ?? _rightLeft?.end ?? _colon?.end
-            ?? _leftRight?.end ?? _leftRange?.end ?? _leftLeft.end;
+        public int End => _semicolon?.End ?? _rightRight?.End ?? _rightRange?.End ?? _rightLeft?.End ?? _colon?.End
+            ?? _leftRight?.End ?? _leftRange?.End ?? _leftLeft.End;
 
         static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)
         {
             List<Line> content = [];
-            for (var token = state.currentToken; token is not null; token = state.nextToken)
+            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
                 {
@@ -53,14 +53,14 @@ internal partial class RecolourSprite
                         break;
                 }
             }
-            label_End:
+        label_End:
             return content.ToMaybeList();
         }
 
         private Line(ref ParsingState state)
         {
             ExpressionOrRange(ref state, ref _leftLeft!, ref _leftRange, ref _leftRight);
-            for (var token = state.currentToken; token is not null; token = state.nextToken)
+            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
                 {
@@ -80,9 +80,9 @@ internal partial class RecolourSprite
             }
             return;
 
-            label_Right:
+        label_Right:
             ExpressionOrRange(ref state, ref _rightLeft, ref _rightRange, ref _rightRight, false);
-            for (var token = state.currentToken; token is not null; token = state.nextToken)
+            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
                 {
@@ -105,7 +105,7 @@ internal partial class RecolourSprite
         private static void ExpressionOrRange(ref ParsingState state, ref ExpressionAST? left, ref RangeToken? range,
             ref ExpressionAST? right, bool stopAtColon = true)
         {
-            for (var token = state.currentToken; token is not null; token = state.nextToken)
+            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
                 {
@@ -134,8 +134,8 @@ internal partial class RecolourSprite
             }
             return;
 
-            label_Range:
-            for (var token = state.currentToken; token is not null; token = state.nextToken)
+        label_Range:
+            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
                 {
@@ -157,8 +157,8 @@ internal partial class RecolourSprite
             }
             return;
 
-            label_Right:
-            for (var token = state.currentToken; token is not null; token = state.nextToken)
+        label_Right:
+            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
                 {

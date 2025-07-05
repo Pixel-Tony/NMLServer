@@ -7,13 +7,14 @@ namespace NMLServer.Model.Statement;
 internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
     : IAllowsParseInsideBlock<ValueWithComma<T>> where T : BaseValueToken
 {
-    public int end => comma?.end ?? identifier.end;
+    public int End => comma?.End ?? identifier.End;
 
     public static List<ValueWithComma<T>>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {
         List<ValueWithComma<T>> chain = [];
         T? current = null;
-        for (var token = state.currentToken; token is not null; token = state.nextToken)
+        for (var token = state.CurrentToken; token is not null; token = state.NextToken)
+        {
             switch (token)
             {
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
@@ -33,8 +34,9 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
                     state.AddUnexpected(token);
                     break;
             }
+        }
 
-        label_End:
+    label_End:
         return chain.ToMaybeList();
     }
 

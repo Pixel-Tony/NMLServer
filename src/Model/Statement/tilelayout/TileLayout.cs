@@ -8,18 +8,17 @@ internal sealed partial class TileLayout : BlockStatement
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Entry>? _entries;
 
-    protected override int middleEnd => IHasEnd.LastOf(_attributes, _entries);
+    protected override int MiddleEnd => IHasEnd.LastOf(_attributes, _entries);
 
     public TileLayout(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
         new ParamInfo(false, (1, 1), (0, SymbolKind.Variable)))
     {
         if (ClosingBracket is not null)
-        {
             return;
-        }
+
         List<NMLAttribute> attributes = [];
         List<Entry> entries = [];
-        for (var token = state.nextToken; token is not null; token = state.currentToken)
+        for (var token = state.NextToken; token is not null; token = state.CurrentToken)
         {
             switch (token)
             {
@@ -49,7 +48,7 @@ internal sealed partial class TileLayout : BlockStatement
                     break;
             }
         }
-        label_End:
+    label_End:
         _attributes = attributes.ToMaybeList();
         _entries = entries.ToMaybeList();
     }

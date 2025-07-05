@@ -12,15 +12,15 @@ internal partial struct TokenStorage
 {
     public TokenStorage(string initialSource)
     {
-        source = initialSource;
+        Source = initialSource;
         List = [];
-        Lexer lexer = new(source);
+        Lexer lexer = new(Source);
         while (lexer.LexToken(out _) is { } token)
             List.Add(token);
         _lineLengths = lexer.LineLengths;
     }
 
-    public readonly StringView GetSymbolContext(Token token) => source.AsSpan(token.start, token.length);
+    public readonly StringView GetSymbolContext(Token token) => Source.AsSpan(token.Start, token.Length);
 
     public readonly PositionConverter MakeConverter() => new(_lineLengths);
 
@@ -30,7 +30,7 @@ internal partial struct TokenStorage
     {
         var offset = ProtocolToLocal(position);
         return TryGetAt(offset) is { } token
-            ? source.AsSpan(token.start, offset - token.start)
+            ? Source.AsSpan(token.Start, offset - token.Start)
             : StringView.Empty;
     }
 
@@ -46,8 +46,8 @@ internal partial struct TokenStorage
     public void Rebuild(Range replacedRange, string replacement)
     {
         var range = ProtocolToLocal(replacedRange);
-        StringView sourceSpan = source;
-        source = replacement.Length is 0
+        StringView sourceSpan = Source;
+        Source = replacement.Length is 0
             ? string.Concat(sourceSpan[..range.start], sourceSpan[range.end..])
             : string.Concat(sourceSpan[..range.start], replacement, sourceSpan[range.end..]);
 
@@ -56,12 +56,12 @@ internal partial struct TokenStorage
         // Shift tokens after the range
         var shift = replacement.Length - (range.end - range.start);
         for (int i = firstTokenAfterRange.index, max = List.Count; i < max; ++i)
-            List[i].start += shift;
+            List[i].Start += shift;
         firstTokenToReplace.offset = int.Max(firstTokenToReplace.offset, 0);
 
         var converter = MakeConverter();
         var startOffset = converter.LocalToProtocol(firstTokenToReplace.offset);
-        Lexer lexer = new(source, firstTokenToReplace.offset, startOffset.Character);
+        Lexer lexer = new(Source, firstTokenToReplace.offset, startOffset.Character);
 
         List<Token> lexedTokens = [];
         // Short-circuit if replaced text chunk is at the end of source.
@@ -96,7 +96,7 @@ internal partial struct TokenStorage
         for (var oldTokenIndex = firstTokenAfterRange.index; oldTokenIndex < List.Count; ++oldTokenIndex)
         {
             var oldToken = List[oldTokenIndex];
-            var oldStart = oldToken.start;
+            var oldStart = oldToken.Start;
             // Lex tokens while any are left and last lexed token is 'behind' existing one.
             while (tokenStart < oldStart)
             {
@@ -115,7 +115,7 @@ internal partial struct TokenStorage
 
             // Add remaining line length (first line was shifted in by Lexer already).
             // We use old lengths for calculations, so token.end must be corrected.
-            var (endLine, character) = converter.LocalToProtocol(token.end - shift);
+            var (endLine, character) = converter.LocalToProtocol(token.End - shift);
             var lexedLineLengths = lexer.LineLengths;
             lexedLineLengths[^1] += _lineLengths[endLine] - character;
             _lineLengths.ReplaceRange(lexedLineLengths, startOffset.Line, endLine + 1);
@@ -142,12 +142,12 @@ internal partial struct TokenStorage
         {
             var mid = left + (right - left) / 2;
             var current = List[mid];
-            if (offset <= current.start)
+            if (offset <= current.Start)
             {
                 right = mid - 1;
                 continue;
             }
-            if (offset <= current.end)
+            if (offset <= current.End)
                 return current;
             left = mid + 1;
         }
@@ -199,8 +199,8 @@ internal partial struct TokenStorage
         {
             var mid = left + (right - left) / 2;
             var current = List[mid];
-            var start = current.start;
-            if (current.end < range.start)
+            var start = current.Start;
+            if (current.End < range.start)
             {
                 // We only remember position of rightmost token to the left side of range.
                 firstBeforeRange = (mid, start);
@@ -220,9 +220,9 @@ internal partial struct TokenStorage
                 break;
             }
             right = mid - 1;
-            for (var prev = List[right]; prev.end < range.start;)
+            for (var prev = List[right]; prev.End < range.start;)
             {
-                firstBeforeRange = (right, prev.start);
+                firstBeforeRange = (right, prev.Start);
                 break;
             }
         }
@@ -232,13 +232,13 @@ internal partial struct TokenStorage
         {
             var mid = left + (right - left) / 2;
             var current = List[mid];
-            if (current.end < range.start)
+            if (current.End < range.start)
             {
                 // Similar situation: now we only record rightmost tokens to the right of the range.
                 left = mid + 1;
                 continue;
             }
-            var start = current.start;
+            var start = current.Start;
             if (start > range.end)
             {
                 firstAfterRange = (mid, start);
@@ -251,7 +251,7 @@ internal partial struct TokenStorage
                 break;
             }
             left = mid + 1;
-            var nextStart = List[left].start;
+            var nextStart = List[left].Start;
             if (nextStart > range.end)
             {
                 firstAfterRange = (left, nextStart);
@@ -269,21 +269,21 @@ internal partial struct TokenStorage
             if (token is CommentToken comment)
             {
                 foreach (var (offset, length) in converter.LocalToProtocol(comment))
-                    builder.Push(offset, length, comment.semanticType);
+                    builder.Push(offset, length, comment.SemanticType);
                 continue;
             }
             var type = token switch
             {
-                IdentifierToken id when bag.Has(id, out var definitions) => definitions[0].semanticType,
-                { semanticType: { } semanticType } => semanticType,
+                IdentifierToken id when bag.Has(id, out var definitions) => definitions[0].SemanticType,
+                { SemanticType: { } semanticType } => semanticType,
                 _ => null
             };
             if (type is not null)
-                builder.Push(converter.LocalToProtocol(token.start), token.length, type);
+                builder.Push(converter.LocalToProtocol(token.Start), token.Length, type);
         }
     }
 
-    public string source { get; private set; }
+    public string Source { get; private set; }
     public readonly List<Token> List;
     private readonly List<int> _lineLengths;
 }

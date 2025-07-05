@@ -24,16 +24,16 @@ internal partial class BaseSwitch
         private ExpressionAST? _returnValue = returnValue;
         private SemicolonToken? _semicolon = semicolon;
 
-        public readonly int end => _semicolon?.end ?? _returnValue?.end ?? _returnKeyword?.end ?? _colon?.end
-            ?? _patternRightSide?.end ?? _range?.end ?? _pattern!.end;
+        public readonly int End => _semicolon?.End ?? _returnValue?.End ?? _returnKeyword?.End ?? _colon?.End
+            ?? _patternRightSide?.End ?? _range?.End ?? _pattern!.End;
 
         static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)
         {
             List<Line> content = [];
             var innerState = FSM.ExpectAny;
-            Line current = new Line();
-            for (var token = state.currentToken; token is not null;)
+            Line current = new();
+            for (var token = state.CurrentToken; token is not null;)
             {
                 switch (token)
                 {
@@ -54,7 +54,7 @@ internal partial class BaseSwitch
                         content.Add(current);
                         current = new Line();
                         innerState = FSM.ExpectAny;
-                        token = state.currentToken;
+                        token = state.CurrentToken;
                         continue;
 
                     case UnitToken:
@@ -71,13 +71,13 @@ internal partial class BaseSwitch
                                 innerState = current._pattern is UnitTerminatedExpression
                                     ? FSM.ExpectColonSemicolon
                                     : FSM.ExpectRangeColonSemicolon;
-                                token = state.currentToken;
+                                token = state.CurrentToken;
                                 continue;
 
                             case FSM.ExpectAfterRange:
                                 current._patternRightSide = ExpressionAST.TryParse(ref state);
                                 innerState = FSM.ExpectColon;
-                                token = state.currentToken;
+                                token = state.CurrentToken;
                                 continue;
 
                             case FSM.ExpectValue:
@@ -86,7 +86,7 @@ internal partial class BaseSwitch
                                 content.Add(current);
                                 current = new Line();
                                 innerState = FSM.ExpectAny;
-                                token = state.currentToken;
+                                token = state.CurrentToken;
                                 continue;
 
                             default:
@@ -128,7 +128,7 @@ internal partial class BaseSwitch
                         state.AddUnexpected(token);
                         break;
                 }
-                token = state.nextToken;
+                token = state.NextToken;
             }
             label_Ending:
             return content.ToMaybeList();
@@ -144,7 +144,7 @@ internal partial class BaseSwitch
             ExpectValue // Colon present, expect value
         }
 
-        public DotNode Visualize(DotGraph graph, DotNode parent, string context)
+        public readonly DotNode Visualize(DotGraph graph, DotNode parent, string context)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Line");
             _pattern.MaybeVisualize(graph, n, context);

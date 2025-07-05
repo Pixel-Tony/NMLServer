@@ -8,5 +8,5 @@ namespace NMLServer.Model;
 // TODO: implement support for all statements that define symbols
 internal interface ISymbolSource
 {
-    public IdentifierToken? symbol { get; }
+    public IdentifierToken? Symbol { get; }
 }

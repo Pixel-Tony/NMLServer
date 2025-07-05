@@ -11,7 +11,7 @@ internal readonly ref struct DiagnosticContext(ref TokenStorage.PositionConverte
 
     public void Add<T>(string message, T item, DiagnosticSeverity severity = DiagnosticSeverity.Error)
         where T : IHasStart, IHasEnd
-        => Add(message, item.start, item.end, severity);
+        => Add(message, item.Start, item.End, severity);
 
     public void Add(string message, int offset, DiagnosticSeverity severity = DiagnosticSeverity.Error)
     {

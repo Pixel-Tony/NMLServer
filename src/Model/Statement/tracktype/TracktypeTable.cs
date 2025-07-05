@@ -8,7 +8,7 @@ internal sealed partial class TracktypeTable : BlockStatement
     private readonly List<ValueWithComma<BaseValueToken>>? _entries;
     private readonly List<FallbackEntry>? _fallbackEntries;
 
-    protected override int middleEnd => IHasEnd.LastOf(_entries, _fallbackEntries);
+    protected override int MiddleEnd => IHasEnd.LastOf(_entries, _fallbackEntries);
 
     public TracktypeTable(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword, ParamInfo.None)
     {
@@ -18,7 +18,7 @@ internal sealed partial class TracktypeTable : BlockStatement
         List<ValueWithComma<BaseValueToken>> entries = [];
         List<FallbackEntry> fallbacks = [];
         IdentifierToken? current = null;
-        for (var token = state.currentToken; token is not null; token = state.currentToken)
+        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
         {
             switch (token)
             {
@@ -43,9 +43,8 @@ internal sealed partial class TracktypeTable : BlockStatement
 
                 case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     if (current is not null)
-                    {
                         entries.Add(new ValueWithComma<BaseValueToken>(current, null));
-                    }
+
                     goto label_End;
 
                 default:
@@ -54,7 +53,7 @@ internal sealed partial class TracktypeTable : BlockStatement
             }
             state.Increment();
         }
-        label_End:
+    label_End:
         _entries = entries.ToMaybeList();
         _fallbackEntries = fallbacks.ToMaybeList();
     }

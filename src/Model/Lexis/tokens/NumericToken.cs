@@ -4,5 +4,5 @@ namespace NMLServer.Model.Lexis;
 
 internal sealed class NumericToken(int start, int end) : BaseValueToken(start, end)
 {
-    internal override string semanticType => SemanticTokenTypes.Number;
+    internal override string SemanticType => SemanticTokenTypes.Number;
 }

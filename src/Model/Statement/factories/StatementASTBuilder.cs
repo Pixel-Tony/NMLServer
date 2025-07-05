@@ -8,18 +8,15 @@ internal struct StatementASTBuilder
     private InnerStatementNode? _current;
     private List<StatementAST> _children;
 
-    public List<StatementAST> root { get; }
+    public List<StatementAST> Root { get; }
 
-    public StatementASTBuilder()
-    {
-        _children = root = [];
-    }
+    public StatementASTBuilder() => _children = Root = [];
 
     public bool Make(ref ParsingState state) => Make(ref state, out _);
 
     public bool Make(ref ParsingState state, out StatementAST? output)
     {
-        var token = state.currentToken;
+        var token = state.CurrentToken;
         switch (token)
         {
             case null:
@@ -45,7 +42,7 @@ internal struct StatementASTBuilder
             case BracketToken { Bracket: '}' } closingBracket when _current is not null:
                 _current.ClosingBracket = closingBracket;
                 _current = _current.Parent;
-                _children = _current?.Children ?? root;
+                _children = _current?.Children ?? Root;
                 state.Increment();
                 output = null;
                 return true;

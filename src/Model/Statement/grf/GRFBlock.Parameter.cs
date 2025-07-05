@@ -14,10 +14,10 @@ internal partial class GRFBlock
         private readonly List<Names>? _names;
         private readonly BracketToken? _innerClosingBracket;
 
-        protected override int middleEnd
-            => _innerClosingBracket?.end ?? (IHasEnd.LastOf(_names, _attributes, out var value)
+        protected override int MiddleEnd
+            => _innerClosingBracket?.End ?? (IHasEnd.LastOf(_names, _attributes, out var value)
                     ? value
-                    : _innerOpeningBracket?.end ?? _name?.end ?? 0
+                    : _innerOpeningBracket?.End ?? _name?.End ?? 0
                 );
 
         public Parameter(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
@@ -27,7 +27,7 @@ internal partial class GRFBlock
             {
                 return;
             }
-            for (var token = state.currentToken; token is not null; token = state.nextToken)
+            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
                 {
@@ -62,7 +62,7 @@ internal partial class GRFBlock
             ColonToken? colon = null;
             InnerState innerState = InnerState.ExpectingIdentifier;
 
-            for (var token = state.currentToken; _innerClosingBracket is null && token is not null;)
+            for (var token = state.CurrentToken; _innerClosingBracket is null && token is not null;)
             {
                 switch (innerState)
                 {
@@ -130,7 +130,7 @@ internal partial class GRFBlock
                             case BinaryOpToken:
                                 var expr = ExpressionAST.TryParse(ref state);
                                 var semicolon = state.ExpectSemicolon();
-                                token = state.currentToken;
+                                token = state.CurrentToken;
                                 attributes.Add(new NMLAttribute(identifier, colon, expr, semicolon));
                                 identifier = null;
                                 colon = null;
@@ -142,7 +142,7 @@ internal partial class GRFBlock
                                 identifier = null;
                                 colon = null;
                                 innerState = InnerState.ExpectingIdentifier;
-                                token = state.currentToken;
+                                token = state.CurrentToken;
                                 continue;
 
                             case BracketToken { Bracket: '}' } innerClosingBracket:
@@ -165,7 +165,7 @@ internal partial class GRFBlock
                         }
                         break;
                 }
-                token = state.nextToken;
+                token = state.NextToken;
             }
             if (_innerClosingBracket is not null)
             {

@@ -9,7 +9,7 @@ internal partial class TownNames
     {
         private readonly struct TextEntry(ExpressionAST call, BinaryOpToken? comma = null) : IHasEnd
         {
-            public int end => comma?.end ?? call.end;
+            public int End => comma?.End ?? call.End;
         }
     }
 }

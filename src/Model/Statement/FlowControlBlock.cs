@@ -18,7 +18,7 @@ internal class FlowControlBlock(
         if (_keyword.Type == KeywordType.Else)
         {
             if (Parameters is not null)
-                context.Add(Errors.UnexpectedTopLevelExpr, _keyword.end);
+                context.Add(Errors.UnexpectedTopLevelExpr, _keyword.End);
         }
         else
         {
@@ -27,7 +27,7 @@ internal class FlowControlBlock(
             if (Parameters is not null)
                 Parameters.VerifySyntax(in context);
             else
-                context.Add(ExpressionAST.Errors.ErrorMissingExpr, _keyword.end);
+                context.Add(ExpressionAST.Errors.ErrorMissingExpr, _keyword.End);
         }
     }
 

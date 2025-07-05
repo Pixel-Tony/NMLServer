@@ -21,12 +21,12 @@ using DefinitionsMap = Dictionary<string, List<IdentifierToken>>;
 internal sealed class Document : IDefinitionsBag
 {
     public readonly DocumentUri Uri;
-    public int version { get; private set; }
+    public int Version { get; private set; }
 
     public Document(TextDocumentItem item)
     {
         Uri = item.Uri;
-        version = item.Version;
+        Version = item.Version;
         _tokens = new TokenStorage(item.Text);
         (_statements, _unexpectedTokens) = MakeStatements();
         _definedSymbols = MakeDefinitions();
@@ -46,11 +46,11 @@ internal sealed class Document : IDefinitionsBag
             return null;
 
         List<Location> locations = new(definitions.Count);
-        var length = symbol.length;
+        var length = symbol.Length;
         var converter = _tokens.MakeConverter();
         foreach (var definition in definitions)
         {
-            var definitionStart = definition.start;
+            var definitionStart = definition.Start;
             var start = converter.LocalToProtocol(definitionStart);
             var end = start with { Character = start.Character + length };
             locations.Add(new Location(Uri, new Range(start, end)));
@@ -132,7 +132,7 @@ internal sealed class Document : IDefinitionsBag
     public void Handle(DidChangeTextDocumentParams request)
     {
         int newVersion = request.TextDocument.Version;
-        if (newVersion <= version)
+        if (newVersion <= Version)
             return;
 
         foreach (var change in request.ContentChanges)
@@ -152,7 +152,7 @@ internal sealed class Document : IDefinitionsBag
             _definedSymbols = MakeDefinitions();
         }
 
-        version = newVersion;
+        Version = newVersion;
     }
 
     public void Visualize()
@@ -171,7 +171,7 @@ internal sealed class Document : IDefinitionsBag
         graph.Add(root);
 
         foreach (var child in _statements)
-            child.Visualize(graph, root, _tokens.source);
+            child.Visualize(graph, root, _tokens.Source);
 
         if (graph.Elements.Count >= 400)
         {
@@ -197,7 +197,7 @@ internal sealed class Document : IDefinitionsBag
         StatementASTBuilder builder = new();
         while (builder.Make(ref state))
         { }
-        return (builder.root, state.UnexpectedTokens);
+        return (builder.Root, state.UnexpectedTokens);
     }
 
     private DefinitionsMap MakeDefinitions()
@@ -221,7 +221,7 @@ internal sealed class Document : IDefinitionsBag
             if (child is InnerStatementNode parent)
                 parents.Push(parent);
 
-            if (child is not ISymbolSource { symbol: { } symbol })
+            if (child is not ISymbolSource { Symbol: { } symbol })
                 return;
 
             var context = tokens.GetSymbolContext(symbol);

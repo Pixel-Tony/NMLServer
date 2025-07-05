@@ -6,7 +6,7 @@ internal sealed class IdentifierToken(int start, int end, SymbolKind kind) : Bas
 {
     public SymbolKind Kind = kind;
 
-    internal override string? semanticType => (Kind & SymbolKind.KindMask) switch
+    internal override string? SemanticType => (Kind & SymbolKind.KindMask) switch
     {
         SymbolKind.Function => SemanticTokenTypes.Function,
         SymbolKind.Feature => SemanticTokenTypes.Type,

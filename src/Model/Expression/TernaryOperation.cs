@@ -14,9 +14,9 @@ internal sealed class TernaryOperation(ExpressionAST? parent, TernaryOpToken que
     public ColonToken? Colon;
     public ExpressionAST? FalseBranch;
 
-    public override int start => _condition?.start ?? questionMark.start;
+    public override int Start => _condition?.Start ?? questionMark.Start;
 
-    public override int end => FalseBranch?.end ?? Colon?.end ?? TrueBranch?.end ?? questionMark.end;
+    public override int End => FalseBranch?.End ?? Colon?.End ?? TrueBranch?.End ?? questionMark.End;
 
     public TernaryOperation(ExpressionAST? parent, ExpressionAST? condition, TernaryOpToken questionMark)
         : this(parent, questionMark)

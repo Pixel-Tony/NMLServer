@@ -12,7 +12,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
     private readonly ExpressionAST? _value;
     private readonly SemicolonToken? _semicolon;
 
-    public int end => _semicolon?.end ?? _value?.end ?? _colon?.end ?? _key!.end;
+    public int End => _semicolon?.End ?? _value?.End ?? _colon?.End ?? _key!.End;
 
     public NMLAttribute(BaseMulticharToken? key, ColonToken? colon, ExpressionAST? value, SemicolonToken? semicolon)
     {
@@ -34,7 +34,8 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
     public NMLAttribute(ref ParsingState state, BaseMulticharToken key)
     {
         _key = key;
-        while (state.nextToken is { } token)
+        while (state.NextToken is { } token)
+        {
             switch (token)
             {
                 case ColonToken colonToken:
@@ -57,12 +58,13 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                     state.AddUnexpected(token);
                     break;
             }
+        }
     }
 
     public static List<NMLAttribute>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {
         List<NMLAttribute> attributes = [];
-        for (var token = state.currentToken; token is not null; token = state.currentToken)
+        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
         {
             switch (token)
             {
@@ -88,7 +90,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
                     break;
             }
         }
-        label_End:
+    label_End:
         return attributes.ToMaybeList();
     }
 

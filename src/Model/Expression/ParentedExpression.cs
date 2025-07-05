@@ -16,9 +16,9 @@ internal sealed class ParentedExpression(
     public ExpressionAST? Expression = expression;
     public BracketToken? ClosingBracket = closingBracket;
 
-    public override int start => OpeningBracket?.start ?? Expression?.start ?? ClosingBracket!.start;
+    public override int Start => OpeningBracket?.Start ?? Expression?.Start ?? ClosingBracket!.Start;
 
-    public override int end => ClosingBracket?.end ?? Expression?.end ?? OpeningBracket!.end;
+    public override int End => ClosingBracket?.End ?? Expression?.End ?? OpeningBracket!.End;
 
     protected override void Replace(ExpressionAST target, FunctionCall value)
     {
@@ -39,9 +39,9 @@ internal sealed class ParentedExpression(
     public override void VerifySyntax(ref readonly DiagnosticContext context)
     {
         if (OpeningBracket is null)
-            context.Add("Missing opening paren", start);
+            context.Add("Missing opening paren", Start);
         else if (ClosingBracket is null)
-            context.Add("Missing closing paren", end);
+            context.Add("Missing closing paren", End);
 
         if (Expression is null)
         {

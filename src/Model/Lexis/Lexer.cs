@@ -12,10 +12,10 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
     private readonly StringView _content = view;
     private readonly int _maxPos = view.Length - 1;
 
-    private readonly char currentChar => FastAccess(_pos);
-    private readonly char nextChar => FastAccess(_pos + 1);
-    private readonly bool isAtLastChar => _pos == _maxPos;
-    private readonly bool isInBounds => _pos <= _maxPos;
+    private readonly char CurrentChar => FastAccess(_pos);
+    private readonly char NextChar => FastAccess(_pos + 1);
+    private readonly bool IsAtLastChar => _pos == _maxPos;
+    private readonly bool IsInBounds => _pos <= _maxPos;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private readonly char FastAccess(nint offset)
@@ -32,9 +32,9 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
     /// </remarks>
     public Token? LexToken(out int tokenStart)
     {
-        while (isInBounds)
+        while (IsInBounds)
         {
-            char c = currentChar;
+            char c = CurrentChar;
             if (c is '\n')
             {
                 AddLine();
@@ -88,7 +88,7 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
 
     private Token ParseOnDot()
     {
-        if (isAtLastChar || nextChar is not '.')
+        if (IsAtLastChar || NextChar is not '.')
         {
             return new UnknownToken(_pos++);
         }
@@ -99,19 +99,19 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
 
     private Token ParseOnEqualsSign()
     {
-        return isAtLastChar || nextChar is not '='
+        return IsAtLastChar || NextChar is not '='
             ? new AssignmentToken(_pos++)
             : new BinaryOpToken(_pos, _pos += 2, OperatorType.Eq);
     }
 
     private Token TryParseOperator(OperatorType type)
     {
-        if (isAtLastChar)
+        if (IsAtLastChar)
         {
             return new BinaryOpToken(_pos, ++_pos, type);
         }
         var start = _pos++;
-        switch (currentChar)
+        switch (CurrentChar)
         {
             case '|' when type is OperatorType.BinaryOr:
                 type = OperatorType.LogicalOr;
@@ -141,7 +141,7 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
                 break;
 
             case '>' when type is OperatorType.Gt:
-                if (isAtLastChar || nextChar is not '>')
+                if (IsAtLastChar || NextChar is not '>')
                 {
                     type = OperatorType.ShiftRight;
                     break;
@@ -155,7 +155,7 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
         }
         ++_pos;
 
-        label_Return:
+    label_Return:
         return type == OperatorType.LogicalNot
             ? new UnaryOpToken(start, '!')
             : new BinaryOpToken(start, _pos, type);
@@ -164,7 +164,7 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
     private CommentToken ParseHashtagComment()
     {
         int start = _pos++;
-        while (isInBounds && currentChar is not '\n')
+        while (IsInBounds && CurrentChar is not '\n')
         {
             ++_pos;
         }
@@ -173,18 +173,18 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
 
     private Token ParseFromSlash()
     {
-        if (isAtLastChar)
+        if (IsAtLastChar)
         {
             return new BinaryOpToken(_pos, ++_pos, OperatorType.Divide);
         }
         int start = _pos++;
-        switch (currentChar)
+        switch (CurrentChar)
         {
             case '*':
                 ++_pos;
-                while (isInBounds)
+                while (IsInBounds)
                 {
-                    switch (currentChar)
+                    switch (CurrentChar)
                     {
                         case '/' when _pos - start >= 3 && FastAccess(_pos - 1) is '*':
                             break;
@@ -207,7 +207,7 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
                 {
                     ++_pos;
                 }
-                while (isInBounds && currentChar is not '\n');
+                while (IsInBounds && CurrentChar is not '\n');
                 return new CommentToken(start, _pos);
 
             default:
@@ -229,9 +229,9 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
     private StringToken ParseLiteralString(char openingQuote)
     {
         int start = _pos++;
-        while (isInBounds)
+        while (IsInBounds)
         {
-            char c = currentChar;
+            char c = CurrentChar;
             if (c is '\n')
                 break;
 
@@ -246,9 +246,9 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
     {
         int start = _pos++;
         char current = '\0';
-        for (; isInBounds; ++_pos)
+        for (; IsInBounds; ++_pos)
         {
-            current = currentChar;
+            current = CurrentChar;
             if (!IsIdentifierChar(current))
             {
                 break;
@@ -260,7 +260,7 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
         {
             case '/' when charsLeft == 1
                           || (charsLeft > 1 && !IsIdentifierChar(FastAccess(_pos + 2))):
-                var next = nextChar;
+                var next = NextChar;
                 UnitType unitType = value switch
                 {
                     "m" when next is 's' => UnitType.MPS,
@@ -301,9 +301,9 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
 
         var innerState = c is '0' ? startingZero : onInt;
         int start = _pos++;
-        for (; isInBounds; ++_pos)
+        for (; IsInBounds; ++_pos)
         {
-            c = currentChar;
+            c = CurrentChar;
             var curIsDigit = (c >= '0') & (c <= '9');
             switch (innerState)
             {
@@ -341,7 +341,7 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
                     goto label_End;
             }
         }
-        label_End:
+    label_End:
         return new NumericToken(start, _pos);
     }
 }

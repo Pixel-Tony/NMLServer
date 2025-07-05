@@ -11,7 +11,7 @@ internal abstract class InnerStatementNode : BlockStatement
     public readonly InnerStatementNode? Parent;
     public readonly List<StatementAST>? Children;
 
-    protected sealed override int middleEnd => Children?[^1].end ?? 0;
+    protected sealed override int MiddleEnd => Children?[^1].End ?? 0;
 
     protected InnerStatementNode(InnerStatementNode? parent, ref ParsingState state, KeywordToken keyword,
         ParamInfo info) : base(ref state, keyword, info)

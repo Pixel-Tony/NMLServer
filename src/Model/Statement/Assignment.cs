@@ -14,15 +14,15 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
     private readonly ExpressionAST? _rightHandSide;
     private readonly SemicolonToken? _semicolon;
 
-    public IdentifierToken? symbol { get; }
+    public IdentifierToken? Symbol { get; }
 
-    public override int start => _leftHandSide.start;
-    public override int end => _semicolon?.end ?? _rightHandSide?.end ?? _equalsSign?.end ?? _leftHandSide.end;
+    public override int Start => _leftHandSide.Start;
+    public override int End => _semicolon?.End ?? _rightHandSide?.End ?? _equalsSign?.End ?? _leftHandSide.End;
 
     public Assignment(ref ParsingState state)
     {
         _leftHandSide = ExpressionAST.TryParse(ref state)!;
-        for (var token = state.currentToken; token is not null; token = state.nextToken)
+        for (var token = state.CurrentToken; token is not null; token = state.NextToken)
         {
             switch (token)
             {
@@ -31,13 +31,15 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
                     return;
                 case AssignmentToken equalsSign:
                     _equalsSign = equalsSign;
-                    if (_leftHandSide is Identifier { kind: SymbolKind.Undefined, token: var id })
+                    if (_leftHandSide is Identifier { Kind: SymbolKind.Undefined, Token: var id })
                     {
                         id.Kind = SymbolKind.Variable;
-                        symbol = id;
+                        Symbol = id;
                     }
                     state.IncrementSkippingComments();
-                    goto label_AfterSign;
+                    _rightHandSide = ExpressionAST.TryParse(ref state);
+                    _semicolon = state.ExpectSemicolon();
+                    return;
                 case SemicolonToken semicolon:
                     _semicolon = semicolon;
                     state.Increment();
@@ -47,9 +49,6 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
                     break;
             }
         }
-        label_AfterSign:
-        _rightHandSide = ExpressionAST.TryParse(ref state);
-        _semicolon = state.ExpectSemicolon();
     }
 
     public void VerifySyntax(ref readonly DiagnosticContext context)
@@ -73,9 +72,9 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
                 if (opening!.Bracket is not '[')
                     context.Add(Errors.ExpectedSquareBracket, opening);
                 if (closing is null)
-                    context.Add(Errors.MissingClosingBracket, arguments.end);
+                    context.Add(Errors.MissingClosingBracket, arguments.End);
                 else if (closing.Bracket is not ']')
-                    context.Add(Errors.ExpectedSquareBracket, closing.start);
+                    context.Add(Errors.ExpectedSquareBracket, closing.Start);
                 break;
 
             default:
@@ -84,7 +83,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
         }
         if (_rightHandSide is null)
         {
-            var pos = _equalsSign.end;
+            var pos = _equalsSign.End;
             context.Add(Errors.MissingAssignedValue, pos);
             if (_semicolon is null)
                 context.Add(Errors.MissingSemicolon, pos);
@@ -93,7 +92,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
 
         _rightHandSide.VerifySyntax(in context);
         if (_semicolon is null)
-            context.Add(Errors.MissingSemicolon, _rightHandSide.end);
+            context.Add(Errors.MissingSemicolon, _rightHandSide.End);
     }
 
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)

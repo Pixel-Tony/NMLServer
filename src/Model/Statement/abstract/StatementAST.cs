@@ -6,8 +6,8 @@ namespace NMLServer.Model.Statement;
 
 internal abstract class StatementAST : IHasStart, IHasEnd, IVisualProvider
 {
-    public abstract int start { get; }
-    public abstract int end { get; }
+    public abstract int Start { get; }
+    public abstract int End { get; }
 
     protected static class Errors
     {

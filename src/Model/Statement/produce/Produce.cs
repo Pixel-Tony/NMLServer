@@ -16,11 +16,11 @@ internal sealed partial class Produce : StatementAST
     private readonly ExpressionAST? _runAgain;
     private readonly BracketToken? _closingBracket;
 
-    public override int start => _keyword.start;
+    public override int Start => _keyword.Start;
 
-    public override int end => _closingBracket?.end ?? _runAgain?.end ?? _thirdComma?.end ?? _productions.end
-        ?? _secondComma?.end
-        ?? _consumptions.end ?? _firstComma?.end ?? _id?.end ?? _openingBracket?.end ?? _keyword.end;
+    public override int End => _closingBracket?.End ?? _runAgain?.End ?? _thirdComma?.End ?? _productions.End
+        ?? _secondComma?.End
+        ?? _consumptions.End ?? _firstComma?.End ?? _id?.End ?? _openingBracket?.End ?? _keyword.End;
 
     private enum InnerState
     {
@@ -38,9 +38,9 @@ internal sealed partial class Produce : StatementAST
     public Produce(ref ParsingState state, KeywordToken keyword)
     {
         _keyword = keyword;
-        var token = state.currentToken;
+        var token = state.CurrentToken;
         InnerState innerState = InnerState.OpeningBracket;
-        for (; token is not null && _openingBracket is null; token = state.nextToken)
+        for (; token is not null && _openingBracket is null; token = state.NextToken)
         {
             switch (token)
             {

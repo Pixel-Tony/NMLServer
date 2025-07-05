@@ -13,7 +13,7 @@ internal sealed partial class SpriteLayout
         private readonly List<NMLAttribute>? _attributes;
         private readonly BracketToken? _closingBracket;
 
-        public int end => _closingBracket?.end ?? _attributes?[^1].end ?? _openingBracket?.end ?? _identifier!.end;
+        public int End => _closingBracket?.End ?? _attributes?[^1].End ?? _openingBracket?.End ?? _identifier!.End;
 
         private Entry(ref ParsingState state, BracketToken openingBracket)
         {
@@ -25,7 +25,8 @@ internal sealed partial class SpriteLayout
         private Entry(ref ParsingState state, IdentifierToken identifier)
         {
             _identifier = identifier;
-            while (state.nextToken is { } token)
+            while (state.NextToken is { } token)
+            {
                 switch (token)
                 {
                     case BracketToken { Bracket: '{' } openingBracket:
@@ -46,13 +47,14 @@ internal sealed partial class SpriteLayout
                         state.AddUnexpected(token);
                         break;
                 }
+            }
         }
 
         static List<Entry>? IAllowsParseInsideBlock<Entry>.ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)
         {
             List<Entry> entries = [];
-            for (var token = state.currentToken; token is not null; token = state.currentToken)
+            for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
             {
                 switch (token)
                 {
@@ -78,7 +80,7 @@ internal sealed partial class SpriteLayout
                         break;
                 }
             }
-            label_End:
+        label_End:
             return entries.ToMaybeList();
         }
 

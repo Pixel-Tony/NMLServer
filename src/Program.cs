@@ -10,9 +10,9 @@ internal static class Program
 
     public static LanguageServer Server = null!;
 
-    private static async Task Main(string[] args)
+    private static async Task Main()
     {
-        SourceStorage storage = new();
+        SourceStorage storage = [];
         Server = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
 
         Server.OnInitialize((initParams, info) =>

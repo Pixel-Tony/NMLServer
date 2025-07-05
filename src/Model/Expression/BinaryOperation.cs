@@ -9,13 +9,13 @@ internal sealed class BinaryOperation(ExpressionAST? parent, BinaryOpToken op) :
 {
     public ExpressionAST? Left;
     public ExpressionAST? Right;
-    public OperatorType operatorType => op.Type;
+    public OperatorType OperatorType => op.Type;
 
-    public override int start => Left?.start ?? op.start;
+    public override int Start => Left?.Start ?? op.Start;
 
-    public override int end => Right?.end ?? op.end;
+    public override int End => Right?.End ?? op.End;
 
-    public uint precedence => op.Precedence;
+    public uint Precedence => op.Precedence;
 
     public BinaryOperation(ExpressionAST? parent, ExpressionAST? lhs, BinaryOpToken op) : this(parent, op)
     {
@@ -36,11 +36,11 @@ internal sealed class BinaryOperation(ExpressionAST? parent, BinaryOpToken op) :
     {
         if (Left is not null)
             Left.VerifySyntax(in context);
-        else if (operatorType is not (OperatorType.Plus or OperatorType.Minus))
-            context.Add(Errors.ErrorMissingExpr, int.Max(op.start - 1, 0));
+        else if (OperatorType is not (OperatorType.Plus or OperatorType.Minus))
+            context.Add(Errors.ErrorMissingExpr, int.Max(op.Start - 1, 0));
 
         if (Right is null)
-            context.Add(Errors.ErrorMissingExpr, op.end);
+            context.Add(Errors.ErrorMissingExpr, op.End);
         else
             Right.VerifySyntax(in context);
     }
@@ -50,7 +50,7 @@ internal sealed class BinaryOperation(ExpressionAST? parent, BinaryOpToken op) :
         var n = VizExtensions.MakeNode(graph, parent, "BinaryOp")
             .WithExprStyle();
 
-        if (Left is not null || operatorType is not (OperatorType.Plus or OperatorType.Minus))
+        if (Left is not null || OperatorType is not (OperatorType.Plus or OperatorType.Minus))
             Left.MaybeVisualize(graph, n, ctx);
 
         op.Visualize(graph, n, ctx);

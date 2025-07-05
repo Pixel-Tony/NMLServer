@@ -16,8 +16,8 @@ internal partial class GRFBlock
             private readonly BracketToken? _closingBracket;
             private readonly SemicolonToken? _semicolon;
 
-            public int end => _semicolon?.end ?? _closingBracket?.end
-                ?? _items?[^1].end ?? _openingBracket?.end ?? _colon?.end ?? _name!.end;
+            public int End => _semicolon?.End ?? _closingBracket?.End
+                ?? _items?[^1].End ?? _openingBracket?.End ?? _colon?.End ?? _name!.End;
 
             public Names(ref ParsingState state, IdentifierToken? name, ColonToken? colon,
                 BracketToken openingBracket)
@@ -26,7 +26,7 @@ internal partial class GRFBlock
                 _colon = colon;
                 _openingBracket = openingBracket;
                 List<NMLAttribute> attributes = [];
-                for (var token = state.nextToken; token is not null; token = state.currentToken)
+                for (var token = state.NextToken; token is not null; token = state.CurrentToken)
                 {
                     switch (token)
                     {

@@ -13,8 +13,8 @@ internal sealed class CallStatement : StatementAST, IDiagnosticProvider
     private readonly ExpressionAST? _parameters;
     private readonly SemicolonToken? _semicolon;
 
-    public override int start => _keyword.start;
-    public override int end => _semicolon?.end ?? _parameters?.end ?? _keyword.end;
+    public override int Start => _keyword.Start;
+    public override int End => _semicolon?.End ?? _parameters?.End ?? _keyword.End;
 
     public CallStatement(ref ParsingState state, KeywordToken keyword)
     {
@@ -38,19 +38,19 @@ internal sealed class CallStatement : StatementAST, IDiagnosticProvider
             })
         {
             if (_parameters is null)
-                context.Add(expectParams, _keyword.end);
+                context.Add(expectParams, _keyword.End);
             else
                 context.Add(expectParams, _parameters);
             return;
         }
         if (opParen is null)
-            context.Add(expectOpParen, inner?.start ?? _keyword.end);
+            context.Add(expectOpParen, inner?.Start ?? _keyword.End);
 
         if (clParen is null)
-            context.Add(expectClParen, end);
+            context.Add(expectClParen, End);
 
         if (_semicolon is null)
-            context.Add("Expected ;", end);
+            context.Add("Expected ;", End);
     }
 
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)

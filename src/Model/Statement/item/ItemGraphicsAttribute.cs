@@ -13,14 +13,14 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
     private readonly ExpressionAST? _value;
     private readonly SemicolonToken? _semicolon;
 
-    public int end => _semicolon?.end ?? _value?.end ?? _returnKeyword?.end ?? _colon?.end ?? _identifier!.end;
+    public int End => _semicolon?.End ?? _value?.End ?? _returnKeyword?.End ?? _colon?.End ?? _identifier!.End;
 
     public static List<ItemGraphicsAttribute>? ParseSomeInBlock(ref ParsingState state,
         ref BracketToken? expectedClosingBracket)
     {
         List<ItemGraphicsAttribute> attributes = [];
 
-        for (var token = state.currentToken; token is not null; token = state.currentToken)
+        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
         {
             switch (token)
             {
@@ -46,14 +46,15 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                     break;
             }
         }
-        label_End:
+    label_End:
         return attributes.ToMaybeList();
     }
 
     private ItemGraphicsAttribute(ref ParsingState state, IdentifierToken identifier)
     {
         _identifier = identifier;
-        while (state.nextToken is { } token)
+        while (state.NextToken is { } token)
+        {
             switch (token)
             {
                 case BracketToken { Bracket: '}' }:
@@ -61,7 +62,7 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                 case ColonToken colonToken:
                     _colon = colonToken;
                     state.IncrementSkippingComments();
-                    token = state.currentToken;
+                    token = state.CurrentToken;
                     if (token is KeywordToken { Type: KeywordType.Return } returnKeyword)
                     {
                         _returnKeyword = returnKeyword;
@@ -80,6 +81,7 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
                     state.AddUnexpected(token);
                     break;
             }
+        }
     }
 
     private ItemGraphicsAttribute(ref ParsingState state, ColonToken colon)

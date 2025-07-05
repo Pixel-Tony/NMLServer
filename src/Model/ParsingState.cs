@@ -8,7 +8,7 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
     public readonly List<Token> UnexpectedTokens = [];
     private int _offset = offset;
 
-    public void AddUnexpected(Token token)
+    public readonly void AddUnexpected(Token token)
     {
         if (token is not CommentToken)
             UnexpectedTokens.Add(token);
@@ -16,17 +16,18 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
 
     public void Increment() => ++_offset;
 
-    public Token? currentToken => _offset <= _max ? tokens[_offset] : null;
+    public readonly Token? CurrentToken => _offset <= _max ? tokens[_offset] : null;
 
-    public Token? nextToken => ++_offset <= _max ? tokens[_offset] : null;
+    public Token? NextToken => ++_offset <= _max ? tokens[_offset] : null;
 
     public SemicolonToken? ExpectSemicolon()
     {
-        for (var token = currentToken; token is not null; token = nextToken)
+        for (var token = CurrentToken; token is not null; token = NextToken)
+        {
             switch (token)
             {
                 case SemicolonToken semicolon:
-                    Increment();
+                    IncrementSkippingComments();
                     return semicolon;
                 case BracketToken { Bracket: '}' }:
                 case KeywordToken { Kind: KeywordKind.BlockDefining }:
@@ -35,16 +36,18 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
                     AddUnexpected(token);
                     break;
             }
+        }
         return null;
     }
 
     public BracketToken? ExpectClosingCurlyBracket()
     {
-        for (var token = currentToken; token is not null; token = nextToken)
+        for (var token = CurrentToken; token is not null; token = NextToken)
+        {
             switch (token)
             {
                 case BracketToken { Bracket: '}' } closingBracket:
-                    Increment();
+                    IncrementSkippingComments();
                     return closingBracket;
                 case KeywordToken { Kind: KeywordKind.BlockDefining }:
                 case BracketToken { Bracket: '{' }:
@@ -53,6 +56,7 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
                     AddUnexpected(token);
                     break;
             }
+        }
         return null;
     }
 
@@ -60,6 +64,6 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
     {
         do
             Increment();
-        while (currentToken is CommentToken);
+        while (CurrentToken is CommentToken);
     }
 }

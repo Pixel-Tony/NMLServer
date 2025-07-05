@@ -7,14 +7,14 @@ namespace NMLServer.Model.Expression;
 
 internal sealed class UnitTerminatedExpression(ExpressionAST? child, UnitToken token) : ExpressionAST(null)
 {
-    public override int start => child?.start ?? token.start;
-    public override int end => token.end;
+    public override int Start => child?.Start ?? token.Start;
+    public override int End => token.End;
 
     public override void VerifySyntax(ref readonly DiagnosticContext context)
     {
         if (child is null)
         {
-            context.Add(Errors.ErrorMissingExpr, int.Max(start - 1, 0));
+            context.Add(Errors.ErrorMissingExpr, int.Max(Start - 1, 0));
             return;
         }
         child.VerifySyntax(in context);

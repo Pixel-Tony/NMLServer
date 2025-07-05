@@ -12,8 +12,8 @@ internal sealed class FunctionCall(ExpressionAST? parent, BaseMulticharToken fun
     /// <remarks>If not null, has not null opening paren.</remarks>
     public ParentedExpression? Arguments;
 
-    public override int start => Function.start;
-    public override int end => Arguments?.end ?? Function.end;
+    public override int Start => Function.Start;
+    public override int End => Arguments?.End ?? Function.End;
 
     // TODO: extend rules
     public override void VerifySyntax(ref readonly DiagnosticContext context)
@@ -25,7 +25,7 @@ internal sealed class FunctionCall(ExpressionAST? parent, BaseMulticharToken fun
         // TODO: verify function
         if (Arguments is null)
         {
-            context.Add("Expected function arguments", Function.end);
+            context.Add("Expected function arguments", Function.End);
             return;
         }
         Arguments.VerifySyntax(in context);

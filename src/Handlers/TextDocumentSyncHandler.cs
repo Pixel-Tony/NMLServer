@@ -14,7 +14,7 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
     private static async Task PublishDiagnostics(Document doc)
     {
         var content = doc.ProvideDiagnostics();
-        PublishDiagnosticsParams response = new() { Diagnostics = content, Uri = doc.Uri, Version = doc.version };
+        PublishDiagnosticsParams response = new() { Diagnostics = content, Uri = doc.Uri, Version = doc.Version };
         await Program.Server.Client.PublishDiagnostics(response).ConfigureAwait(false);
     }
 

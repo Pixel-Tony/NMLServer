@@ -118,7 +118,7 @@ internal static class Grammar
             ("features.txt", SymbolKind.Feature)
         ];
 
-        Dictionary<string, SymbolKind> allSymbols = new();
+        Dictionary<string, SymbolKind> allSymbols = [];
         foreach (var (filename, kind) in entries)
         {
             var path = Path.Join(AppContext.BaseDirectory, "grammar", filename);
