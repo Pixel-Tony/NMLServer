@@ -5,6 +5,15 @@ namespace NMLServer;
 
 internal static class Program
 {
+    public static void Log(object? message) => Debug(message?.ToString());
+
+    public static void Debug(string? message)
+    {
+#if DEBUG
+        Console.Error.WriteLine(message);
+#endif
+    }
+
     private const string Name = "NewGRF Meta Language";
     private const string Version = "1.0.0";
 

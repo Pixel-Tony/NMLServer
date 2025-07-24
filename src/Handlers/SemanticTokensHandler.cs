@@ -12,19 +12,23 @@ internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHand
 {
     protected override Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken _)
     {
+        Program.Debug("semanticTokens <-");
         SemanticTokensBuilder builder = new(Grammar.TokenTypes, Grammar.TokenModifiers);
         var document = storage[request.TextDocument.Uri];
         document.ProvideSemanticTokens(in builder);
         SemanticTokens result = new() { Data = builder.Build() };
+        Program.Debug("semanticTokens ->");
         return Task.FromResult<SemanticTokens?>(result);
     }
 
     protected override Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken _)
     {
+        Program.Debug("semanticTokens/range <-");
         SemanticTokensBuilder builder = new(Grammar.TokenTypes, Grammar.TokenModifiers);
         var document = storage[request.TextDocument.Uri];
         document.ProvideSemanticTokens(in builder, request.Range);
         SemanticTokens result = new() { Data = builder.Build() };
+        Program.Debug("semanticTokens/range ->");
         return Task.FromResult<SemanticTokens?>(result);
     }
 
