@@ -9,6 +9,7 @@ using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
+using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
@@ -91,17 +92,29 @@ internal sealed class Document : IDefinitionsBag
         List<CompletionItem> result = [];
         var prefix = _tokens.GetPrefix(position);
         if (prefix == StringView.Empty)
-            return new CompletionList();
+            return ProvideDefaultCompletions();
 
-        foreach (var id in _definedSymbols.Keys)
+        foreach (var (id, toks) in _definedSymbols)
             if (id.AsSpan().StartsWith(prefix))
-                result.Add(new CompletionItem { Label = id, Kind = CompletionItemKind.Function });
-        foreach (var kw in Grammar.Keywords.Dictionary.Keys)
-            if (kw.AsSpan().StartsWith(prefix))
-                result.Add(new CompletionItem { Label = kw, Kind = CompletionItemKind.Keyword });
+                result.Add(new() { Label = id, Kind = toks[0].CompletionItemKind });
+        foreach (var (kw, type) in Grammar.Keywords.Dictionary)
+        {
+            if (!kw.AsSpan().StartsWith(prefix))
+                continue;
+            result.Add(new()
+            {
+                Label = kw,
+                Kind = CompletionItemKind.Keyword,
+                InsertTextFormat = InsertTextFormat.Snippet,
+                InsertText = (type.kind & KeywordKind.BlockDefining) != 0
+                    ? kw + " ${1:($2) }{\n\t$0\n}"
+                    : kw
+            });
+        }
+
         foreach (var unit in Grammar.UnitLiterals.Dictionary.Keys)
             if (unit.AsSpan().StartsWith(prefix))
-                result.Add(new CompletionItem { Label = unit, Kind = CompletionItemKind.Keyword });
+                result.Add(new() { Label = unit, Kind = CompletionItemKind.Keyword });
 
         foreach (var (label, kind) in Grammar.DefinedSymbols.Dictionary)
         {
@@ -119,8 +132,19 @@ internal sealed class Document : IDefinitionsBag
             if (cik != 0)
                 result.Add(new CompletionItem { Label = label, Kind = cik });
         }
-
         return new CompletionList { IsIncomplete = true, Items = result };
+    }
+
+    private CompletionList ProvideDefaultCompletions()
+    {
+        List<CompletionItem> result = [];
+        foreach (var (s, toks) in _definedSymbols)
+            result.Add(new() { Label = s, Kind = toks[0].CompletionItemKind });
+
+        foreach (var kw in Grammar.Keywords.Dictionary.Keys)
+            result.Add(new() { Label = kw, Kind = CompletionItemKind.Keyword });
+
+        return new CompletionList() { IsIncomplete = true, Items = result };
     }
 
     public void ProvideSemanticTokens(in SemanticTokensBuilder builder)
@@ -146,8 +170,8 @@ internal sealed class Document : IDefinitionsBag
         // TODO incremental
         {
             foreach (var v in _definedSymbols.Values)
-            foreach (var token in v)
-                token.Kind = SymbolKind.Undefined;
+                foreach (var token in v)
+                    token.Kind = SymbolKind.Undefined;
             (_statements, _unexpectedTokens) = MakeStatements();
             _definedSymbols = MakeDefinitions();
         }
@@ -177,7 +201,7 @@ internal sealed class Document : IDefinitionsBag
         {
             const string msg = "Graph too big, visualization aborted.";
             await Program.Server.Client.ShowMessage(new ShowMessageParams
-                { Message = msg, Type = MessageType.Debug });
+            { Message = msg, Type = MessageType.Debug });
             return;
         }
         await using var writer = new StringWriter();
@@ -202,7 +226,7 @@ internal sealed class Document : IDefinitionsBag
 
     private DefinitionsMap MakeDefinitions()
     {
-        DefinitionsMap map = new();
+        DefinitionsMap map = [];
         if (_statements.Count == 0)
             return map;
 

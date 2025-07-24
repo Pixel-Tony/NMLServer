@@ -8,5 +8,5 @@ internal sealed class KeywordToken(int start, int end, KeywordType type, Keyword
     public readonly KeywordType Type = type;
     public readonly KeywordKind Kind = kind;
 
-    internal override string SemanticType => SemanticTokenTypes.Keyword;
+    public override string SemanticType => SemanticTokenTypes.Keyword;
 }

@@ -6,5 +6,5 @@ internal sealed class BracketToken(int start, char bracket) : Token(start, 1)
 {
     public readonly char Bracket = bracket;
 
-    internal override string SemanticType => SemanticTokenTypes.Operator;
+    public override string SemanticType => SemanticTokenTypes.Operator;
 }

@@ -4,5 +4,5 @@ namespace NMLServer.Model.Lexis;
 
 internal sealed class RangeToken(int start) : Token(start, 2)
 {
-    internal override string SemanticType => SemanticTokenTypes.Operator;
+    public override string SemanticType => SemanticTokenTypes.Operator;
 }

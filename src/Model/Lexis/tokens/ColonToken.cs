@@ -4,5 +4,5 @@ namespace NMLServer.Model.Lexis;
 
 internal sealed class ColonToken(int start) : Token(start, 1)
 {
-    internal override string SemanticType => SemanticTokenTypes.Operator;
+    public override string SemanticType => SemanticTokenTypes.Operator;
 }

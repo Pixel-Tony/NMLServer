@@ -8,5 +8,5 @@ internal sealed class BinaryOpToken(int start, int end, OperatorType type) : Bas
 
     public readonly OperatorType Type = type;
 
-    internal override string SemanticType => SemanticTokenTypes.Operator;
+    public override string SemanticType => SemanticTokenTypes.Operator;
 }

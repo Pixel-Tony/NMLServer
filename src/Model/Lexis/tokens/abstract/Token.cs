@@ -12,7 +12,7 @@ internal abstract class Token(int start, int length) : IHasStart, IHasEnd, IVisu
 
     public int Length { get; } = length;
 
-    internal abstract string? SemanticType { get; }
+    public abstract string? SemanticType { get; }
 
     public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
         => VizExtensions.MakeNode(graph, parent, ctx[Start..End])

@@ -10,8 +10,10 @@ internal class CompletionHandler(SourceStorage storage) : CompletionHandlerBase
 {
     protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token)
     {
+        Program.Log("CompletitionParams <-");
         var doc = storage[request.TextDocument.Uri];
         var completions = doc.ProvideCompletions(request.Position);
+        Program.Log("CompletitionParams ->");
         return Task.FromResult<CompletionResponse?>(new CompletionResponse(completions));
     }
 

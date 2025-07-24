@@ -9,5 +9,5 @@ internal sealed class UnaryOpToken(int start, char sign) : Token(start, 1)
 #pragma warning restore CS9113 // Parameter is unread.
 
 {
-    internal override string SemanticType => SemanticTokenTypes.Operator;
+    public override string SemanticType => SemanticTokenTypes.Operator;
 }
