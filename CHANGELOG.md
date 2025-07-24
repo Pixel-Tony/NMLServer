@@ -1,20 +1,10 @@
-# Project Changelog
+## 0.x
 
-## 0.0.2 (09/09/23)
-### Features:
-- The parsers for common and names-like attributes
-- The function-like statement parser
-- The block-like statement parsers for:
-  - `grf` block and `param` sub-block
-  - `basecost` block
-  - `railtypetable`, `roadtypetable` and `tramtypetable` blocks
+### v0.2
 
-## 0.0.1 (13/08/23)
-### Features:
-- The lexer supporting most of token types
-- The parser for expressions
+#### fixed:
+- Add: completion suggestions for positions outside of tokens
+- Fix: corner case for TokenStorage.Rebuild if old count is 0
 
-
-
-
-
+### v0.1
+- Initial public release for beta-testing
