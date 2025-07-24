@@ -1,3 +1,8 @@
-﻿**/*.*
-!.gitignore
-!/src/**/*.*
+# Binaries
+built
+obj
+bin
+
+# IDE files
+.idea
+.vscode

@@ -1,24 +1,32 @@
-﻿using NMLServer.Lexing;
-using NMLServer.Lexing.Tokens;
-using NMLServer.Parsing.Expression;
+using EmmyLua.LanguageServer.Framework.Server;
+using NMLServer.Handlers;
 
 namespace NMLServer;
 
-internal class Program
+internal static class Program
 {
-    public static void Main(string[] args)
+    private const string Name = "NewGRF Meta Language";
+    private const string Version = "1.0.0";
+
+    public static LanguageServer Server = null!;
+
+    private static async Task Main()
     {
-        string[] tests =
+        SourceStorage storage = [];
+        Server = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
+
+        Server.OnInitialize((initParams, info) =>
         {
-            "1 ? 2 : 3 + 1 ? 4 : 5"
-        };
-        var tokensArrays = tests.Select(test => new Lexer(test).Tokenize().ToArray());
-        var parsers = tokensArrays.Select(tokens => new ExpressionParser(tokens));
-        var list = parsers.Select(parser => parser.Parse(0));
-        foreach (var (a, b) in list)
-        {
-            Console.WriteLine(a?.ToString() ?? (a is null).ToString());
-            Console.WriteLine((b as LiteralToken)?.value ?? null);
-        }
+            info.Name = Name;
+            info.Version = Version;
+            return Task.CompletedTask;
+        });
+        Server.AddHandler(new TextDocumentSyncHandler(storage))
+            .AddHandler(new DefinitionHandler(storage))
+            .AddHandler(new SemanticTokensHandler(storage))
+            .AddHandler(new CompletionHandler(storage))
+            .AddHandler(new DiagnosticsHandler(storage));
+
+        await Server.Run().ConfigureAwait(false);
     }
 }
