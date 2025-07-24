@@ -25,7 +25,7 @@ internal partial class RecolourSprite
             ref BracketToken? closingBracket)
         {
             List<Line> content = [];
-            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
+            for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
             {
                 switch (token)
                 {
@@ -59,7 +59,7 @@ internal partial class RecolourSprite
 
         private Line(ref ParsingState state)
         {
-            ExpressionOrRange(ref state, ref _leftLeft!, ref _leftRange, ref _leftRight);
+            ExpressionOrRange(ref state, ref _leftLeft!, ref _leftRange, ref _leftRight, true);
             for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
                 switch (token)
@@ -103,7 +103,7 @@ internal partial class RecolourSprite
         }
 
         private static void ExpressionOrRange(ref ParsingState state, ref ExpressionAST? left, ref RangeToken? range,
-            ref ExpressionAST? right, bool stopAtColon = true)
+            ref ExpressionAST? right, bool stopAtColon)
         {
             for (var token = state.CurrentToken; token is not null; token = state.NextToken)
             {
