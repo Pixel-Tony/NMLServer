@@ -193,7 +193,7 @@ internal sealed class Document : IDefinitionsBag
 
     private (List<StatementAST> root, List<Token> unexpectedTokens) MakeStatements()
     {
-        ParsingState state = new(_tokens.List);
+        ParsingState state = new(_tokens.Items);
         StatementASTBuilder builder = new();
         while (builder.Make(ref state))
         { }
