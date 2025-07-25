@@ -24,7 +24,7 @@
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
         <OutputPath>built\Debug</OutputPath>
-        <DefineConstants>GRAPHVIZ_ENABLE</DefineConstants>
+        <DefineConstants>TREE_VISUALIZER_ENABLED</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(Configuration)' == 'Debug'">
@@ -38,12 +38,12 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="DotNetGraph">
           <Version>3.3.0</Version>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="EmmyLua.LanguageServer.Framework">
             <Version>0.8.1</Version>
         </PackageReference>

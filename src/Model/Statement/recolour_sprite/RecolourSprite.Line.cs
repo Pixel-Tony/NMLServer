@@ -1,4 +1,7 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -184,6 +187,7 @@ internal partial class RecolourSprite
             }
         }
 
+#if  TREE_VISUALIZER_ENABLED
         public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Line").WithStmtFeatures();
@@ -197,5 +201,6 @@ internal partial class RecolourSprite
             _semicolon.MaybeVisualize(graph, n, ctx);
             return n;
         }
+#endif
     }
 }

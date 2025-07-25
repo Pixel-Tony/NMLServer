@@ -1,4 +1,7 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 
@@ -84,6 +87,7 @@ internal sealed partial class SpriteLayout
             return entries.ToMaybeList();
         }
 
+#if TREE_VISUALIZER_ENABLED
         public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Entry").WithStmtFeatures();
@@ -94,5 +98,6 @@ internal sealed partial class SpriteLayout
             _closingBracket.MaybeVisualize(graph, n, ctx);
             return n;
         }
+#endif
     }
 }

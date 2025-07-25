@@ -1,4 +1,7 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 
@@ -40,6 +43,7 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
         return chain.ToMaybeList();
     }
 
+#if TREE_VISUALIZER_ENABLED
     public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "ValueComma").WithStmtFeatures();
@@ -47,4 +51,5 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
         comma.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }

@@ -1,4 +1,7 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -92,6 +95,7 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
         _semicolon = state.ExpectSemicolon();
     }
 
+#if  TREE_VISUALIZER_ENABLED
     public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "GraphicsBlock").WithStmtFeatures();
@@ -102,4 +106,5 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
         _semicolon.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }

@@ -1,5 +1,7 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
+#endif
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Expression;
 using NMLServer.Model.Lexis;
@@ -31,7 +33,10 @@ internal class FlowControlBlock(
         }
     }
 
+#if TREE_VISUALIZER_ENABLED
+
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
         => base.Visualize(graph, parent, ctx)
             .WithLabel("If/Else");
+#endif
 }

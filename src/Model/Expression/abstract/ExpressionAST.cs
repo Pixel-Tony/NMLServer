@@ -1,4 +1,6 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
+#endif
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Statement;
@@ -21,7 +23,9 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
     protected virtual void Replace(ExpressionAST target, FunctionCall value)
         => throw new Exception("Cannot replace child at the bottom-level node");
 
+#if TREE_VISUALIZER_ENABLED
     public abstract DotNode Visualize(DotGraph graph, DotNode parent, string ctx);
+#endif
 
     public static List<ExpressionAST>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {

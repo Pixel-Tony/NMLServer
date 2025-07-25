@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Compilation;
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
+#endif
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.ShowMessage;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
@@ -179,6 +181,9 @@ internal sealed class Document : IDefinitionsBag
         Version = newVersion;
     }
 
+#if TREE_VISUALIZER_ENABLED
+    private Timer? _visualizationTimer;
+
     public void Visualize()
     {
         _visualizationTimer ??= new Timer(_ => VisualizeAsync().Wait());
@@ -214,6 +219,7 @@ internal sealed class Document : IDefinitionsBag
     }
 
     public void Dispose() => _visualizationTimer?.Dispose();
+#endif
 
     private (List<StatementAST> root, List<Token> unexpectedTokens) MakeStatements()
     {
@@ -258,7 +264,6 @@ internal sealed class Document : IDefinitionsBag
         }
     }
 
-    private Timer? _visualizationTimer;
     private TokenStorage _tokens;
     private List<StatementAST> _statements;
     private List<Token> _unexpectedTokens;

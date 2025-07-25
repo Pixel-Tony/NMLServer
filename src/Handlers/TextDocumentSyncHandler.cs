@@ -44,8 +44,12 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
 
     protected override Task Handle(DidCloseTextDocumentParams p, CancellationToken _)
     {
+#if TREE_VISUALIZER_ENABLED
         if (storage.Remove(p.TextDocument.Uri, out var item))
             item.Dispose();
+#else
+        storage.Remove(p.TextDocument.Uri);
+#endif
         return Task.CompletedTask;
     }
 

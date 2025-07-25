@@ -1,5 +1,7 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
-using NMLServer.Extensions;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 
@@ -45,6 +47,7 @@ internal sealed class TernaryOperation(ExpressionAST? parent, TernaryOpToken que
         // TODO
     }
 
+#if TREE_VISUALIZER_ENABLED
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "TernaryOp").WithExprStyle();
@@ -56,4 +59,5 @@ internal sealed class TernaryOperation(ExpressionAST? parent, TernaryOpToken que
         FalseBranch.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }

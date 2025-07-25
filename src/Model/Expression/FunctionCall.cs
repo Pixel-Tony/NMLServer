@@ -1,5 +1,7 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
-using NMLServer.Extensions;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 
@@ -31,6 +33,7 @@ internal sealed class FunctionCall(ExpressionAST? parent, BaseMulticharToken fun
         Arguments.VerifySyntax(in context);
     }
 
+#if TREE_VISUALIZER_ENABLED
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "FunctionCall")
@@ -40,4 +43,5 @@ internal sealed class FunctionCall(ExpressionAST? parent, BaseMulticharToken fun
         Arguments.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }

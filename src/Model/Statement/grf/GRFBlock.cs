@@ -1,5 +1,8 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 
@@ -15,9 +18,8 @@ internal sealed partial class GRFBlock : BlockStatement
     public GRFBlock(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword, ParamInfo.None)
     {
         if (ClosingBracket is not null)
-        {
             return;
-        }
+
         List<NMLAttribute> attributes = [];
         List<Parameter> parameters = [];
 
@@ -56,6 +58,7 @@ internal sealed partial class GRFBlock : BlockStatement
         _parameters = parameters.ToMaybeList();
     }
 
+#if TREE_VISUALIZER_ENABLED
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("GRF");
@@ -66,4 +69,5 @@ internal sealed partial class GRFBlock : BlockStatement
         ClosingBracket.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }

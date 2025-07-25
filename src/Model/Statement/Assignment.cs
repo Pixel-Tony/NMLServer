@@ -1,6 +1,8 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
-using NMLServer.Extensions;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -95,6 +97,8 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
             context.Add(Errors.MissingSemicolon, _rightHandSide.End);
     }
 
+#if TREE_VISUALIZER_ENABLED
+
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("Assignment");
@@ -104,4 +108,5 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
         _semicolon.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }

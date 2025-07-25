@@ -1,6 +1,8 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
-using NMLServer.Extensions;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -186,6 +188,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
             context.Add("Identifier is already defined", Symbol);
     }
 
+#if TREE_VISUALIZER_ENABLED
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = base.Visualize(graph, parent, ctx)
@@ -196,6 +199,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
         OpeningBracket.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }
 
 internal abstract class BlockStatement<T> : BlockStatement where T : IAllowsParseInsideBlock<T>
@@ -204,13 +208,14 @@ internal abstract class BlockStatement<T> : BlockStatement where T : IAllowsPars
 
     protected sealed override int MiddleEnd => Contents?[^1].End ?? 0;
 
-    protected BlockStatement(ref ParsingState state, KeywordToken keyword, ParamInfo info) : base(ref state,
-        keyword, info)
+    protected BlockStatement(ref ParsingState state, KeywordToken keyword, ParamInfo info)
+        : base(ref state, keyword, info)
     {
         if (ClosingBracket is null)
             Contents = T.ParseSomeInBlock(ref state, ref ClosingBracket);
     }
 
+#if TREE_VISUALIZER_ENABLED
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = base.Visualize(graph, parent, ctx);
@@ -219,4 +224,5 @@ internal abstract class BlockStatement<T> : BlockStatement where T : IAllowsPars
         ClosingBracket.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }

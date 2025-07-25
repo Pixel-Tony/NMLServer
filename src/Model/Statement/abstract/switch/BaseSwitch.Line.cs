@@ -1,4 +1,7 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -144,6 +147,7 @@ internal partial class BaseSwitch
             ExpectValue // Colon present, expect value
         }
 
+#if TREE_VISUALIZER_ENABLED
         public readonly DotNode Visualize(DotGraph graph, DotNode parent, string context)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Line");
@@ -156,5 +160,6 @@ internal partial class BaseSwitch
             _semicolon.MaybeVisualize(graph, n, context);
             return n;
         }
+#endif
     }
 }

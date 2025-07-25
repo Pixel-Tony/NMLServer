@@ -1,6 +1,8 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
-using NMLServer.Extensions;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Model.Expression;
 using NMLServer.Model.Lexis;
 
@@ -56,6 +58,8 @@ internal class Constant : StatementAST, ISymbolSource
         }
     }
 
+#if TREE_VISUALIZER_ENABLED
+
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("Constant");
@@ -66,4 +70,5 @@ internal class Constant : StatementAST, ISymbolSource
         _semicolon.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }

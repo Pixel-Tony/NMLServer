@@ -1,6 +1,8 @@
+#if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
-using NMLServer.Extensions;
+using NMLServer.Extensions.DotNetGraph;
+#endif
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
@@ -38,9 +40,9 @@ internal sealed class CallStatement : StatementAST, IDiagnosticProvider
             })
         {
             if (_parameters is null)
-                context.Add(expectParams, _keyword.End);
+                context.Add(expectParams, offset: _keyword.End);
             else
-                context.Add(expectParams, _parameters);
+                context.Add(expectParams, item: _parameters);
             return;
         }
         if (opParen is null)
@@ -53,6 +55,8 @@ internal sealed class CallStatement : StatementAST, IDiagnosticProvider
             context.Add("Expected ;", End);
     }
 
+#if TREE_VISUALIZER_ENABLED
+
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("Call");
@@ -61,4 +65,5 @@ internal sealed class CallStatement : StatementAST, IDiagnosticProvider
         _semicolon.MaybeVisualize(graph, n, ctx);
         return n;
     }
+#endif
 }
