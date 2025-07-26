@@ -24,7 +24,7 @@ internal sealed partial class TownNames : BlockStatement
 
         List<NMLAttribute> attributes = [];
         List<Part> parts = [];
-        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {

@@ -8,7 +8,7 @@ using NMLServer.Model.Lexis;
 namespace NMLServer.Model.Statement;
 
 internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
-    : IAllowsParseInsideBlock<ValueWithComma<T>> where T : BaseValueToken
+    : IBlockContents<ValueWithComma<T>> where T : BaseValueToken
 {
     public int End => comma?.End ?? identifier.End;
 
@@ -16,29 +16,35 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
     {
         List<ValueWithComma<T>> chain = [];
         T? current = null;
-        for (var token = state.CurrentToken; token is not null; token = state.NextToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {
                 case BinaryOpToken { Type: OperatorType.Comma } commaToken when current is not null:
                     chain.Add(new ValueWithComma<T>(current, commaToken));
+                    state.Increment();
                     current = null;
                     break;
+
                 case T value when current is null:
                     current = value;
+                    state.Increment();
                     break;
+
                 case BracketToken { Bracket: '}' } expectedClosingBracket:
                     closingBracket = expectedClosingBracket;
                     state.Increment();
                     goto label_End;
+
                 case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     goto label_End;
+
                 default:
                     state.AddUnexpected(token);
+                    state.Increment();
                     break;
             }
         }
-
     label_End:
         return chain.ToMaybeList();
     }

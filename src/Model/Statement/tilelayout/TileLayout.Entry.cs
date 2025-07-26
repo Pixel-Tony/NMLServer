@@ -5,7 +5,7 @@ namespace NMLServer.Model.Statement;
 
 internal sealed partial class TileLayout
 {
-    internal readonly struct Entry : IHasEnd
+    private readonly struct Entry : IHasEnd
     {
         private readonly NumericToken? _x;
         private readonly BinaryOpToken? _comma;
@@ -20,61 +20,25 @@ internal sealed partial class TileLayout
         {
             _x = x;
             _comma = comma;
-            var token = state.NextToken;
-            while (_comma is null && token is not null)
+            while (state.NextToken is { } token)
             {
                 switch (token)
                 {
-                    case BinaryOpToken { Type: OperatorType.Comma } foundComma:
+                    case BinaryOpToken { Type: OperatorType.Comma } foundComma
+                            when (_comma is null) & (_y is null):
                         _comma = foundComma;
-                        goto label_ParsingY;
+                        break;
 
-                    case ColonToken colon:
+                    case ColonToken colon when _colon is null:
                         _colon = colon;
-                        goto label_ParsingValue;
-
-                    case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
+                        state.IncrementSkippingComments();
+                        _value = ExpressionAST.TryParse(ref state);
+                        _semicolon = state.ExpectSemicolon();
                         return;
 
-                    default:
-                        state.AddUnexpected(token);
-                        token = state.NextToken;
-                        break;
-                }
-            }
-        label_ParsingY:
-            while (token is not null)
-            {
-                switch (token)
-                {
-                    case NumericToken y:
+                    case NumericToken y when (_comma is not null) & (_y is null):
                         _y = y;
-                        token = state.NextToken;
-                        goto label_ParsingColon;
-
-                    case ColonToken colon:
-                        _colon = colon;
-                        goto label_ParsingValue;
-
-                    case BracketToken { Bracket: '}' }:
-                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
-                        return;
-
-                    default:
-                        state.AddUnexpected(token);
-                        token = state.NextToken;
                         break;
-                }
-            }
-        label_ParsingColon:
-            while (token is not null)
-            {
-                switch (token)
-                {
-                    case ColonToken colon:
-                        _colon = colon;
-                        goto label_ParsingValue;
 
                     case BracketToken { Bracket: '}' }:
                     case KeywordToken { Kind: KeywordKind.BlockDefining }:
@@ -82,15 +46,10 @@ internal sealed partial class TileLayout
 
                     default:
                         state.AddUnexpected(token);
-                        token = state.NextToken;
                         break;
                 }
             }
             return;
-        label_ParsingValue:
-            state.IncrementSkippingComments();
-            _value = ExpressionAST.TryParse(ref state);
-            _semicolon = state.ExpectSemicolon();
         }
     }
 }

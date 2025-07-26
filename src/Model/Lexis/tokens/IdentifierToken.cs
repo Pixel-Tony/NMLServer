@@ -9,8 +9,8 @@ internal sealed class IdentifierToken(int start, int end, SymbolKind kind) : Bas
 
     public override string? SemanticType => (Kind & SymbolKind.KindMask) switch
     {
-        SymbolKind.Function => SemanticTokenTypes.Function,
         SymbolKind.Feature => SemanticTokenTypes.Type,
+        SymbolKind.Function => SemanticTokenTypes.Function,
         SymbolKind.Variable => SemanticTokenTypes.Variable,
         SymbolKind.Constant => SemanticTokenTypes.EnumMember,
         SymbolKind.Parameter => SemanticTokenTypes.Parameter,

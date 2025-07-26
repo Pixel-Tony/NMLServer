@@ -6,20 +6,22 @@ using EmmyLua.LanguageServer.Framework.Server.Handler;
 
 namespace NMLServer.Handlers;
 
-internal class CompletionHandler(SourceStorage storage) : CompletionHandlerBase
+internal sealed class CompletionHandler(SourceStorage storage) : CompletionHandlerBase
 {
-    protected override Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token)
+    protected override async Task<CompletionResponse?> Handle(CompletionParams request, CancellationToken token)
     {
-        Program.Log("CompletitionParams <-");
+        await Program.DebugAsync("textDocument/completion <-");
         var doc = storage[request.TextDocument.Uri];
         var completions = doc.ProvideCompletions(request.Position);
-        Program.Log("CompletitionParams ->");
-        return Task.FromResult<CompletionResponse?>(new CompletionResponse(completions));
+        await Program.DebugAsync("textDocument/completion ->");
+        return new CompletionResponse(result);
     }
 
-    protected override Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token)
+    // TODO
+    protected override async Task<CompletionItem> Resolve(CompletionItem item, CancellationToken token)
     {
-        return Task.FromResult(item); // TODO
+        await Program.DebugAsync("completionItem/resolve <- / ->");
+        return item;
     }
 
     public override void RegisterCapability(ServerCapabilities serverCapabilities,

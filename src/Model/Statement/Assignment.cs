@@ -24,7 +24,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
     public Assignment(ref ParsingState state)
     {
         _leftHandSide = ExpressionAST.TryParse(ref state)!;
-        for (var token = state.CurrentToken; token is not null; token = state.NextToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {
@@ -48,6 +48,7 @@ internal sealed class Assignment : StatementAST, ISymbolSource, IDiagnosticProvi
                     return;
                 default:
                     state.AddUnexpected(token);
+                    state.Increment();
                     break;
             }
         }

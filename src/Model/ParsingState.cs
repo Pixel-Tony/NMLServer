@@ -22,38 +22,45 @@ internal struct ParsingState(IReadOnlyList<Token> tokens, int offset = 0)
 
     public SemicolonToken? ExpectSemicolon()
     {
-        for (var token = CurrentToken; token is not null; token = NextToken)
+        while (CurrentToken is { } token)
         {
             switch (token)
             {
                 case SemicolonToken semicolon:
                     IncrementSkippingComments();
                     return semicolon;
+
                 case BracketToken { Bracket: '}' }:
                 case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     return null;
+
                 default:
                     AddUnexpected(token);
+                    Increment();
                     break;
             }
         }
+
         return null;
     }
 
     public BracketToken? ExpectClosingCurlyBracket()
     {
-        for (var token = CurrentToken; token is not null; token = NextToken)
+        while (CurrentToken is { } token)
         {
             switch (token)
             {
                 case BracketToken { Bracket: '}' } closingBracket:
-                    IncrementSkippingComments();
+                    Increment();
                     return closingBracket;
+
                 case KeywordToken { Kind: KeywordKind.BlockDefining }:
                 case BracketToken { Bracket: '{' }:
                     return null;
+
                 default:
                     AddUnexpected(token);
+                    Increment();
                     break;
             }
         }

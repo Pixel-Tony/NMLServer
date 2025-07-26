@@ -79,8 +79,7 @@ internal partial struct TokenStorage
                 _character -= lineLength;
                 lineLength = lineLengths[++_line];
             }
-
-            label_caughtUp:
+        label_caughtUp:
             _offset = offset + length;
             (_linesInfo ??= []).Clear();
 

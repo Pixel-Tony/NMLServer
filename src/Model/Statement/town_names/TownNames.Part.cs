@@ -19,9 +19,10 @@ internal sealed partial class TownNames
         public Part(ref ParsingState state, BracketToken openingBracket)
         {
             _openingBracket = openingBracket;
+            state.Increment();
             List<TextEntry> texts = [];
             List<SubEntry> subParts = [];
-            for (var token = state.NextToken; token is not null;)
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {
@@ -36,10 +37,11 @@ internal sealed partial class TownNames
                         if (token is BinaryOpToken { Type: OperatorType.Comma } commaInText)
                         {
                             texts.Add(new TextEntry(call, commaInText));
+                            state.Increment();
                             break;
                         }
                         texts.Add(new TextEntry(call));
-                        continue;
+                        break;
 
                     case KeywordToken { Type: KeywordType.TownNames } townNames:
                         state.IncrementSkippingComments();
@@ -49,19 +51,20 @@ internal sealed partial class TownNames
                         if (token is BinaryOpToken { Type: OperatorType.Comma } comma)
                         {
                             subParts.Add(new SubEntry(townNames, args, comma));
+                            state.Increment();
                             break;
                         }
                         subParts.Add(new SubEntry(townNames, args));
-                        continue;
+                        break;
 
                     case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         goto label_End;
 
                     default:
                         state.AddUnexpected(token);
+                        state.Increment();
                         break;
                 }
-                token = state.NextToken;
             }
         label_End:
             _texts = texts.ToMaybeList();

@@ -9,7 +9,7 @@ namespace NMLServer.Model.Statement;
 
 internal sealed partial class SpriteLayout
 {
-    public readonly struct Entry : IAllowsParseInsideBlock<Entry>
+    public readonly struct Entry : IBlockContents<Entry>
     {
         private readonly IdentifierToken? _identifier;
         private readonly BracketToken? _openingBracket;
@@ -28,7 +28,8 @@ internal sealed partial class SpriteLayout
         private Entry(ref ParsingState state, IdentifierToken identifier)
         {
             _identifier = identifier;
-            while (state.NextToken is { } token)
+            state.Increment();
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {
@@ -48,16 +49,16 @@ internal sealed partial class SpriteLayout
 
                     default:
                         state.AddUnexpected(token);
+                        state.Increment();
                         break;
                 }
             }
         }
 
-        static List<Entry>? IAllowsParseInsideBlock<Entry>.ParseSomeInBlock(ref ParsingState state,
-            ref BracketToken? closingBracket)
+        public static List<Entry>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
         {
             List<Entry> entries = [];
-            for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {

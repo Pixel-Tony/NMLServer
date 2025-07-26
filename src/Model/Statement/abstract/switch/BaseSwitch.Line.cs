@@ -17,7 +17,7 @@ internal partial class BaseSwitch
         ColonToken? colon,
         KeywordToken? returnKeyword,
         ExpressionAST? returnValue,
-        SemicolonToken? semicolon) : IAllowsParseInsideBlock<Line>
+        SemicolonToken? semicolon) : IBlockContents<Line>
     {
         private ExpressionAST? _pattern = pattern;
         private RangeToken? _range = range;

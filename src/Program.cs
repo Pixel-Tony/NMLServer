@@ -5,7 +5,7 @@ namespace NMLServer;
 
 internal static class Program
 {
-    public static void Log(object? message) => Debug(message?.ToString());
+    public static void Debug(object? message) => Debug(message?.ToString());
 
     public static void Debug(string? message)
     {
@@ -14,8 +14,12 @@ internal static class Program
 #endif
     }
 
-    private const string Name = "NewGRF Meta Language";
-    private const string Version = "1.0.0";
+    public static async Task DebugAsync(string? message)
+    {
+#if DEBUG
+        await Console.Error.WriteLineAsync(message);
+#endif
+    }
 
     public static LanguageServer Server = null!;
 
@@ -26,8 +30,8 @@ internal static class Program
 
         Server.OnInitialize((initParams, info) =>
         {
-            info.Name = Name;
-            info.Version = Version;
+            info.Name = "NewGRF Meta Language";
+            info.Version = "1.0.0";
             return Task.CompletedTask;
         });
         Server.AddHandler(new TextDocumentSyncHandler(storage))

@@ -8,7 +8,7 @@ using NMLServer.Model.Statement;
 namespace NMLServer.Model.Expression;
 
 internal abstract class ExpressionAST(ExpressionAST? parent)
-    : IHasStart, IAllowsParseInsideBlock<ExpressionAST>, IDiagnosticProvider
+    : IHasStart, IBlockContents<ExpressionAST>, IDiagnosticProvider
 {
     public static class Errors
     {
@@ -55,11 +55,16 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
     /// and corresponding <see cref="UnitTerminatedExpression"/> node is the root of result.</remarks>
     public static ExpressionAST? TryParse(ref ParsingState state, bool parseUntilOuterComma = false)
     {
-        var token = state.CurrentToken;
-        if (token is null || (parseUntilOuterComma && token is BinaryOpToken { Type: OperatorType.Comma }))
-            return null;
+        ExpressionAST? result;
+        {
+            if (state.CurrentToken is not { } token)
+                return null;
+            if (parseUntilOuterComma && token is BinaryOpToken { Type: OperatorType.Comma })
+                return null;
 
-        var result = TokenToAST(token);
+            result = TokenToAST(token);
+        }
+
         switch (result)
         {
             case null:
@@ -69,9 +74,10 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                 state.Increment();
                 return result;
         }
+        state.Increment();
         ExpressionAST current = result;
 
-        for (token = state.NextToken; token is not null; token = state.CurrentToken)
+        while (state.CurrentToken is { } token)
         {
             ExpressionAST value;
             switch (token)
@@ -181,13 +187,9 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                             var parens = new ParentedExpression(call, openingParen);
                             call.Arguments = parens;
                             if (current._parent is null)
-                            {
                                 result = call;
-                            }
                             else
-                            {
                                 current._parent.Replace(current, call);
-                            }
                             current = parens;
                             break;
 
@@ -206,9 +208,7 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                     {
                         openParen.ClosingBracket = closingParen;
                         if (current._parent is FunctionCall)
-                        {
                             current = current._parent;
-                        }
                         break;
                     }
                     if (current._parent is null)
@@ -235,7 +235,6 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
                     goto label_OnValue;
                 case BaseValueToken valueToken:
                     value = MakeValueFromToken(current, valueToken);
-
                 label_OnValue:
                     switch (current)
                     {
@@ -355,5 +354,5 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
         };
     }
 
-    public abstract void VerifySyntax(ref readonly DiagnosticContext context);
+    public virtual void VerifySyntax(ref readonly DiagnosticContext context) { }
 }

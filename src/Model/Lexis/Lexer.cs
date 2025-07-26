@@ -154,7 +154,6 @@ internal ref struct Lexer(StringView view, int pos = 0, int firstLineLength = 0)
                 goto label_Return;
         }
         ++_pos;
-
     label_Return:
         return type == OperatorType.LogicalNot
             ? new UnaryOpToken(start, '!')

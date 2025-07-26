@@ -20,21 +20,21 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
 
     protected override async Task Handle(DidOpenTextDocumentParams p, CancellationToken _)
     {
-        Program.Debug("didOpenTextDocumentParams <-");
+        await Program.DebugAsync("textDocument/didOpen <-");
         var item = p.TextDocument;
         Document doc = new(item);
         storage[item.Uri] = doc;
         await PublishDiagnostics(doc);
-        Program.Debug("didOpenTextDocumentParams ->");
+        await Program.DebugAsync("textDocument/didOpen ->");
     }
 
     protected override async Task Handle(DidChangeTextDocumentParams p, CancellationToken _)
     {
-        Program.Debug("didChangeTextDocumentParams <-");
+        await Program.DebugAsync("textDocument/didChange <-");
         var doc = storage[p.TextDocument.Uri];
         doc.Handle(p);
         await PublishDiagnostics(doc);
-        Program.Debug("didChangeTextDocumentParams ->");
+        await Program.DebugAsync("textDocument/didChange ->");
     }
 
     protected override Task Handle(WillSaveTextDocumentParams p, CancellationToken _) => Task.CompletedTask;
@@ -42,15 +42,16 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
     protected override Task<List<TextEdit>?> HandleRequest(WillSaveTextDocumentParams p, CancellationToken _)
         => Task.FromResult<List<TextEdit>?>(null);
 
-    protected override Task Handle(DidCloseTextDocumentParams p, CancellationToken _)
+    protected override async Task Handle(DidCloseTextDocumentParams p, CancellationToken _)
     {
+        await Program.DebugAsync("textDocument/didClose <-");
 #if TREE_VISUALIZER_ENABLED
         if (storage.Remove(p.TextDocument.Uri, out var item))
             item.Dispose();
 #else
         storage.Remove(p.TextDocument.Uri);
 #endif
-        return Task.CompletedTask;
+        await Program.DebugAsync("textDocument/didClose ->");
     }
 
     public override void RegisterCapability(ServerCapabilities server, ClientCapabilities _)

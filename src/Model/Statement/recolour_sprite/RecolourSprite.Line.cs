@@ -10,7 +10,7 @@ namespace NMLServer.Model.Statement;
 
 internal partial class RecolourSprite
 {
-    public readonly struct Line : IAllowsParseInsideBlock<Line>
+    public readonly struct Line : IBlockContents<Line>
     {
         private readonly ExpressionAST _leftLeft;
         private readonly RangeToken? _leftRange;
@@ -24,11 +24,10 @@ internal partial class RecolourSprite
         public int End => _semicolon?.End ?? _rightRight?.End ?? _rightRange?.End ?? _rightLeft?.End ?? _colon?.End
             ?? _leftRight?.End ?? _leftRange?.End ?? _leftLeft.End;
 
-        static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
-            ref BracketToken? closingBracket)
+        public static List<Line>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
         {
             List<Line> content = [];
-            for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {

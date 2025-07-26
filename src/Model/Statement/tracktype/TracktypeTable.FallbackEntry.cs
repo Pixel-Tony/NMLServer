@@ -59,9 +59,8 @@ internal partial class TracktypeTable
                         break;
                 }
             }
-
         label_ParsingComma:
-            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {
@@ -76,6 +75,7 @@ internal partial class TracktypeTable
 
                     default:
                         state.AddUnexpected(token);
+                        state.Increment();
                         break;
                 }
             }

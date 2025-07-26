@@ -10,30 +10,31 @@ namespace NMLServer.Handlers;
 
 internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHandlerBase
 {
-    protected override Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken _)
+    protected override async Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken _)
     {
-        Program.Debug("semanticTokens <-");
+        await Program.DebugAsync("textDocument/semanticTokens/full <-");
         SemanticTokensBuilder builder = new(Grammar.TokenTypes, Grammar.TokenModifiers);
         var document = storage[request.TextDocument.Uri];
         document.ProvideSemanticTokens(in builder);
         SemanticTokens result = new() { Data = builder.Build() };
-        Program.Debug("semanticTokens ->");
-        return Task.FromResult<SemanticTokens?>(result);
+        await Program.DebugAsync("textDocument/semanticTokens/full ->");
+        return result;
     }
 
-    protected override Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken _)
+    protected override async Task<SemanticTokens?> Handle(SemanticTokensRangeParams request, CancellationToken _)
     {
-        Program.Debug("semanticTokens/range <-");
+        await Program.DebugAsync("textDocument/semanticTokens/range <-");
         SemanticTokensBuilder builder = new(Grammar.TokenTypes, Grammar.TokenModifiers);
         var document = storage[request.TextDocument.Uri];
         document.ProvideSemanticTokens(in builder, request.Range);
         SemanticTokens result = new() { Data = builder.Build() };
-        Program.Debug("semanticTokens/range ->");
-        return Task.FromResult<SemanticTokens?>(result);
+        await Program.DebugAsync("textDocument/semanticTokens/range ->");
+        return result;
     }
 
-    protected override Task<SemanticTokensDeltaResponse?> Handle(SemanticTokensDeltaParams request, CancellationToken _)
+    protected override async Task<SemanticTokensDeltaResponse?> Handle(SemanticTokensDeltaParams request, CancellationToken _)
     {
+        await Program.DebugAsync("textDocument/semanticTokens/full/delta <-");
         throw new NotImplementedException("The server does not support incremental SemanticTokens requests.");
     }
 
