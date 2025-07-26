@@ -20,21 +20,21 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
 
     protected override async Task Handle(DidOpenTextDocumentParams p, CancellationToken _)
     {
-        Program.Debug("didOpenTextDocumentParams <-");
+        Program.Debug("textDocument/didOpen <-");
         var item = p.TextDocument;
         Document doc = new(item);
         storage[item.Uri] = doc;
         await PublishDiagnostics(doc);
-        Program.Debug("didOpenTextDocumentParams ->");
+        Program.Debug("textDocument/didOpen ->");
     }
 
     protected override async Task Handle(DidChangeTextDocumentParams p, CancellationToken _)
     {
-        Program.Debug("didChangeTextDocumentParams <-");
+        Program.Debug("textDocument/didChange <-");
         var doc = storage[p.TextDocument.Uri];
         doc.Handle(p);
         await PublishDiagnostics(doc);
-        Program.Debug("didChangeTextDocumentParams ->");
+        Program.Debug("textDocument/didChange ->");
     }
 
     protected override Task Handle(WillSaveTextDocumentParams p, CancellationToken _) => Task.CompletedTask;

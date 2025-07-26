@@ -9,8 +9,10 @@ internal class DefinitionHandler(SourceStorage storage) : DefinitionHandlerBase
 {
     protected override Task<DefinitionResponse?> Handle(DefinitionParams p, CancellationToken _)
     {
+        Program.Debug("textDocument/definition <-");
         var document = storage[p.TextDocument.Uri];
         var locations = document.TryGetDefinitionLocations(p.Position);
+        Program.Debug("textDocument/definition ->");
         return Task.FromResult(locations is null ? null : new DefinitionResponse(locations));
     }
 

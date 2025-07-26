@@ -10,10 +10,12 @@ internal class DiagnosticsHandler(SourceStorage storage) : DocumentDiagnosticHan
 {
     protected override Task<DocumentDiagnosticReport> Handle(DocumentDiagnosticParams request, CancellationToken _)
     {
+        Program.Debug("textDocument/diagnostic <-");
         var doc = storage[request.TextDocument.Uri];
-        return Task.FromResult<DocumentDiagnosticReport>(
-            new RelatedFullDocumentDiagnosticReport { Diagnostics = doc.ProvideDiagnostics() }
-        );
+        var diagnostics = doc.ProvideDiagnostics();
+        DocumentDiagnosticReport result = new RelatedFullDocumentDiagnosticReport { Diagnostics = diagnostics };
+        Program.Debug("textDocument/diagnostic ->");
+        return Task.FromResult(result);
     }
 
     public override void RegisterCapability(ServerCapabilities server, ClientCapabilities _)

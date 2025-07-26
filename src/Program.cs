@@ -5,7 +5,7 @@ namespace NMLServer;
 
 internal static class Program
 {
-    public static void Log(object? message) => Debug(message?.ToString());
+    public static void Debug(object? message) => Debug(message?.ToString());
 
     public static void Debug(string? message)
     {
