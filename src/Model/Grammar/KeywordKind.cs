@@ -2,8 +2,7 @@ namespace NMLServer.Model;
 
 internal enum KeywordKind
 {
-    None = 0,
-    ReturnKeyword = 1,
-    ExpressionUsable = 2,
-    BlockDefining = 4
+    None = 0x0,
+    ExpressionUsable = 0x1,
+    BlockDefining = 0x2
 }

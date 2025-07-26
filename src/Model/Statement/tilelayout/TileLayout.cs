@@ -18,7 +18,7 @@ internal sealed partial class TileLayout : BlockStatement
 
         List<NMLAttribute> attributes = [];
         List<Entry> entries = [];
-        for (var token = state.NextToken; token is not null; token = state.CurrentToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {

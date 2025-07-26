@@ -8,7 +8,7 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
+internal readonly struct NMLAttribute : IBlockContents<NMLAttribute>
 {
     private readonly BaseMulticharToken? _key;
     private readonly ColonToken? _colon;
@@ -27,7 +27,6 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
 
     public NMLAttribute(ref ParsingState state, ColonToken colon)
     {
-        _key = null;
         _colon = colon;
         state.IncrementSkippingComments();
         _value = ExpressionAST.TryParse(ref state);
@@ -67,7 +66,7 @@ internal readonly struct NMLAttribute : IAllowsParseInsideBlock<NMLAttribute>
     public static List<NMLAttribute>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {
         List<NMLAttribute> attributes = [];
-        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {

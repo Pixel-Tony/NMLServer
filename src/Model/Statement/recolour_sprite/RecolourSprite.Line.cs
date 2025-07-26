@@ -4,31 +4,26 @@ using NMLServer.Extensions.DotNetGraph;
 #endif
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
-using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
 internal partial class RecolourSprite
 {
-    public readonly struct Line : IAllowsParseInsideBlock<Line>
+    public readonly struct Line : IBlockContents<Line>
     {
-        private readonly ExpressionAST _leftLeft;
-        private readonly RangeToken? _leftRange;
-        private readonly ExpressionAST? _leftRight;
+        private readonly ExpressionRange lhs;
         private readonly ColonToken? _colon;
-        private readonly ExpressionAST? _rightLeft;
-        private readonly RangeToken? _rightRange;
-        private readonly ExpressionAST? _rightRight;
+        private readonly ExpressionRange rhs;
         private readonly SemicolonToken? _semicolon;
 
-        public int End => _semicolon?.End ?? _rightRight?.End ?? _rightRange?.End ?? _rightLeft?.End ?? _colon?.End
-            ?? _leftRight?.End ?? _leftRange?.End ?? _leftLeft.End;
+        // -1 is unreachable but type system disallows lhs.End!
+        public int End => _semicolon?.End ?? rhs.End ?? _colon?.End ?? lhs.End ?? -1;
 
-        static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
+        static List<Line>? IBlockContents<Line>.ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)
         {
             List<Line> content = [];
-            for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {
@@ -62,8 +57,8 @@ internal partial class RecolourSprite
 
         private Line(ref ParsingState state)
         {
-            ExpressionOrRange(ref state, ref _leftLeft!, ref _leftRange, ref _leftRight, true);
-            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
+            lhs = new ExpressionRange(ref state);
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {
@@ -71,117 +66,27 @@ internal partial class RecolourSprite
                     case BracketToken { Bracket: '}' }:
                         return;
 
-                    case ColonToken colonToken:
-                        _colon = colonToken;
-                        state.Increment();
-                        goto label_Right;
-
-                    default:
-                        state.AddUnexpected(token);
-                        break;
-                }
-            }
-            return;
-
-        label_Right:
-            ExpressionOrRange(ref state, ref _rightLeft, ref _rightRange, ref _rightRight, false);
-            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
-            {
-                switch (token)
-                {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
-                    case BracketToken { Bracket: '}' }:
-                        return;
-
-                    case SemicolonToken semicolonToken:
-                        _semicolon = semicolonToken;
-                        state.Increment();
-                        return;
-
-                    default:
-                        state.AddUnexpected(token);
-                        break;
-                }
-            }
-        }
-
-        private static void ExpressionOrRange(ref ParsingState state, ref ExpressionAST? left, ref RangeToken? range,
-            ref ExpressionAST? right, bool stopAtColon)
-        {
-            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
-            {
-                switch (token)
-                {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
-                    case BracketToken { Bracket: '}' }:
-                        return;
-
+                    case RangeToken:
                     case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
                     case BracketToken { Bracket: not '{' }:
                     case UnaryOpToken:
                     case BinaryOpToken:
                     case TernaryOpToken:
                     case BaseValueToken:
-                        left = ExpressionAST.TryParse(ref state);
-                        goto label_Range;
+                        if (_colon is null)
+                            goto default;
+                        rhs = new ExpressionRange(ref state);
+                        _semicolon = state.ExpectSemicolon();
+                        return;
 
-                    case RangeToken rangeToken:
-                        range = rangeToken;
+                    case ColonToken colon when colon is null:
+                        _colon = colon;
                         state.Increment();
-                        goto label_Right;
+                        break;
 
                     default:
                         state.AddUnexpected(token);
-                        break;
-                }
-            }
-            return;
-
-        label_Range:
-            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
-            {
-                switch (token)
-                {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
-                    case BracketToken { Bracket: '}' }:
-                    case ColonToken when stopAtColon:
-                    case SemicolonToken when !stopAtColon:
-                        return;
-
-                    case RangeToken rangeToken:
-                        range = rangeToken;
                         state.Increment();
-                        goto label_Right;
-
-                    default:
-                        state.AddUnexpected(token);
-                        break;
-                }
-            }
-            return;
-
-        label_Right:
-            for (var token = state.CurrentToken; token is not null; token = state.NextToken)
-            {
-                switch (token)
-                {
-                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
-                    case BracketToken { Bracket: '}' }:
-                    case ColonToken when stopAtColon:
-                    case SemicolonToken when !stopAtColon:
-                        return;
-
-                    case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
-                    case BracketToken { Bracket: not '{' }:
-                    case UnaryOpToken:
-                    case BinaryOpToken:
-                    case TernaryOpToken:
-                    case BaseValueToken:
-                        right = ExpressionAST.TryParse(ref state);
-                        return;
-
-                    default:
-                        state.AddUnexpected(token);
                         break;
                 }
             }
@@ -191,13 +96,9 @@ internal partial class RecolourSprite
         public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Line").WithStmtFeatures();
-            _leftLeft.Visualize(graph, n, ctx);
-            _leftRange.MaybeVisualize(graph, n, ctx);
-            _leftRight.MaybeVisualize(graph, n, ctx);
+            lhs.Visualize(graph, n, ctx);
             _colon.MaybeVisualize(graph, n, ctx);
-            _rightLeft.MaybeVisualize(graph, n, ctx);
-            _rightRange.MaybeVisualize(graph, n, ctx);
-            _rightRight.MaybeVisualize(graph, n, ctx);
+            rhs.Visualize(graph, n, ctx);
             _semicolon.MaybeVisualize(graph, n, ctx);
             return n;
         }

@@ -8,7 +8,7 @@ using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGraphicsAttribute>
+internal readonly struct ItemGraphicsAttribute : IBlockContents<ItemGraphicsAttribute>
 {
     private readonly IdentifierToken? _identifier;
     private readonly ColonToken? _colon;
@@ -23,7 +23,7 @@ internal readonly struct ItemGraphicsAttribute : IAllowsParseInsideBlock<ItemGra
     {
         List<ItemGraphicsAttribute> attributes = [];
 
-        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {

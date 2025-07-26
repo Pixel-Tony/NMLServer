@@ -31,20 +31,23 @@ internal partial class Produce
                         _closingBracket = closingBracket;
                         state.Increment();
                         goto label_End;
+
                     case ColonToken colonToken:
                         content.Add(new NMLAttribute(ref state, colonToken));
                         break;
+
                     case IdentifierToken identifierToken:
                         content.Add(new NMLAttribute(ref state, identifierToken));
                         break;
+
                     case KeywordToken { Kind: KeywordKind.BlockDefining }:
                         goto label_End;
+
                     default:
                         state.AddUnexpected(token);
                         break;
                 }
             }
-
         label_End:
             _content = content.ToMaybeList();
         }

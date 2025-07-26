@@ -41,16 +41,19 @@ internal class Constant : StatementAST, ISymbolSource
                 case BracketToken { Bracket: '{' or '}' }:
                 case KeywordToken { Kind: KeywordKind.BlockDefining }:
                     return;
+
                 case AssignmentToken equalsSign:
                     _equalsSign = equalsSign;
                     state.IncrementSkippingComments();
                     _rightHandSide = ExpressionAST.TryParse(ref state);
                     _semicolon = state.ExpectSemicolon();
                     return;
+
                 case SemicolonToken semicolon:
                     _semicolon = semicolon;
                     state.Increment();
                     return;
+
                 default:
                     state.AddUnexpected(token);
                     break;

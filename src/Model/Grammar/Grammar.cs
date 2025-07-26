@@ -73,7 +73,7 @@ internal static class Grammar
             ["const"] = (KeywordType.Const, KeywordKind.BlockDefining),
             ["param"] = (KeywordType.Param, KeywordKind.ExpressionUsable),
             ["while"] = (KeywordType.While, KeywordKind.BlockDefining),
-            ["return"] = (KeywordType.Return, KeywordKind.ReturnKeyword),
+            ["return"] = (KeywordType.Return, KeywordKind.None),
             ["string"] = (KeywordType.String, KeywordKind.ExpressionUsable),
             ["switch"] = (KeywordType.Switch, KeywordKind.BlockDefining),
             ["produce"] = (KeywordType.Produce, KeywordKind.BlockDefining),

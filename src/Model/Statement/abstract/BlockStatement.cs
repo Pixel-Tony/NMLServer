@@ -47,7 +47,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
         state.IncrementSkippingComments();
         Parameters = ExpressionAST.TryParse(ref state);
         Symbol = CaptureSymbol();
-        for (var token = state.CurrentToken; token is not null; token = state.NextToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {
@@ -66,11 +66,13 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
 
                 default:
                     state.AddUnexpected(token);
+                    state.Increment();
                     break;
             }
         }
         return;
 
+        // TODO remove!
         IdentifierToken? CaptureSymbol()
         {
             if (ParameterInfo.Symbol.kind is SymbolKind.Undefined)
@@ -202,7 +204,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
 #endif
 }
 
-internal abstract class BlockStatement<T> : BlockStatement where T : IAllowsParseInsideBlock<T>
+internal abstract class BlockStatement<T> : BlockStatement where T : IBlockContents<T>
 {
     protected readonly List<T>? Contents;
 

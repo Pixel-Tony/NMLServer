@@ -10,33 +10,62 @@ namespace NMLServer.Model.Statement;
 
 internal partial class BaseSwitch
 {
-    internal struct Line(
-        ExpressionAST? pattern,
-        RangeToken? range,
-        ExpressionAST? patternRightSide,
-        ColonToken? colon,
-        KeywordToken? returnKeyword,
-        ExpressionAST? returnValue,
-        SemicolonToken? semicolon) : IAllowsParseInsideBlock<Line>
+    internal struct Line : IBlockContents<Line>
     {
-        private ExpressionAST? _pattern = pattern;
-        private RangeToken? _range = range;
-        private ExpressionAST? _patternRightSide = patternRightSide;
-        private ColonToken? _colon = colon;
-        private KeywordToken? _returnKeyword = returnKeyword;
-        private ExpressionAST? _returnValue = returnValue;
-        private SemicolonToken? _semicolon = semicolon;
+        private readonly ExpressionRange _lhs;
+        private readonly ColonToken? _colon;
+        private readonly KeywordToken? _return;
+        private ExpressionAST? _value;
+        private SemicolonToken? _semicolon;
 
-        public readonly int End => _semicolon?.End ?? _returnValue?.End ?? _returnKeyword?.End ?? _colon?.End
-            ?? _patternRightSide?.End ?? _range?.End ?? _pattern!.End;
+        // -1 is unreachable but type system disallows lhs.End!
+        public readonly int End => _semicolon?.End ?? _value?.End ?? _return?.End ?? _colon?.End ?? _lhs.End ?? -1;
 
-        static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
+        public static List<Line>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
+        {
+            List<Line> contents = [];
+
+            while (state.CurrentToken is { } token)
+            {
+                switch (token)
+                {
+                    case BracketToken { Bracket: '}' } closing:
+                        closingBracket = closing;
+                        state.Increment();
+                        goto label_End;
+
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
+                        goto label_End;
+
+                    case KeywordToken { Type: KeywordType.Return } returnKw:
+                        contents.Add(new Line(ref state, null, returnKw));
+                        break;
+
+                    case ColonToken colon:
+                        contents.Add(new Line(ref state, colon));
+                        break;
+
+                    // TODO
+
+                    default:
+                        state.AddUnexpected(token);
+                        state.Increment();
+                        break;
+                }
+            }
+        label_End:
+            return contents.ToMaybeList();
+        }
+
+
+
+        public static List<Line>? ParseSomeInBlock(ref ParsingState state,
             ref BracketToken? closingBracket)
         {
             List<Line> content = [];
             var innerState = FSM.ExpectAny;
             Line current = new();
-            for (var token = state.CurrentToken; token is not null;)
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {
@@ -47,9 +76,8 @@ internal partial class BaseSwitch
                         state.Increment();
                         goto label_Ending;
 
-                    case KeywordToken { Type: KeywordType.Return } returnKeyword:
-                        if (innerState is not (FSM.ExpectAny or FSM.ExpectValue))
-                            goto label_Unexpected;
+                    case KeywordToken { Type: KeywordType.Return } returnKeyword
+                            when innerState is FSM.ExpectAny or FSM.ExpectValue:
                         current._returnKeyword = returnKeyword;
                         state.IncrementSkippingComments();
                         current._returnValue = ExpressionAST.TryParse(ref state);
@@ -57,7 +85,6 @@ internal partial class BaseSwitch
                         content.Add(current);
                         current = new Line();
                         innerState = FSM.ExpectAny;
-                        token = state.CurrentToken;
                         continue;
 
                     case UnitToken:
@@ -74,13 +101,11 @@ internal partial class BaseSwitch
                                 innerState = current._pattern is UnitTerminatedExpression
                                     ? FSM.ExpectColonSemicolon
                                     : FSM.ExpectRangeColonSemicolon;
-                                token = state.CurrentToken;
                                 continue;
 
                             case FSM.ExpectAfterRange:
                                 current._patternRightSide = ExpressionAST.TryParse(ref state);
                                 innerState = FSM.ExpectColon;
-                                token = state.CurrentToken;
                                 continue;
 
                             case FSM.ExpectValue:
@@ -89,7 +114,6 @@ internal partial class BaseSwitch
                                 content.Add(current);
                                 current = new Line();
                                 innerState = FSM.ExpectAny;
-                                token = state.CurrentToken;
                                 continue;
 
                             default:
@@ -105,36 +129,56 @@ internal partial class BaseSwitch
                         if (innerState is FSM.ExpectValue)
                             goto label_Unexpected;
                         current._colon = colonToken;
+                        state.Increment();
                         innerState = FSM.ExpectValue;
                         break;
 
-                    case RangeToken rangeToken:
-                        if (innerState is FSM.ExpectAny or FSM.ExpectRangeColonSemicolon)
-                        {
-                            current._range = rangeToken;
-                            innerState = FSM.ExpectAfterRange;
-                            break;
-                        }
-                        goto label_Unexpected;
+                    case RangeToken rangeToken
+                            when innerState is FSM.ExpectAny or FSM.ExpectRangeColonSemicolon:
+                        current._range = rangeToken;
+                        state.Increment();
+                        innerState = FSM.ExpectAfterRange;
+                        break;
 
-                    case SemicolonToken semicolonToken:
-                        if (innerState is FSM.ExpectAny or FSM.ExpectAfterRange)
-                            goto label_Unexpected;
+                    case SemicolonToken semicolonToken
+                            when innerState is not (FSM.ExpectAny or FSM.ExpectAfterRange):
                         current._semicolon = semicolonToken;
+                        state.Increment();
                         content.Add(current);
                         current = default;
                         innerState = FSM.ExpectAny;
                         break;
 
                     default:
-                        label_Unexpected:
+                    label_Unexpected:
                         state.AddUnexpected(token);
+                        state.Increment();
                         break;
                 }
-                token = state.NextToken;
             }
-            label_Ending:
+        label_Ending:
             return content.ToMaybeList();
+        }
+
+        private Line(ref ParsingState state, ColonToken? colon = null, KeywordToken? returnKw = null)
+        {
+            _colon = colon;
+            _return = returnKw;
+
+            if (_colon is null & _return is null)
+                _lhs = new ExpressionRange(ref state);
+
+            while (state.CurrentToken is { } token)
+            {
+                switch (token)
+                {
+                    // TODO
+                    default:
+                        state.AddUnexpected(token);
+                        state.Increment();
+                        break;
+                }
+            }
         }
 
         private enum FSM
@@ -151,12 +195,10 @@ internal partial class BaseSwitch
         public readonly DotNode Visualize(DotGraph graph, DotNode parent, string context)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Line");
-            _pattern.MaybeVisualize(graph, n, context);
-            _range.MaybeVisualize(graph, n, context);
-            _patternRightSide.MaybeVisualize(graph, n, context);
+            _lhs.Visualize(graph, n, context);
             _colon.MaybeVisualize(graph, n, context);
-            _returnKeyword?.Visualize(graph, n, context);
-            _returnValue.MaybeVisualize(graph, n, context);
+            _return.MaybeVisualize(graph, n, context);
+            _value.MaybeVisualize(graph, n, context);
             _semicolon.MaybeVisualize(graph, n, context);
             return n;
         }

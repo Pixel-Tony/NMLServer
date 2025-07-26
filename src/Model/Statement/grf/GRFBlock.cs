@@ -23,7 +23,7 @@ internal sealed partial class GRFBlock : BlockStatement
         List<NMLAttribute> attributes = [];
         List<Parameter> parameters = [];
 
-        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {

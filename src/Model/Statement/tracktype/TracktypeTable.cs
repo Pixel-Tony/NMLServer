@@ -18,7 +18,7 @@ internal sealed partial class TracktypeTable : BlockStatement
         List<ValueWithComma<BaseValueToken>> entries = [];
         List<FallbackEntry> fallbacks = [];
         IdentifierToken? current = null;
-        for (var token = state.CurrentToken; token is not null; token = state.CurrentToken)
+        while (state.CurrentToken is { } token)
         {
             switch (token)
             {
