@@ -18,6 +18,39 @@ internal sealed partial class SpriteLayout
 
         public int End => _closingBracket?.End ?? _attributes?[^1].End ?? _openingBracket?.End ?? _identifier!.End;
 
+        public static List<Entry>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
+        {
+            List<Entry> entries = [];
+            while (state.CurrentToken is { } token)
+            {
+                switch (token)
+                {
+                    case BracketToken { Bracket: '{' } openingBracket:
+                        entries.Add(new Entry(ref state, openingBracket));
+                        break;
+
+                    case BracketToken { Bracket: '}' } expectedClosingBracket:
+                        closingBracket = expectedClosingBracket;
+                        state.Increment();
+                        goto label_End;
+
+                    case IdentifierToken identifierToken:
+                        entries.Add(new Entry(ref state, identifierToken));
+                        break;
+
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
+                        goto label_End;
+
+                    default:
+                        state.AddUnexpected(token);
+                        state.Increment();
+                        break;
+                }
+            }
+        label_End:
+            return entries.ToMaybeList();
+        }
+
         private Entry(ref ParsingState state, BracketToken openingBracket)
         {
             _openingBracket = openingBracket;
@@ -53,39 +86,6 @@ internal sealed partial class SpriteLayout
                         break;
                 }
             }
-        }
-
-        public static List<Entry>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
-        {
-            List<Entry> entries = [];
-            while (state.CurrentToken is { } token)
-            {
-                switch (token)
-                {
-                    case BracketToken { Bracket: '{' } openingBracket:
-                        entries.Add(new Entry(ref state, openingBracket));
-                        break;
-
-                    case BracketToken { Bracket: '}' } expectedClosingBracket:
-                        closingBracket = expectedClosingBracket;
-                        state.Increment();
-                        goto label_End;
-
-                    case IdentifierToken identifierToken:
-                        entries.Add(new Entry(ref state, identifierToken));
-                        break;
-
-                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
-                        goto label_End;
-
-                    default:
-                        state.AddUnexpected(token);
-                        state.Increment();
-                        break;
-                }
-            }
-        label_End:
-            return entries.ToMaybeList();
         }
 
 #if TREE_VISUALIZER_ENABLED

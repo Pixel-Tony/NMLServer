@@ -10,153 +10,132 @@ namespace NMLServer.Model.Statement;
 
 internal partial class BaseSwitch
 {
-    internal struct Line(
-        ExpressionAST? pattern,
-        RangeToken? range,
-        ExpressionAST? patternRightSide,
-        ColonToken? colon,
-        KeywordToken? returnKeyword,
-        ExpressionAST? returnValue,
-        SemicolonToken? semicolon) : IBlockContents<Line>
+    internal readonly struct Line : IBlockContents<Line>
     {
-        private ExpressionAST? _pattern = pattern;
-        private RangeToken? _range = range;
-        private ExpressionAST? _patternRightSide = patternRightSide;
-        private ColonToken? _colon = colon;
-        private KeywordToken? _returnKeyword = returnKeyword;
-        private ExpressionAST? _returnValue = returnValue;
-        private SemicolonToken? _semicolon = semicolon;
+        private readonly ExpressionRange _lhs;
+        private readonly ColonToken? _colon;
+        private readonly KeywordToken? _return;
+        private readonly ExpressionAST? _value;
+        private readonly SemicolonToken? _semicolon;
 
-        public readonly int End => _semicolon?.End ?? _returnValue?.End ?? _returnKeyword?.End ?? _colon?.End
-            ?? _patternRightSide?.End ?? _range?.End ?? _pattern!.End;
+        // -1 is unreachable but type system disallows lhs.End!
+        public readonly int End => _semicolon?.End ?? _value?.End ?? _return?.End ?? _colon?.End ?? _lhs.End ?? -1;
 
-        static List<Line>? IAllowsParseInsideBlock<Line>.ParseSomeInBlock(ref ParsingState state,
-            ref BracketToken? closingBracket)
+        public static List<Line>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
         {
-            List<Line> content = [];
-            var innerState = FSM.ExpectAny;
-            Line current = new();
-            for (var token = state.CurrentToken; token is not null;)
+            List<Line> contents = [];
+            while (state.CurrentToken is { } token)
             {
                 switch (token)
                 {
-                    case BracketToken { Bracket: '}' } bracket:
-                        if (innerState is not FSM.ExpectAny)
-                            content.Add(current);
-                        closingBracket = bracket;
+                    case BracketToken { Bracket: '}' } closing:
+                        closingBracket = closing;
                         state.Increment();
-                        goto label_Ending;
+                        goto label_End;
 
-                    case KeywordToken { Type: KeywordType.Return } returnKeyword:
-                        if (innerState is not (FSM.ExpectAny or FSM.ExpectValue))
-                            goto label_Unexpected;
-                        current._returnKeyword = returnKeyword;
-                        state.IncrementSkippingComments();
-                        current._returnValue = ExpressionAST.TryParse(ref state);
-                        current._semicolon = state.ExpectSemicolon();
-                        content.Add(current);
-                        current = new Line();
-                        innerState = FSM.ExpectAny;
-                        token = state.CurrentToken;
-                        continue;
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
+                        goto label_End;
+
+                    case KeywordToken { Type: KeywordType.Return } returnKw:
+                        contents.Add(new Line(ref state, null, returnKw));
+                        break;
+
+                    case ColonToken colon:
+                        contents.Add(new Line(ref state, colon));
+                        break;
 
                     case UnitToken:
-                    case BaseValueToken:
+                    case RangeToken:
                     case UnaryOpToken:
                     case BinaryOpToken:
                     case TernaryOpToken:
+                    case BaseValueToken:
                     case BracketToken { Bracket: not '{' }:
                     case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
-                        switch (innerState)
-                        {
-                            case FSM.ExpectAny:
-                                current._pattern = ExpressionAST.TryParse(ref state);
-                                innerState = current._pattern is UnitTerminatedExpression
-                                    ? FSM.ExpectColonSemicolon
-                                    : FSM.ExpectRangeColonSemicolon;
-                                token = state.CurrentToken;
-                                continue;
-
-                            case FSM.ExpectAfterRange:
-                                current._patternRightSide = ExpressionAST.TryParse(ref state);
-                                innerState = FSM.ExpectColon;
-                                token = state.CurrentToken;
-                                continue;
-
-                            case FSM.ExpectValue:
-                                current._returnValue = ExpressionAST.TryParse(ref state);
-                                current._semicolon = state.ExpectSemicolon();
-                                content.Add(current);
-                                current = new Line();
-                                innerState = FSM.ExpectAny;
-                                token = state.CurrentToken;
-                                continue;
-
-                            default:
-                                goto label_Unexpected;
-                        }
-
-                    case KeywordToken:
-                        if (innerState is not FSM.ExpectAny)
-                            content.Add(current);
-                        goto label_Ending;
-
-                    case ColonToken colonToken:
-                        if (innerState is FSM.ExpectValue)
-                            goto label_Unexpected;
-                        current._colon = colonToken;
-                        innerState = FSM.ExpectValue;
-                        break;
-
-                    case RangeToken rangeToken:
-                        if (innerState is FSM.ExpectAny or FSM.ExpectRangeColonSemicolon)
-                        {
-                            current._range = rangeToken;
-                            innerState = FSM.ExpectAfterRange;
-                            break;
-                        }
-                        goto label_Unexpected;
-
-                    case SemicolonToken semicolonToken:
-                        if (innerState is FSM.ExpectAny or FSM.ExpectAfterRange)
-                            goto label_Unexpected;
-                        current._semicolon = semicolonToken;
-                        content.Add(current);
-                        current = default;
-                        innerState = FSM.ExpectAny;
+                        contents.Add(new Line(ref state));
                         break;
 
                     default:
-                        label_Unexpected:
                         state.AddUnexpected(token);
+                        state.Increment();
                         break;
                 }
-                token = state.NextToken;
             }
-            label_Ending:
-            return content.ToMaybeList();
+        label_End:
+            return contents.ToMaybeList();
         }
 
-        private enum FSM
+        private Line(ref ParsingState state, ColonToken? colon = null, KeywordToken? returnKw = null)
         {
-            ExpectAny, // Start of the line
-            ExpectRangeColonSemicolon, // Expression present, can be a "key: value" or a "value;"
-            ExpectAfterRange, // Expression and range operator present, expect second half of range
-            ExpectColonSemicolon, // Expression +unit present
-            ExpectColon, // Expression .. Expression (+unit) present, expect colon and value afterwards
-            ExpectValue // Colon present, expect value
+            _colon = colon;
+            _return = returnKw;
+            if (_return is not null)
+            {
+                state.Increment();
+                goto label_AfterReturn;
+            }
+            if (_colon is not null)
+                state.Increment();
+            else
+                _lhs = new ExpressionRange(ref state);
+
+            while (state.CurrentToken is { } token)
+            {
+                switch (token)
+                {
+                    case BracketToken { Bracket: '}' }:
+                    case KeywordToken { Kind: KeywordKind.BlockDefining }:
+                        return;
+
+                    case SemicolonToken semicolon:
+                        _semicolon = semicolon;
+                        state.Increment();
+                        return;
+
+                    case KeywordToken { Type: KeywordType.Return } returnKeyword:
+                        if (_colon is null)
+                            goto default;
+                        _return = returnKeyword;
+                        state.Increment();
+                        goto label_AfterReturn;
+
+                    case ColonToken colonToken when _colon is null:
+                        _colon = colonToken;
+                        state.Increment();
+                        break;
+
+                    case UnitToken:
+                    case RangeToken:
+                    case UnaryOpToken:
+                    case BinaryOpToken:
+                    case TernaryOpToken:
+                    case BaseValueToken:
+                    case BracketToken { Bracket: not '{' }:
+                    case KeywordToken { Kind: KeywordKind.ExpressionUsable }:
+                        if (_colon is null)
+                            goto default;
+                        goto label_AfterReturn;
+
+                    default:
+                        state.AddUnexpected(token);
+                        state.Increment();
+                        break;
+                }
+            }
+            return;
+        label_AfterReturn:
+            _value = ExpressionAST.TryParse(ref state);
+            _semicolon = state.ExpectSemicolon();
         }
 
 #if TREE_VISUALIZER_ENABLED
         public readonly DotNode Visualize(DotGraph graph, DotNode parent, string context)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Line");
-            _pattern.MaybeVisualize(graph, n, context);
-            _range.MaybeVisualize(graph, n, context);
-            _patternRightSide.MaybeVisualize(graph, n, context);
+            _lhs.Visualize(graph, n, context);
             _colon.MaybeVisualize(graph, n, context);
-            _returnKeyword?.Visualize(graph, n, context);
-            _returnValue.MaybeVisualize(graph, n, context);
+            _return?.Visualize(graph, n, context);
+            _value.MaybeVisualize(graph, n, context);
             _semicolon.MaybeVisualize(graph, n, context);
             return n;
         }
