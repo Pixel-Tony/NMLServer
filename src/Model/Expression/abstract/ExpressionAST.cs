@@ -3,12 +3,11 @@ using DotNetGraph.Core;
 #endif
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
-using NMLServer.Model.Statement;
 
 namespace NMLServer.Model.Expression;
 
 internal abstract class ExpressionAST(ExpressionAST? parent)
-    : IHasStart, IBlockContents<ExpressionAST>, IDiagnosticProvider
+    : IHasStart, IHasEnd, IVisualProvider, IDiagnosticProvider
 {
     public static class Errors
     {
@@ -26,24 +25,6 @@ internal abstract class ExpressionAST(ExpressionAST? parent)
 #if TREE_VISUALIZER_ENABLED
     public abstract DotNode Visualize(DotGraph graph, DotNode parent, string ctx);
 #endif
-
-    public static List<ExpressionAST>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
-    {
-        var expression = TryParse(ref state);
-        if (expression is not null)
-        {
-            List<ExpressionAST> result = [];
-            while (expression is not null)
-            {
-                result.Add(expression);
-                expression = TryParse(ref state);
-            }
-            closingBracket = state.ExpectClosingCurlyBracket();
-            return result;
-        }
-        closingBracket = state.ExpectClosingCurlyBracket();
-        return null;
-    }
 
     /// <summary>
     /// Try to parse an NML expression.
