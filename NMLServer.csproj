@@ -53,7 +53,10 @@
         <ItemGroup>
             <GrammarSourceFiles Include="./grammar/*.txt"/>
         </ItemGroup>
-        <MakeDir Directories="$(PublishDir)/grammar"/>
-        <Copy SourceFiles="@(GrammarSourceFiles)" DestinationFolder="$(PublishDir)/grammar" SkipUnchangedFiles="true"/>
+
+        <Copy SourceFiles="@(GrammarSourceFiles)" DestinationFolder="$(OutDir)/grammar" SkipUnchangedFiles="true"
+              Condition="'$(Configuration)' == 'Debug'"/>
+        <Copy SourceFiles="@(GrammarSourceFiles)" DestinationFolder="$(PublishDir)/grammar" SkipUnchangedFiles="true"
+              Condition="'$(Configuration)' == 'Release'"/>
     </Target>
 </Project>
