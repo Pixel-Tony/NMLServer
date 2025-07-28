@@ -22,7 +22,7 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
     protected readonly ParamInfo ParameterInfo;
     private readonly KeywordToken _keyword;
     protected readonly ExpressionAST? Parameters;
-    protected readonly BracketToken? OpeningBracket;
+    public readonly BracketToken? OpeningBracket;
     public BracketToken? ClosingBracket;
 
     public sealed override int Start => _keyword.Start;

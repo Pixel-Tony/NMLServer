@@ -13,7 +13,7 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
 {
     private static async Task PublishDiagnostics(Document doc)
     {
-        var content = doc.ProvideDiagnostics();
+        var content = DiagnosticsHandler.ProvideDiagnostics(doc);
         PublishDiagnosticsParams response = new() { Diagnostics = content, Uri = doc.Uri, Version = doc.Version };
         await Program.Server.Client.PublishDiagnostics(response).ConfigureAwait(false);
     }
@@ -32,7 +32,7 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
     {
         await Program.DebugAsync("textDocument/didChange <-");
         var doc = storage[p.TextDocument.Uri];
-        doc.Handle(p);
+        doc.AcceptChanges(p.TextDocument.Version, p.ContentChanges);
         await PublishDiagnostics(doc);
         await Program.DebugAsync("textDocument/didChange ->");
     }
@@ -45,12 +45,7 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
     protected override async Task Handle(DidCloseTextDocumentParams p, CancellationToken _)
     {
         await Program.DebugAsync("textDocument/didClose <-");
-#if TREE_VISUALIZER_ENABLED
-        if (storage.Remove(p.TextDocument.Uri, out var item))
-            item.Dispose();
-#else
         storage.Remove(p.TextDocument.Uri);
-#endif
         await Program.DebugAsync("textDocument/didClose ->");
     }
 

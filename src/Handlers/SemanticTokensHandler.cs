@@ -15,7 +15,7 @@ internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHand
         await Program.DebugAsync("textDocument/semanticTokens/full <-");
         SemanticTokensBuilder builder = new(Grammar.TokenTypes, Grammar.TokenModifiers);
         var document = storage[request.TextDocument.Uri];
-        document.ProvideSemanticTokens(in builder);
+        document.Tokens.ProvideSemanticTokens(in builder, document);
         SemanticTokens result = new() { Data = builder.Build() };
         await Program.DebugAsync("textDocument/semanticTokens/full ->");
         return result;
@@ -26,7 +26,7 @@ internal class SemanticTokensHandler(SourceStorage storage) : SemanticTokensHand
         await Program.DebugAsync("textDocument/semanticTokens/range <-");
         SemanticTokensBuilder builder = new(Grammar.TokenTypes, Grammar.TokenModifiers);
         var document = storage[request.TextDocument.Uri];
-        document.ProvideSemanticTokens(in builder, request.Range);
+        document.Tokens.ProvideSemanticTokens(in builder, request.Range, document);
         SemanticTokens result = new() { Data = builder.Build() };
         await Program.DebugAsync("textDocument/semanticTokens/range ->");
         return result;

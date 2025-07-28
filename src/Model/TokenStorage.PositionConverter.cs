@@ -18,6 +18,9 @@ internal partial struct TokenStorage
         private int _offset = 0;
         private List<TRangeInfo>? _linesInfo = null;
 
+        public PositionConverter Copy()
+            => new(lineLengths) { _line = _line, _character = _character, _offset = _offset };
+
         /// <summary>
         /// Convert start position of token to position in file.
         /// </summary>

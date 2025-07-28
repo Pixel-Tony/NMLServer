@@ -1,19 +1,7 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-#if TREE_VISUALIZER_ENABLED
-using DotNetGraph.Compilation;
-using DotNetGraph.Core;
-using DotNetGraph.Extensions;
-#endif
-using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.ShowMessage;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
-using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
 using EmmyLua.LanguageServer.Framework.Protocol.Model;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Diagnostic;
-using EmmyLua.LanguageServer.Framework.Protocol.Model.Kind;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextDocument;
-using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Statement;
 
@@ -30,144 +18,33 @@ internal sealed class Document : IDefinitionsBag
     {
         Uri = item.Uri;
         Version = item.Version;
-        _tokens = new TokenStorage(item.Text);
+        Tokens = new TokenStorage(item.Text);
         (_statements, _unexpectedTokens) = MakeStatements();
         _definedSymbols = MakeDefinitions();
     }
 
     public bool Has(IdentifierToken token, [NotNullWhen(true)] out List<IdentifierToken>? definitions)
-        => _definedSymbols.GetAlternateLookup<StringView>()
-            .TryGetValue(_tokens.GetSymbolContext(token), out definitions);
+        => DefinedSymbolsLookup.TryGetValue(Tokens.GetSymbolContext(token), out definitions);
 
-    public List<Location>? TryGetDefinitionLocations(Position position)
+    // TODO
+    public void ProvideCompletions(ref readonly List<CompletionItem> result)
     {
-        if (_tokens.TryGetAt(position) is not IdentifierToken symbol)
-            return null;
-
-        if (!_definedSymbols.GetAlternateLookup<StringView>()
-                .TryGetValue(_tokens.GetSymbolContext(symbol), out var definitions))
-            return null;
-
-        List<Location> locations = new(definitions.Count);
-        var length = symbol.Length;
-        var converter = _tokens.MakeConverter();
-        foreach (var definition in definitions)
-        {
-            var definitionStart = definition.Start;
-            var start = converter.LocalToProtocol(definitionStart);
-            var end = start with { Character = start.Character + length };
-            locations.Add(new Location(Uri, new Range(start, end)));
-        }
-        return locations;
-    }
-
-    public List<Diagnostic> ProvideDiagnostics()
-    {
-        if (_statements.Count == 0)
-            return [];
-
-        Stack<InnerStatementNode> parents = [];
-        var converter = _tokens.MakeConverter();
-        DiagnosticContext context = new(ref converter);
-        foreach (var child in _statements)
-            SupplyDiagnostics(child, ref context);
-        while (parents.TryPop(out var node))
-            if (node.Children is { } children)
-                foreach (var child in children)
-                    SupplyDiagnostics(child, ref context);
-        foreach (var unexpectedToken in _unexpectedTokens)
-            context.Add("Unexpected token", unexpectedToken);
-
-        return context.Diagnostics;
-
-        void SupplyDiagnostics(StatementAST child, ref DiagnosticContext context)
-        {
-            (child as IDiagnosticProvider)?.VerifySyntax(ref context);
-            (child as IContextProvider)?.VerifyContext(ref context, this);
-            if (child is InnerStatementNode parent)
-                parents.Push(parent);
-        }
-    }
-
-    public CompletionList ProvideCompletions(Position position)
-    {
-        List<CompletionItem> result = [];
-        var prefix = _tokens.GetPrefix(position);
-        if (prefix == StringView.Empty)
-            return ProvideDefaultCompletions();
-
-        foreach (var (id, toks) in _definedSymbols)
-            if (id.AsSpan().StartsWith(prefix))
-                result.Add(new() { Label = id, Kind = toks[0].CompletionItemKind });
-        foreach (var (kw, type) in Grammar.Keywords.Dictionary)
-        {
-            if (!kw.AsSpan().StartsWith(prefix))
-                continue;
-            result.Add(new()
-            {
-                Label = kw,
-                Kind = CompletionItemKind.Keyword,
-                InsertTextFormat = InsertTextFormat.Snippet,
-                InsertText = (type.kind & KeywordKind.BlockDefining) != 0
-                    ? kw + " ${1:($2) }{\n\t$0\n}"
-                    : kw
-            });
-        }
-
-        foreach (var unit in Grammar.UnitLiterals.Dictionary.Keys)
-            if (unit.AsSpan().StartsWith(prefix))
-                result.Add(new() { Label = unit, Kind = CompletionItemKind.Keyword });
-
-        foreach (var (label, kind) in Grammar.DefinedSymbols.Dictionary)
-        {
-            if (!label.AsSpan().StartsWith(prefix))
-                continue;
-            var cik = kind switch
-            {
-                SymbolKind.Feature => CompletionItemKind.Class,
-                SymbolKind.Function => CompletionItemKind.Function,
-                SymbolKind.Variable => CompletionItemKind.Variable,
-                SymbolKind.Parameter => CompletionItemKind.Variable,
-                SymbolKind.Constant => CompletionItemKind.Constant,
-                _ => (CompletionItemKind)0
-            };
-            if (cik != 0)
-                result.Add(new CompletionItem { Label = label, Kind = cik });
-        }
-        return new CompletionList { IsIncomplete = true, Items = result };
-    }
-
-    private CompletionList ProvideDefaultCompletions()
-    {
-        List<CompletionItem> result = [];
         foreach (var (s, toks) in _definedSymbols)
-            result.Add(new() { Label = s, Kind = toks[0].CompletionItemKind });
-
-        foreach (var kw in Grammar.Keywords.Dictionary.Keys)
-            result.Add(new() { Label = kw, Kind = CompletionItemKind.Keyword });
-
-        return new CompletionList() { IsIncomplete = true, Items = result };
+            result.Add(new() { Label = s, Kind = Grammar.GetCompletionItemKind(toks[0].Kind) });
     }
 
-    public void ProvideSemanticTokens(in SemanticTokensBuilder builder)
-        => _tokens.ProvideSemanticTokens(in builder, this);
-
-    public void ProvideSemanticTokens(in SemanticTokensBuilder builder, Range range)
-        => _tokens.ProvideSemanticTokens(in builder, range, this);
-
-    public void Handle(DidChangeTextDocumentParams request)
+    public void AcceptChanges(int newVersion, List<TextDocumentContentChangeEvent> changes)
     {
-        int newVersion = request.TextDocument.Version;
         if (newVersion <= Version)
             return;
 
-        foreach (var change in request.ContentChanges)
+        foreach (var change in changes)
         {
             var text = change.Text;
             if (change.Range is { } replacedRange)
-                _tokens.Rebuild(replacedRange, text);
+                Tokens.Rebuild(replacedRange, text);
             else
-                _tokens = new TokenStorage(text);
+                Tokens = new TokenStorage(text);
         }
         // TODO incremental
         {
@@ -177,53 +54,12 @@ internal sealed class Document : IDefinitionsBag
             (_statements, _unexpectedTokens) = MakeStatements();
             _definedSymbols = MakeDefinitions();
         }
-
         Version = newVersion;
     }
 
-#if TREE_VISUALIZER_ENABLED
-    private Timer? _visualizationTimer;
-
-    public void Visualize()
-    {
-        _visualizationTimer ??= new Timer(_ => VisualizeAsync().Wait());
-        _visualizationTimer.Change(TimeSpan.FromMilliseconds(300), Timeout.InfiniteTimeSpan);
-    }
-
-    private async Task VisualizeAsync()
-    {
-        var graph = new DotGraph().WithIdentifier("MyGraph")
-            .WithAttribute("bgcolor", "transparent")
-            .WithAttribute("dpi", "400");
-        var root = new DotNode().WithIdentifier("Root")
-            .WithAttribute("fontname", "Consolas");
-        graph.Add(root);
-
-        foreach (var child in _statements)
-            child.Visualize(graph, root, _tokens.Source);
-
-        if (graph.Elements.Count >= 400)
-        {
-            const string msg = "Graph too big, visualization aborted.";
-            await Program.Server.Client.ShowMessage(new ShowMessageParams
-            { Message = msg, Type = MessageType.Debug });
-            return;
-        }
-        await using var writer = new StringWriter();
-        var context = new CompilationContext(writer, new CompilationOptions());
-        await graph.CompileAsync(context).ConfigureAwait(false);
-
-        var result = writer.GetStringBuilder().ToString();
-        await File.WriteAllTextAsync("graph.dot", result).ConfigureAwait(false);
-        await Process.Start("dot", "-Tpng -ograph.png graph.dot").WaitForExitAsync().ConfigureAwait(false);
-    }
-
-    public void Dispose() => _visualizationTimer?.Dispose();
-#endif
-
     private (List<StatementAST> root, List<Token> unexpectedTokens) MakeStatements()
     {
-        ParsingState state = new(_tokens.Items);
+        ParsingState state = new(Tokens.Items);
         StatementASTBuilder builder = new();
         while (builder.Make(ref state))
         { }
@@ -233,29 +69,29 @@ internal sealed class Document : IDefinitionsBag
     private DefinitionsMap MakeDefinitions()
     {
         DefinitionsMap map = [];
+        var lookup = map.GetAlternateLookup<StringView>();
         if (_statements.Count == 0)
             return map;
 
         Stack<InnerStatementNode> parents = [];
         foreach (var child in _statements)
-            TryAddDefinition(child, parents, map, ref _tokens);
+            TryAddDefinition(child, parents, map, lookup, ref Tokens);
         while (parents.TryPop(out var node))
             if (node.Children is { } children)
                 foreach (var child in children)
-                    TryAddDefinition(child, parents, map, ref _tokens);
+                    TryAddDefinition(child, parents, map, lookup, ref Tokens);
         return map;
 
         static void TryAddDefinition(StatementAST child, Stack<InnerStatementNode> parents, DefinitionsMap map,
+                DefinitionsMap.AlternateLookup<StringView> lookup,
             ref readonly TokenStorage tokens)
         {
             if (child is InnerStatementNode parent)
                 parents.Push(parent);
-
             if (child is not ISymbolSource { Symbol: { } symbol })
                 return;
-
             var context = tokens.GetSymbolContext(symbol);
-            if (map.GetAlternateLookup<StringView>().TryGetValue(context, out var equalSymbols))
+            if (lookup.TryGetValue(context, out var equalSymbols))
             {
                 equalSymbols.Add(symbol);
                 return;
@@ -264,8 +100,11 @@ internal sealed class Document : IDefinitionsBag
         }
     }
 
-    private TokenStorage _tokens;
+    public TokenStorage Tokens;
     private List<StatementAST> _statements;
+    public IReadOnlyList<StatementAST> Statements => _statements;
     private List<Token> _unexpectedTokens;
+    public IReadOnlyList<Token> UnexpectedTokens => _unexpectedTokens;
     private DefinitionsMap _definedSymbols;
+    public DefinitionsMap.AlternateLookup<StringView> DefinedSymbolsLookup => _definedSymbols.GetAlternateLookup<StringView>();
 }

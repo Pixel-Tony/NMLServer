@@ -1,6 +1,9 @@
 using System.Collections.Frozen;
 using System.Text;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Completion;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.SemanticToken;
+
+using DocumentSymbolKind = EmmyLua.LanguageServer.Framework.Protocol.Message.DocumentSymbol.SymbolKind;
 
 namespace NMLServer.Model;
 
@@ -147,4 +150,35 @@ internal static class Grammar
     ];
 
     public static readonly List<string> TokenModifiers = [];
+
+
+    public static CompletionItemKind GetCompletionItemKind(SymbolKind kind) => (kind & SymbolKind.KindMask) switch
+    {
+        SymbolKind.Feature => CompletionItemKind.Class,
+        SymbolKind.Function => CompletionItemKind.Function,
+        SymbolKind.Variable => CompletionItemKind.Variable,
+        SymbolKind.Parameter => CompletionItemKind.Variable,
+        SymbolKind.Constant => CompletionItemKind.Constant,
+        _ => 0
+    };
+
+    public static DocumentSymbolKind GetDocumentSymbolKind(SymbolKind kind) => (kind & SymbolKind.KindMask) switch
+    {
+        SymbolKind.Feature => DocumentSymbolKind.Class,
+        SymbolKind.Function => DocumentSymbolKind.Function,
+        SymbolKind.Variable => DocumentSymbolKind.Variable,
+        SymbolKind.Parameter => DocumentSymbolKind.Variable,
+        SymbolKind.Constant => DocumentSymbolKind.Constant,
+        _ => 0
+    };
+
+    public static string? GetSemanticTokenType(SymbolKind kind) => (kind & SymbolKind.KindMask) switch
+    {
+        SymbolKind.Feature => SemanticTokenTypes.Type,
+        SymbolKind.Function => SemanticTokenTypes.Function,
+        SymbolKind.Variable => SemanticTokenTypes.Variable,
+        SymbolKind.Parameter => SemanticTokenTypes.Parameter,
+        SymbolKind.Constant => SemanticTokenTypes.EnumMember,
+        _ => null
+    };
 }
