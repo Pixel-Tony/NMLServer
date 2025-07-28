@@ -74,7 +74,7 @@ internal readonly struct NMLAttribute : IBlockContents<NMLAttribute>
                     attributes.Add(new NMLAttribute(ref state, colonToken));
                     break;
 
-                case IdentifierToken identifierToken:
+                case BaseValueToken identifierToken:
                     attributes.Add(new NMLAttribute(ref state, identifierToken));
                     break;
 
