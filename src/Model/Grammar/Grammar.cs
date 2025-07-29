@@ -114,10 +114,11 @@ internal static class Grammar
         ReadOnlySpan<(string filename, SymbolKind kind)> entries =
         [
             ("constants.txt", SymbolKind.Constant),
+            ("properties.txt", SymbolKind.Property),
+            ("variables.txt", SymbolKind.Variable),
+            ("functions.txt", SymbolKind.Function),
             ("misc-bits.txt", SymbolKind.Variable | SymbolKind.Writeable),
             ("readable.txt", SymbolKind.Variable),
-            ("functions.txt", SymbolKind.Function),
-            ("variables.txt", SymbolKind.Variable),
             ("features.txt", SymbolKind.Feature)
         ];
 
@@ -125,7 +126,7 @@ internal static class Grammar
         foreach (var (filename, kind) in entries)
         {
             var path = Path.Join(AppContext.BaseDirectory, "grammar", filename);
-            var symbols = File.ReadAllText(path, Encoding.UTF8).Split(' ');
+            var symbols = File.ReadAllText(path, Encoding.UTF8).Split('\n');
             allSymbols.EnsureCapacity(allSymbols.Count + symbols.Length);
             foreach (var symbol in symbols)
             {
@@ -146,11 +147,10 @@ internal static class Grammar
     [
         SemanticTokenTypes.EnumMember, SemanticTokenTypes.Parameter, SemanticTokenTypes.Number, SemanticTokenTypes.Type,
         SemanticTokenTypes.String, SemanticTokenTypes.Keyword, SemanticTokenTypes.Variable, SemanticTokenTypes.Comment,
-        SemanticTokenTypes.Operator, SemanticTokenTypes.Function,
+        SemanticTokenTypes.Operator, SemanticTokenTypes.Function, SemanticTokenTypes.Property
     ];
 
     public static readonly List<string> TokenModifiers = [];
-
 
     public static CompletionItemKind GetCompletionItemKind(SymbolKind kind) => (kind & SymbolKind.KindMask) switch
     {
@@ -159,6 +159,7 @@ internal static class Grammar
         SymbolKind.Variable => CompletionItemKind.Variable,
         SymbolKind.Parameter => CompletionItemKind.Variable,
         SymbolKind.Constant => CompletionItemKind.Constant,
+        SymbolKind.Property => CompletionItemKind.Property,
         _ => 0
     };
 
@@ -169,6 +170,7 @@ internal static class Grammar
         SymbolKind.Variable => DocumentSymbolKind.Variable,
         SymbolKind.Parameter => DocumentSymbolKind.Variable,
         SymbolKind.Constant => DocumentSymbolKind.Constant,
+        SymbolKind.Property => DocumentSymbolKind.Property,
         _ => 0
     };
 
@@ -179,6 +181,7 @@ internal static class Grammar
         SymbolKind.Variable => SemanticTokenTypes.Variable,
         SymbolKind.Parameter => SemanticTokenTypes.Parameter,
         SymbolKind.Constant => SemanticTokenTypes.EnumMember,
+        SymbolKind.Property => SemanticTokenTypes.Property,
         _ => null
     };
 }

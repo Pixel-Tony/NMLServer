@@ -12,6 +12,7 @@ internal enum SymbolKind
     Variable = 0x03,
     Parameter = 0x04,
     Constant = 0x05,
+    Property = 0x06,
 
     KindMask = 0x0F,
 

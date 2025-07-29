@@ -1,1 +1,3 @@
-climate difficulty_level traininfo_y_offset
+climate
+difficulty_level
+traininfo_y_offset
