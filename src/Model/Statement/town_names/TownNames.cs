@@ -10,7 +10,7 @@ internal sealed partial class TownNames : BlockStatement
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Part>? _parts;
 
-    protected override int MiddleEnd => IHasEnd.LastOf(_attributes, _parts);
+    protected override int? MiddleEnd => IHasEnd.LastOf(_attributes, _parts);
 
     public TownNames(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
         new ParamInfo(false, (0, 1)))

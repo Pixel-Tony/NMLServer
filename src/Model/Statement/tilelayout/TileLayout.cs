@@ -8,7 +8,7 @@ internal sealed partial class TileLayout : BlockStatement
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Entry>? _entries;
 
-    protected override int MiddleEnd => IHasEnd.LastOf(_attributes, _entries);
+    protected override int? MiddleEnd => IHasEnd.LastOf(_attributes, _entries);
 
     public TileLayout(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
         new ParamInfo(false, (1, 1), (0, SymbolKind.Variable)))

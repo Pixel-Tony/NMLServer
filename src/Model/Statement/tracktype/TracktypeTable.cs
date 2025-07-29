@@ -8,7 +8,7 @@ internal sealed partial class TracktypeTable : BlockStatement
     private readonly List<ValueWithComma<BaseValueToken>>? _entries;
     private readonly List<FallbackEntry>? _fallbackEntries;
 
-    protected override int MiddleEnd => IHasEnd.LastOf(_entries, _fallbackEntries);
+    protected override int? MiddleEnd => IHasEnd.LastOf(_entries, _fallbackEntries);
 
     public TracktypeTable(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword, ParamInfo.None)
     {

@@ -14,7 +14,7 @@ internal sealed partial class GRFBlock : BlockStatement
     private readonly List<NMLAttribute>? _attributes;
     private readonly List<Parameter>? _parameters;
 
-    protected override int MiddleEnd => IHasEnd.LastOf(_attributes, _parameters);
+    protected override int? MiddleEnd => IHasEnd.LastOf(_attributes, _parameters);
 
     public GRFBlock(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword, ParamInfo.None)
     {

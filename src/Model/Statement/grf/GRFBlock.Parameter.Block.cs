@@ -22,10 +22,7 @@ internal partial class GRFBlock
             private readonly BracketToken? _closingBracket;
 
             public readonly int End
-                => _closingBracket?.End ?? (IHasEnd.LastOf(_names, _attributes, out var value)
-                    ? value
-                    : _openingBracket?.End ?? _name?.End ?? 0
-                );
+                => _closingBracket?.End ?? IHasEnd.LastOf(_names, _attributes) ?? _openingBracket?.End ?? _name!.End;
 
             public IdentifierToken? Symbol => _name;
 

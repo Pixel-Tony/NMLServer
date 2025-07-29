@@ -28,18 +28,9 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
 
     public sealed override int Start => _keyword.Start;
 
-    public sealed override int End
-    {
-        get
-        {
-            if (ClosingBracket is not null)
-                return ClosingBracket.End;
-            var middle = MiddleEnd;
-            return middle > 0 ? middle : OpeningBracket?.End ?? Parameters?.End ?? _keyword.End;
-        }
-    }
+    public sealed override int End => ClosingBracket?.End ?? MiddleEnd ?? OpeningBracket?.End ?? Parameters?.End ?? _keyword.End;
 
-    protected abstract int MiddleEnd { get; }
+    protected abstract int? MiddleEnd { get; }
 
     protected BlockStatement(ref ParsingState state, KeywordToken keyword, ParamInfo info)
     {
@@ -215,7 +206,7 @@ internal abstract class BlockStatement<T> : BlockStatement where T : IBlockConte
 {
     protected readonly List<T>? Contents;
 
-    protected sealed override int MiddleEnd => Contents?[^1].End ?? 0;
+    protected sealed override int? MiddleEnd => Contents?[^1].End;
 
     protected BlockStatement(ref ParsingState state, KeywordToken keyword, ParamInfo info)
         : base(ref state, keyword, info)

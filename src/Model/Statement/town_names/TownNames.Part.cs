@@ -14,8 +14,8 @@ internal sealed partial class TownNames
         private readonly List<SubEntry>? _subParts;
         private readonly BracketToken? _closingBracket;
 
-        public int End => _closingBracket?.End
-                          ?? (IHasEnd.LastOf(_texts, _subParts, out int v) ? v : _openingBracket.End);
+        public int End
+            => _closingBracket?.End ?? IHasEnd.LastOf(_texts, _subParts) ?? _openingBracket.End;
 
         public Part(ref ParsingState state, BracketToken openingBracket)
         {
