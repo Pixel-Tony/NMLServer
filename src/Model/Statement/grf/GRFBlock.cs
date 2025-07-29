@@ -1,10 +1,11 @@
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Extensions;
-using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -56,6 +57,12 @@ internal sealed partial class GRFBlock : BlockStatement
     label_End:
         _attributes = attributes.ToMaybeList();
         _parameters = parameters.ToMaybeList();
+    }
+
+    public override void ProvideFoldingRanges(in Stack<IFoldingRangeProvider> children, in List<FoldingRange> ranges, ref TokenStorage.PositionConverter converter)
+    {
+        IFoldingRangeProvider.RangeFromBrackets(OpeningBracket, ClosingBracket, in ranges, ref converter, true);
+        IFoldingRangeProvider.Include(_parameters, in children);
     }
 
 #if TREE_VISUALIZER_ENABLED

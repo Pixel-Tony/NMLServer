@@ -1,3 +1,4 @@
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 using NMLServer.Extensions;
 using NMLServer.Model.Diagnostics;
 using NMLServer.Model.Lexis;
@@ -10,11 +11,6 @@ internal sealed partial class TownNames : BlockStatement
     private readonly List<Part>? _parts;
 
     protected override int MiddleEnd => IHasEnd.LastOf(_attributes, _parts);
-
-    public override void VerifySyntax(ref readonly DiagnosticContext context)
-    {
-        // TODO parameter syntax requires additional handling
-    }
 
     public TownNames(ref ParsingState state, KeywordToken keyword) : base(ref state, keyword,
         new ParamInfo(false, (0, 1)))
@@ -53,5 +49,16 @@ internal sealed partial class TownNames : BlockStatement
     label_End:
         _attributes = attributes.ToMaybeList();
         _parts = parts.ToMaybeList();
+    }
+
+    public override void VerifySyntax(ref readonly DiagnosticContext context)
+    {
+        // TODO parameter syntax requires additional handling
+    }
+
+    public override void ProvideFoldingRanges(in Stack<IFoldingRangeProvider> children, in List<FoldingRange> ranges, ref TokenStorage.PositionConverter converter)
+    {
+        IFoldingRangeProvider.RangeFromBrackets(OpeningBracket, ClosingBracket, in ranges, ref converter, true);
+        IFoldingRangeProvider.Include(_parts, in children);
     }
 }

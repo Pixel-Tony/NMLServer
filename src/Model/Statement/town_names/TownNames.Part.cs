@@ -1,12 +1,13 @@
 using NMLServer.Extensions;
 using NMLServer.Model.Lexis;
 using NMLServer.Model.Expression;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 
 namespace NMLServer.Model.Statement;
 
 internal sealed partial class TownNames
 {
-    private readonly partial struct Part : IHasEnd
+    private readonly partial struct Part : IHasEnd, IFoldingRangeProvider
     {
         private readonly BracketToken _openingBracket;
         private readonly List<TextEntry>? _texts;
@@ -69,6 +70,12 @@ internal sealed partial class TownNames
         label_End:
             _texts = texts.ToMaybeList();
             _subParts = subParts.ToMaybeList();
+        }
+
+        public void ProvideFoldingRanges(in Stack<IFoldingRangeProvider> children, in List<FoldingRange> ranges,
+            ref TokenStorage.PositionConverter converter)
+        {
+            IFoldingRangeProvider.RangeFromBrackets(_openingBracket, _closingBracket, in ranges, ref converter);
         }
     }
 }

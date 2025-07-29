@@ -1,15 +1,16 @@
+using NMLServer.Model.Diagnostics;
+using NMLServer.Model.Lexis;
+using NMLServer.Model.Expression;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Model.Diagnostics;
-using NMLServer.Model.Lexis;
-using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
-internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISymbolSource, IContextProvider
+internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISymbolSource, IContextProvider, IFoldingRangeProvider
 {
     protected readonly record struct ParamInfo(
         bool HasParens,
@@ -188,6 +189,12 @@ internal abstract class BlockStatement : StatementAST, IDiagnosticProvider, ISym
 
         if (others.IndexOf(Symbol) != 0)
             context.Add("Identifier is already defined", Symbol);
+    }
+
+    public virtual void ProvideFoldingRanges(in Stack<IFoldingRangeProvider> children,
+        in List<FoldingRange> ranges, ref TokenStorage.PositionConverter converter)
+    {
+        IFoldingRangeProvider.RangeFromBrackets(OpeningBracket, ClosingBracket, in ranges, ref converter);
     }
 
 #if TREE_VISUALIZER_ENABLED

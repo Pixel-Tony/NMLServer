@@ -1,15 +1,16 @@
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Extensions;
-using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
 internal sealed partial class SpriteLayout
 {
-    public readonly struct Entry : IBlockContents<Entry>
+    public readonly struct Entry : IBlockContents<Entry>, IFoldingRangeProvider
     {
         private readonly IdentifierToken? _identifier;
         private readonly BracketToken? _openingBracket;
@@ -86,6 +87,12 @@ internal sealed partial class SpriteLayout
                         break;
                 }
             }
+        }
+
+        public void ProvideFoldingRanges(in Stack<IFoldingRangeProvider> children, in List<FoldingRange> ranges,
+            ref TokenStorage.PositionConverter converter)
+        {
+            IFoldingRangeProvider.RangeFromBrackets(_openingBracket, _closingBracket, in ranges, ref converter);
         }
 
 #if TREE_VISUALIZER_ENABLED

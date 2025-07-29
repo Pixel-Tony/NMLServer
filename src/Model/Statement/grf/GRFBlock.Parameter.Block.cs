@@ -1,9 +1,10 @@
-#if TREE_VISUALIZER_ENABLED
-using DotNetGraph.Core;
-#endif
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 using NMLServer.Extensions;
 using NMLServer.Model.Expression;
 using NMLServer.Model.Lexis;
+#if TREE_VISUALIZER_ENABLED
+using DotNetGraph.Core;
+#endif
 
 namespace NMLServer.Model.Statement;
 
@@ -12,7 +13,7 @@ internal partial class GRFBlock
 {
     private partial class Parameter
     {
-        public readonly partial struct Block : IBlockContents<Block>, ISymbolSource
+        public readonly partial struct Block : IBlockContents<Block>, ISymbolSource, IFoldingRangeProvider
         {
             private readonly IdentifierToken? _name;
             private readonly BracketToken? _openingBracket;
@@ -156,6 +157,13 @@ internal partial class GRFBlock
 
                 _attributes = attributes.ToMaybeList();
                 _names = names.ToMaybeList();
+            }
+
+            public void ProvideFoldingRanges(in Stack<IFoldingRangeProvider> children,
+                in List<FoldingRange> ranges, ref TokenStorage.PositionConverter converter)
+            {
+                IFoldingRangeProvider.RangeFromBrackets(_openingBracket, _closingBracket, in ranges, ref converter, true);
+                IFoldingRangeProvider.Include(_names, in children);
             }
 
 #if TREE_VISUALIZER_ENABLED

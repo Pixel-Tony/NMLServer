@@ -1,10 +1,10 @@
+using NMLServer.Extensions;
+using NMLServer.Model.Lexis;
+using NMLServer.Model.Expression;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Extensions;
-using NMLServer.Model.Lexis;
-using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
@@ -95,7 +95,7 @@ internal readonly struct ItemGraphicsAttribute : IBlockContents<ItemGraphicsAttr
         _semicolon = state.ExpectSemicolon();
     }
 
-#if  TREE_VISUALIZER_ENABLED
+#if TREE_VISUALIZER_ENABLED
     public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "GraphicsBlock").WithStmtFeatures();

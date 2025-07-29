@@ -1,3 +1,4 @@
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
 using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
@@ -8,7 +9,7 @@ internal partial class GRFBlock
     {
         public partial struct Block
         {
-            private readonly struct Names : IHasEnd
+            private readonly struct Names : IHasEnd, IFoldingRangeProvider
             {
                 private readonly IdentifierToken? _name;
                 private readonly ColonToken? _colon;
@@ -32,6 +33,11 @@ internal partial class GRFBlock
                         _semicolon = state.ExpectSemicolon();
                 }
 
+                public void ProvideFoldingRanges(in Stack<IFoldingRangeProvider> children, in List<FoldingRange> ranges,
+                    ref TokenStorage.PositionConverter converter)
+                {
+                    IFoldingRangeProvider.RangeFromBrackets(_openingBracket, _closingBracket, in ranges, ref converter);
+                }
             }
         }
     }

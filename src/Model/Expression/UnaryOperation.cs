@@ -1,9 +1,9 @@
+using NMLServer.Model.Diagnostics;
+using NMLServer.Model.Lexis;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Model.Diagnostics;
-using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Expression;
 
@@ -31,7 +31,6 @@ internal sealed class UnaryOperation(ExpressionAST? parent, UnaryOpToken operati
     }
 
 #if TREE_VISUALIZER_ENABLED
-
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "UnaryOperation").WithExprStyle();

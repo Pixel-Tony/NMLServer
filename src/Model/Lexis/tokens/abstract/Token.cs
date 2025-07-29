@@ -1,8 +1,8 @@
+using NMLServer.Model.Expression;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Lexis;
 

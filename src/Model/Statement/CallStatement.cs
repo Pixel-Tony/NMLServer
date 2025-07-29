@@ -1,11 +1,11 @@
+using NMLServer.Model.Diagnostics;
+using NMLServer.Model.Lexis;
+using NMLServer.Model.Expression;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Model.Diagnostics;
-using NMLServer.Model.Lexis;
-using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
@@ -56,7 +56,6 @@ internal sealed class CallStatement : StatementAST, IDiagnosticProvider
     }
 
 #if TREE_VISUALIZER_ENABLED
-
     public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("Call");

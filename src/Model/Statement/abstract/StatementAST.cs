@@ -1,8 +1,8 @@
+using NMLServer.Model.Expression;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Model.Expression;
 
 namespace NMLServer.Model.Statement;
 
@@ -22,7 +22,6 @@ internal abstract class StatementAST : IHasStart, IHasEnd, IVisualProvider
     }
 
 #if TREE_VISUALIZER_ENABLED
-
     public virtual DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
         => VizExtensions.MakeNode(graph, parent, label: "Stmt").WithStmtFeatures();
 #endif

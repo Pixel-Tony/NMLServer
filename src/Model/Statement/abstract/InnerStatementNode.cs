@@ -1,9 +1,10 @@
+using EmmyLua.LanguageServer.Framework.Protocol.Message.FoldingRange;
+using NMLServer.Model.Lexis;
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
 using NMLServer.Extensions.DotNetGraph;
 #endif
-using NMLServer.Model.Lexis;
 
 namespace NMLServer.Model.Statement;
 
@@ -23,6 +24,17 @@ internal abstract class InnerStatementNode : BlockStatement
         {
             Children = [];
         }
+    }
+
+    public override void ProvideFoldingRanges(in Stack<IFoldingRangeProvider> children,
+        in List<FoldingRange> ranges, ref TokenStorage.PositionConverter converter)
+    {
+        IFoldingRangeProvider.RangeFromBrackets(OpeningBracket, ClosingBracket, in ranges, ref converter, true);
+        if (Children is null)
+            return;
+        foreach (var child in Children)
+            if (child is IFoldingRangeProvider provider)
+                children.Push(provider);
     }
 
 #if TREE_VISUALIZER_ENABLED

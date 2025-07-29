@@ -1,15 +1,12 @@
 #if TREE_VISUALIZER_ENABLED
 using DotNetGraph.Core;
 using DotNetGraph.Extensions;
-#endif
 using NMLServer.Model;
 
 namespace NMLServer.Extensions.DotNetGraph;
 
 internal static class VizExtensions
 {
-#if TREE_VISUALIZER_ENABLED
-
     private static int _nodeId = 1;
 
     public static DotNode MakeNode(DotGraph graph, DotNode parent, string label)
@@ -41,5 +38,5 @@ internal static class VizExtensions
         }
         node.Visualize(graph, parent, ctx);
     }
-#endif
 }
+#endif
