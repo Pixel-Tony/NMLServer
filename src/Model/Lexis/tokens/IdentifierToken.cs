@@ -4,5 +4,5 @@ internal sealed class IdentifierToken(int start, int end, SymbolKind kind) : Bas
 {
     public SymbolKind Kind = kind;
 
-    public override string? SemanticType { get; } = Grammar.GetSemanticTokenType(kind);
+    public override string? SemanticType => Grammar.GetSemanticTokenType(Kind);
 }
