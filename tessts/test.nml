@@ -1,0 +1,5 @@
+
+
+switch(FEAT_TRAINS, SELF, sw_test, 0) {
+    return item_XD;
+}
