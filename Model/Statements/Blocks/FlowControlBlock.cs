@@ -6,7 +6,7 @@ namespace NMLServer.Model.Statements.Blocks;
 
 internal class FlowControlBlock(ref ParsingState state, KeywordToken keyword) : BaseParentStatement(ref state, keyword)
 {
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
         => base.Visualize(graph, parent, ctx)
             .WithLabel(Keyword.Keyword.ToString());
 }

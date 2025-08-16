@@ -126,7 +126,7 @@ internal partial class BaseSwitch
             _semicolon = state.ExpectSemicolon();
         }
 
-        public readonly DotNode Visualize(DotGraph graph, DotNode parent, string context)
+        public readonly DotNode Visualize(DotGraph graph, DotNode parent, StringView context)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Line");
             _lhs.Visualize(graph, n, context);

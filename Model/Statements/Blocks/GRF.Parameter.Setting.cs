@@ -153,7 +153,7 @@ internal partial class GRF
             public void ProvideFoldingRanges(List<FoldingRange> ranges, ref PositionConverter converter)
                 => IFoldingRangeProvider.RangeWithInnerRanges(_openingBracket, _closingBracket, _names, ranges, ref converter);
 
-            public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+            public DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
             {
                 var n = VizExtensions.MakeNode(graph, parent, "Block")
                     .WithStmtFeatures();

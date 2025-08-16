@@ -28,7 +28,7 @@ internal sealed class UnaryOperation(BaseExpression? parent, UnaryOpToken operat
         Expression.VerifySyntax(context);
     }
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "UnaryOperation").WithExprStyle();
         Expression.MaybeVisualize(graph, n, ctx);

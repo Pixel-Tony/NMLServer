@@ -58,7 +58,7 @@ internal sealed partial class GRF : BaseBlockStatement
     public override void ProvideFoldingRanges(List<FoldingRange> ranges, ref PositionConverter converter)
         => IFoldingRangeProvider.RangeWithInnerRanges(OpeningBracket, ClosingBracket, _parameters, ranges, ref converter);
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("GRF");
         foreach (var p in _parameters ?? [])

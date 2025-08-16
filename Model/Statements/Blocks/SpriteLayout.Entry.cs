@@ -89,7 +89,7 @@ internal sealed partial class SpriteLayout
         public void ProvideFoldingRanges(List<FoldingRange> ranges, ref PositionConverter converter)
             => IFoldingRangeProvider.RangeFromBrackets(_openingBracket, _closingBracket, ranges, ref converter);
 
-        public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+        public DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
         {
             var n = VizExtensions.MakeNode(graph, parent, "Entry").WithStmtFeatures();
             _identifier.MaybeVisualize(graph, n, ctx);

@@ -10,20 +10,20 @@ using RangeInfo = (int start, int end);
 
 internal struct TokenStorage
 {
-    public string Source { readonly get; private set; }
-    public readonly List<BaseToken> Items = [];
+    private string _source;
     private readonly List<int> _lineLengths;
+
+    public readonly StringView Source => _source;
+    public readonly List<BaseToken> Items = [];
 
     public TokenStorage(string initialSource)
     {
-        Source = initialSource;
-        Lexer lexer = new(Source);
+        _source = initialSource;
+        Lexer lexer = new(_source);
         while (lexer.LexToken() is { } token)
             Items.Add(token);
         _lineLengths = lexer.LineLengths;
     }
-
-    public readonly StringView GetSymbolContext(BaseToken token) => Source.AsSpan(token.Start, token.Length);
 
     public readonly PositionConverter MakeConverter() => new(_lineLengths);
 
@@ -46,9 +46,9 @@ internal struct TokenStorage
     {
         // Amend string contents
         var oldItemsCount = Items.Count;
-        StringView sourceSpan = Source;
+        var sourceSpan = Source;
         var (start, end) = replacedRange is { } rng ? ProtocolToLocal(rng) : (0, sourceSpan.Length);
-        Source = replacement.Length is 0
+        _source = replacement.Length is 0
             ? string.Concat(sourceSpan[..start], sourceSpan[end..])
             : string.Concat(sourceSpan[..start], replacement, sourceSpan[end..]);
 

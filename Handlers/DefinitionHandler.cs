@@ -17,7 +17,7 @@ internal class DefinitionHandler(SourceStorage storage) : DefinitionHandlerBase
         var document = storage[uri];
         var symbols = document.Definitions.Symbols;
         var tokens = document.AST.Tokens;
-        StringView source = tokens.Source;
+        var source = tokens.Source;
 
         if (tokens.At(p.Position) is not IdentifierToken symbol)
             return null;

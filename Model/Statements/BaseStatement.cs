@@ -14,7 +14,7 @@ internal abstract class BaseStatement : IHasBounds, IVisualProvider
 
     public abstract int End { get; }
 
-    public virtual DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public virtual DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
         => VizExtensions.MakeNode(graph, parent, label: "Stmt").WithStmtFeatures();
 
     public virtual void AddDefinitions(DefinitionBag map, StringView source)

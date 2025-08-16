@@ -32,7 +32,7 @@ internal sealed class Procedure : BaseStatement
             context.Add("Missing semicolon", End);
     }
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("Call");
         _keyword.Visualize(graph, n, ctx);

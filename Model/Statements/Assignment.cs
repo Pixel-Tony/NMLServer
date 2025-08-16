@@ -98,7 +98,7 @@ internal sealed class Assignment : BaseStatement
             context.Add(ErrorStrings.MissingSemicolon, pos);
     }
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("Assignment");
         _lhs.Visualize(graph, n, ctx);

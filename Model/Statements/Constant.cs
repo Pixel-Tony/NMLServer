@@ -60,7 +60,7 @@ internal class Constant : BaseStatement
             bag.Add(_lhs, SymbolKind.Constant, source);
     }
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("Constant");
         _keyword.Visualize(graph, n, ctx);

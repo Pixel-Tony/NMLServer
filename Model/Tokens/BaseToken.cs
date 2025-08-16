@@ -11,8 +11,8 @@ internal abstract class BaseToken(int start, int length) : IHasBounds, IVisualPr
 
     public abstract string? SemanticType { get; }
 
-    public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
-        => VizExtensions.MakeNode(graph, parent, ctx[Start..End])
+    public DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
+        => VizExtensions.MakeNode(graph, parent, new string(Context(ctx)))
             .WithTokenFeatures();
 
     public StringView Context(StringView source) => source.Slice(Start, Length);

@@ -303,5 +303,5 @@ internal abstract class BaseExpression(BaseExpression? parent) : IHasBounds, IVi
         return result;
     }
 
-    public abstract DotNode Visualize(DotGraph graph, DotNode parent, string ctx);
+    public abstract DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx);
 }

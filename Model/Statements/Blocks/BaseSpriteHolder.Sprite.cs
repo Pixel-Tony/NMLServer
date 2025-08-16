@@ -73,7 +73,7 @@ partial class BaseSpriteHolder
             return result.ToMaybeList();
         }
 
-        public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+        public DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
             => VizExtensions.MakeNode(graph, parent, "Sprite")
                 .WithStmtFeatures();
 

@@ -21,7 +21,7 @@ internal abstract class BaseParentStatement : BaseBlockStatement
     public override void ProvideFoldingRanges(List<FoldingRange> ranges, ref PositionConverter converter)
         => IFoldingRangeProvider.RangeFromBrackets(OpeningBracket, ClosingBracket, ranges, ref converter, true);
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = base.Visualize(graph, parent, ctx).WithLabel("ParentStmt");
         ClosingBracket.MaybeVisualize(graph, n, ctx);

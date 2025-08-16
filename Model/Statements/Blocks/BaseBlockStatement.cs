@@ -83,7 +83,7 @@ internal abstract class BaseBlockStatement : BaseStatement
     public override void ProvideFoldingRanges(List<FoldingRange> ranges, ref PositionConverter converter)
         => IFoldingRangeProvider.RangeFromBrackets(OpeningBracket, ClosingBracket, ranges, ref converter);
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = base.Visualize(graph, parent, ctx)
             .WithLabel("BlockStmt");
@@ -107,7 +107,7 @@ internal abstract class BaseBlockStatement<T> : BaseBlockStatement where T : IBl
             Contents = T.ParseSomeInBlock(ref state, ref ClosingBracket);
     }
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = base.Visualize(graph, parent, ctx);
         foreach (var item in Contents ?? [])

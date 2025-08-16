@@ -64,7 +64,7 @@ internal readonly struct ExpressionRange
         }
     }
 
-    public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "Line").WithStmtFeatures();
         lhs.MaybeVisualize(graph, n, ctx);

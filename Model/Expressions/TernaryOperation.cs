@@ -46,7 +46,7 @@ internal sealed class TernaryOperation(BaseExpression? parent, TernaryOpToken qu
         // TODO
     }
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "TernaryOp").WithExprStyle();
         _condition.MaybeVisualize(graph, n, ctx);

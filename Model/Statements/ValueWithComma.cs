@@ -47,7 +47,7 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
         return chain.ToMaybeList();
     }
 
-    public DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "ValueComma").WithStmtFeatures();
         identifier.Visualize(graph, n, ctx);

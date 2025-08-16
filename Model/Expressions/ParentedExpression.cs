@@ -71,7 +71,7 @@ internal sealed class ParentedExpression(
         Expression.VerifySyntax(context);
     }
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "ParentedExpr")
             .WithExprStyle();

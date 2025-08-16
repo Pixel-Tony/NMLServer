@@ -28,7 +28,7 @@ internal static class VizExtensions
 
     private static void WithNullStyle(this DotNode n) => n.WithFillColor(DotColor.PaleVioletRed);
 
-    public static void MaybeVisualize<T>(this T? node, DotGraph graph, DotNode parent, string ctx)
+    public static void MaybeVisualize<T>(this T? node, DotGraph graph, DotNode parent, StringView ctx)
         where T : IVisualProvider
     {
         if (node is null)

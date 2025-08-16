@@ -40,14 +40,15 @@ internal partial class VisualizeHandler(SourceStorage storage) : IJsonHandler
             var doc = storage[uri];
             await Logger.DebugAsync("nml/debug/drawAST ->");
             return JsonSerializer.SerializeToDocument(
-                await VisualizeAsync(doc.AST, doc.AST.Tokens.Source),
+                await VisualizeAsync(doc.AST),
                 SerializerContext.Default.String);
         });
     }
 
-    public static async Task<string> VisualizeAsync(AbstractSyntaxTree tree, string source)
+    private static async Task<string> VisualizeAsync(AbstractSyntaxTree tree)
     {
-        var graph = new DotGraph().WithIdentifier("MyGraph")
+        var graph = new DotGraph()
+            .WithIdentifier("MyGraph")
             .WithAttribute("bgcolor", "transparent")
             .WithAttribute("dpi", "400");
         var root = new DotNode().WithIdentifier("Root")
@@ -56,6 +57,7 @@ internal partial class VisualizeHandler(SourceStorage storage) : IJsonHandler
 
         Stack<DotNode> parents = [];
         var parent = root;
+        var source = tree.Tokens.Source;
         for (TreeTraverser trv = new(tree); trv.Current is { } node; trv.Increment())
         {
             if (graph.Elements.Count >= 500)

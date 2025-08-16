@@ -20,7 +20,7 @@ internal sealed class UnitTerminatedExpression(BaseExpression? child, UnitToken 
         child.VerifySyntax(context);
     }
 
-    public override DotNode Visualize(DotGraph graph, DotNode parent, string ctx)
+    public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
     {
         var n = VizExtensions.MakeNode(graph, parent, "UnitExpr").WithExprStyle();
         child.MaybeVisualize(graph, n, ctx);
