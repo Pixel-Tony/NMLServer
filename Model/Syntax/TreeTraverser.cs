@@ -8,20 +8,13 @@ internal struct TreeTraverser(AmendingTreeTraverser data)
 {
     private AmendingTreeTraverser _data = data;
 
-    public readonly ReadOnlySpan<(BaseParentStatement parent, int index)> Navigation
-    {
-        get
-        {
-            var span = _data.Parents.ToReadOnlySpan();
-            return (span.IsEmpty ? span : span[1..])!;
-        }
-    }
+    public readonly ReadOnlySpan<(BaseParentStatement? parent, int index)> Navigation => _data.Parents.ToReadOnlySpan();
 
     public readonly BaseStatement? Current => _data.Current;
 
     public readonly bool IsOnLastChild => _data.IsOnLastChild;
 
-    public TreeTraverser(AbstractSyntaxTree tree) : this(new AmendingTreeTraverser([], tree.Nodes, null, 0))
+    public TreeTraverser(ref readonly AbstractSyntaxTree tree) : this(new AmendingTreeTraverser(in tree))
     { }
 
     public TreeTraverser(TreeTraverser other) : this(new AmendingTreeTraverser(ref other._data))

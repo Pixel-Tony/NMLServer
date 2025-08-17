@@ -16,13 +16,11 @@ internal class DefinitionHandler(SourceStorage storage) : DefinitionHandlerBase
         var uri = p.TextDocument.Uri;
         var document = storage[uri];
         var symbols = document.Definitions.Symbols;
-        var tokens = document.AST.Tokens;
-        var source = tokens.Source;
-
+        ref readonly var tokens = ref document.AST.Tokens;
         if (tokens.At(p.Position) is not IdentifierToken symbol)
             return null;
 
-        if (!symbols.Has(symbol, source, out var definitions))
+        if (!symbols.Has(symbol, tokens.Source, out var definitions))
             return null;
 
         List<Location> locations = new(definitions.Count);
@@ -30,8 +28,7 @@ internal class DefinitionHandler(SourceStorage storage) : DefinitionHandlerBase
         var converter = tokens.MakeConverter();
         foreach (var (definition, _) in definitions)
         {
-            var definitionStart = definition.Start;
-            var start = converter.LocalToProtocol(definitionStart);
+            var start = converter.LocalToProtocol(definition.Start);
             var end = start with { Character = start.Character + length };
             locations.Add(new Location(uri, new Range(start, end)));
         }

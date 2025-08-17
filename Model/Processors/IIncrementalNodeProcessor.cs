@@ -5,9 +5,5 @@ namespace NMLServer.Model.Processors;
 
 internal interface IIncrementalNodeProcessor
 {
-    public void Trim();
-
-    public void Process(BaseStatement node, NodeProcessingContext context);
-
-    public void FinishIncrement(ref readonly AbstractSyntaxTree ast);
+    public void ProcessChangedSyntax(ref TreeTraverser traverser, BaseStatement? end, ref readonly IncrementContext context);
 }

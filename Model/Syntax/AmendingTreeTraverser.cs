@@ -6,7 +6,11 @@ using System.Runtime.InteropServices;
 
 namespace NMLServer.Model.Syntax;
 
-internal struct AmendingTreeTraverser(ParentStack navigation, List<BaseStatement> nodes, BaseParentStatement? parent, int index)
+internal struct AmendingTreeTraverser(
+    ParentStack navigation,
+    List<BaseStatement> nodes,
+    BaseParentStatement? parent,
+    int index)
 {
     private int _index = index;
     private BaseParentStatement? _parent = parent;
@@ -19,8 +23,11 @@ internal struct AmendingTreeTraverser(ParentStack navigation, List<BaseStatement
 
     public readonly bool IsOnLastChild => _index == _children.Count - 1;
 
-    public AmendingTreeTraverser(ref AmendingTreeTraverser other)
+    public AmendingTreeTraverser(ref readonly AmendingTreeTraverser other)
         : this([.. other.Parents], other._nodes, other._parent, other._index)
+    { }
+
+    public AmendingTreeTraverser(ref readonly AbstractSyntaxTree tree) : this([], tree.Nodes, null, 0)
     { }
 
     public readonly void DropUntil(int offset)

@@ -57,7 +57,7 @@ internal partial class VisualizeHandler(SourceStorage storage) : IJsonHandler
         Stack<DotNode> parents = [];
         var parent = root;
         var source = tree.Tokens.Source;
-        for (TreeTraverser trv = new(tree); trv.Current is { } node; trv.Increment())
+        for (TreeTraverser trv = new(in tree); trv.Current is { } node; trv.Increment())
         {
             if (graph.Elements.Count >= 500)
             {

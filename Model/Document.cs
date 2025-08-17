@@ -6,7 +6,6 @@ using NMLServer.Model.Grammar;
 using NMLServer.Model.Processors;
 using NMLServer.Model.Processors.Diagnostics;
 using NMLServer.Model.Statements;
-using NMLServer.Model.Statements.Blocks;
 
 namespace NMLServer.Model;
 
@@ -17,23 +16,16 @@ internal sealed class Document
     public ref AbstractSyntaxTree AST => ref _AST;
     private AbstractSyntaxTree _AST;
 
-    public readonly DefinitionProcessor Definitions = new();
     public readonly FoldingRangeProcessor FoldingRanges = new();
+    public readonly DefinitionProcessor Definitions = new();
     public readonly DiagnosticProcessor Diagnostics = new();
-
-    private readonly IIncrementalNodeProcessor[] _processorsPipeline;
 
     public Document(TextDocumentItem item)
     {
         Uri = item.Uri;
         Version = item.Version;
-        _processorsPipeline = [
-            FoldingRanges,
-            Definitions,
-            Diagnostics
-        ];
         _AST = new AbstractSyntaxTree(item.Text);
-        TreeTraverser traverser = new(_AST);
+        TreeTraverser traverser = new(in _AST);
         ProcessChangedSyntax(ref traverser, null);
     }
 
@@ -58,28 +50,18 @@ internal sealed class Document
 
     private void ProcessChangedSyntax(ref TreeTraverser traverser, BaseStatement? end)
     {
-        StringView source = _AST.Tokens.Source;
-        var converter = _AST.Tokens.MakeConverter();
-
-        // Since some features depend on the others (a.e. semantics depend on the definitions even from next nodes),
+        // Since some features depend on the others (a.e. semantic tokens depend on the definitions even from next nodes),
         // we cannot call all the processors at once for every new node, so we use a pipeline
-        foreach (var processor in _processorsPipeline)
+        ReadOnlySpan<IIncrementalNodeProcessor> pipeline = [
+            FoldingRanges,
+            Definitions,
+            Diagnostics
+        ];
+        IncrementContext context = new(_AST.Tokens.Source, ref _AST);
+        foreach (var processor in pipeline)
         {
-            processor.Trim();
             TreeTraverser trv = new(traverser);
-            foreach (var (parent, _) in trv.Navigation)
-            {
-                NodeProcessingContext context = new(source, ref converter, true);
-                processor.Process(parent, context);
-            }
-            for (; trv.Current is { } node && node != end; trv.Increment())
-            {
-                var isParent = node is BaseParentStatement { Children: { } };
-
-                NodeProcessingContext context = new(source, ref converter, isParent);
-                processor.Process(node, context);
-            }
-            processor.FinishIncrement(ref _AST);
+            processor.ProcessChangedSyntax(ref trv, end, ref context);
         }
     }
 }

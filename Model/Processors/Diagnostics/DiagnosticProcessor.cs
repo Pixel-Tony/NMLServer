@@ -8,26 +8,17 @@ internal sealed class DiagnosticProcessor : IIncrementalNodeProcessor
 {
     public List<Diagnostic> Content { get; private set; } = [];
 
-    public void FinishIncrement(ref readonly AbstractSyntaxTree ast)
+    public void ProcessChangedSyntax(ref TreeTraverser traverser, BaseStatement? end, ref readonly IncrementContext context)
     {
         Content.Clear();
-        DiagnosticContext context = new();
-        for (TreeTraverser trv = new(ast); trv.Current is { } node; trv.Increment())
-            node.ProvideDiagnostics(context);
+        ref readonly var ast = ref context.SyntaxTree;
+        DiagnosticContext diagnostics = new();
+        for (TreeTraverser trv = new(in ast); trv.Current is { } node; trv.Increment())
+            node.ProvideDiagnostics(diagnostics);
 
         foreach (var token in ast.UnexpectedTokens)
-            context.Add("Unexpected token", token);
+            diagnostics.Add(ErrorStrings.UnexpectedToken, token);
 
-        Content = context.BuildDiagnostics(in ast.Tokens);
-    }
-
-    public void Process(BaseStatement node, NodeProcessingContext context)
-    {
-        //
-    }
-
-    public void Trim()
-    {
-        //
+        Content = diagnostics.BuildDiagnostics(in ast.Tokens);
     }
 }
