@@ -5,12 +5,10 @@ namespace NMLServer;
 
 internal static class Program
 {
-    public static LanguageServer Server = null!;
-
     private static async Task Main()
     {
         SourceStorage storage = [];
-        Server = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
+        var Server = LanguageServer.From(Console.OpenStandardInput(), Console.OpenStandardOutput());
 
         Server.OnInitialize((initParams, info) =>
         {
@@ -18,7 +16,8 @@ internal static class Program
             info.Version = "1.0.0";
             return Task.CompletedTask;
         });
-        Server.AddHandler(new TextDocumentSyncHandler(storage))
+        var clientProxy = Server.Client;
+        Server.AddHandler(new TextDocumentSyncHandler(storage, clientProxy))
             .AddHandler(new DefinitionHandler(storage))
             .AddHandler(new SemanticTokensHandler(storage))
             .AddHandler(new FoldingRangeHandler(storage))

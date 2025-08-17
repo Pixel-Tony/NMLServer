@@ -2,22 +2,31 @@ using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Client.ClientCapabi
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server;
 using EmmyLua.LanguageServer.Framework.Protocol.Capabilities.Server.Options;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.PublishDiagnostics;
+using EmmyLua.LanguageServer.Framework.Protocol.Message.Client.ShowMessage;
 using EmmyLua.LanguageServer.Framework.Protocol.Message.TextDocument;
 using EmmyLua.LanguageServer.Framework.Protocol.Model.TextEdit;
+using EmmyLua.LanguageServer.Framework.Server;
 using EmmyLua.LanguageServer.Framework.Server.Handler;
 using NMLServer.Logging;
 using NMLServer.Model;
 
 namespace NMLServer.Handlers;
 
-internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHandlerBase
+internal class TextDocumentSyncHandler(SourceStorage storage, ClientProxy clientProxy) : TextDocumentHandlerBase
 {
-    private static async Task PublishDiagnostics(Document doc)
+    private async Task NotifyOnFail(Exception e)
     {
-        var content = doc.Diagnostics.Content;
-        PublishDiagnosticsParams response = new() { Diagnostics = content, Uri = doc.Uri, Version = doc.Version };
-        await Program.Server.Client.PublishDiagnostics(response).ConfigureAwait(false);
+        await clientProxy.ShowMessage(new ShowMessageParams() { Message = e.Message, Type = MessageType.Error })
+            .ConfigureAwait(false);
+        await Logger.DebugAsync(e).ConfigureAwait(false);
     }
+
+    private Task PublishDiagnostics(Document doc) => clientProxy.PublishDiagnostics(new PublishDiagnosticsParams()
+    {
+        Diagnostics = doc.Diagnostics.Content,
+        Uri = doc.Uri,
+        Version = doc.Version
+    });
 
     protected override async Task Handle(DidOpenTextDocumentParams p, CancellationToken _)
     {
@@ -27,12 +36,12 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
         {
             Document doc = new(item);
             storage[item.Uri] = doc;
-            await PublishDiagnostics(doc);
+            await PublishDiagnostics(doc).ConfigureAwait(false);
             await Logger.DebugAsync("textDocument/didOpen ->");
         }
         catch (Exception e)
         {
-            Logger.Debug(e);
+            await NotifyOnFail(e).ConfigureAwait(false);
             throw;
         }
     }
@@ -44,12 +53,12 @@ internal class TextDocumentSyncHandler(SourceStorage storage) : TextDocumentHand
         {
             var doc = storage[p.TextDocument.Uri];
             doc.AcceptChanges(p.TextDocument.Version, p.ContentChanges);
-            await PublishDiagnostics(doc);
+            await PublishDiagnostics(doc).ConfigureAwait(false);
             await Logger.DebugAsync("textDocument/didChange ->");
         }
         catch (Exception e)
         {
-            Logger.Debug(e);
+            await NotifyOnFail(e).ConfigureAwait(false);
             throw;
         }
     }

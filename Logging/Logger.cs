@@ -6,10 +6,12 @@ internal static class Logger
 
     public static void Debug(string? message) => DebugAsync(message).Wait();
 
+    public static async Task DebugAsync(object? message) => await DebugAsync(message?.ToString());
+
     public static async Task DebugAsync(string? message)
     {
 #if DEBUG
-        await Console.Error.WriteLineAsync($"[{DateTime.Now}] {message}");
+        await Console.Error.WriteLineAsync($"[{DateTime.Now}] {message}").ConfigureAwait(false);
 #endif
     }
 }
