@@ -17,7 +17,6 @@ using System.Text.Json.Serialization;
 
 namespace NMLServer.Handlers;
 
-
 internal partial class VisualizeHandler(SourceStorage storage) : IJsonHandler
 {
     [JsonSerializable(typeof(string))]
@@ -66,7 +65,7 @@ internal partial class VisualizeHandler(SourceStorage storage) : IJsonHandler
                 break;
             }
             var n = node.Visualize(graph, parent, source);
-            if (trv.IsCurrentLastChild)
+            if (trv.IsOnLastChild)
                 parent = parents.Pop();
             if (node is BaseParentStatement)
             {

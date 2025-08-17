@@ -31,14 +31,14 @@ internal static class ListExtensions
     public static int FindWhereStart<T>(this List<T> source, int offset, int end = int.MaxValue) where T : IHasStart
         => source.ToReadOnlySpan().FindWhereStart(offset, end);
 
-    public static void ReplaceRange<T>(this List<T> destination, (int start, int end) range, List<T> source)
+    public static void ReplaceRange<T>(this List<T> destination, List<T> source, int start, int end = int.MaxValue)
     {
-        var (start, end) = range;
         int destCount = destination.Count;
         Debug.Assert(start <= end);
         Debug.Assert(start <= destCount);
         Debug.Assert(end >= 0);
 
+        end = int.Min(end, destCount);
         int delta = source.Count - (end - start);
         int newEnd = end + delta;
         int newCount = destCount + delta;

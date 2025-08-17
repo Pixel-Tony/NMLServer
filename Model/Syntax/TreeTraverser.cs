@@ -19,7 +19,7 @@ internal struct TreeTraverser(AmendingTreeTraverser data)
 
     public readonly BaseStatement? Current => _data.Current;
 
-    public readonly bool IsCurrentLastChild => _data.IsCurrentLastChild;
+    public readonly bool IsOnLastChild => _data.IsOnLastChild;
 
     public TreeTraverser(AbstractSyntaxTree tree) : this(new AmendingTreeTraverser([], tree.Nodes, null, 0))
     { }

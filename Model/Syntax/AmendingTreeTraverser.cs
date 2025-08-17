@@ -17,7 +17,7 @@ internal struct AmendingTreeTraverser(ParentStack navigation, List<BaseStatement
     public readonly bool TopLevel => _children == _nodes;
     public readonly BaseStatement? Current => (_index >= 0) & (_index < _children.Count) ? _children[_index] : null;
 
-    public readonly bool IsCurrentLastChild => _index == _children.Count - 1;
+    public readonly bool IsOnLastChild => _index == _children.Count - 1;
 
     public AmendingTreeTraverser(ref AmendingTreeTraverser other)
         : this([.. other.Parents], other._nodes, other._parent, other._index)
@@ -29,7 +29,7 @@ internal struct AmendingTreeTraverser(ParentStack navigation, List<BaseStatement
         {
             if (oldCurrent is BaseParentStatement { Children: { } grandChildren })
             {
-                _children.ReplaceRange((_index, _index + 1), grandChildren);
+                _children.ReplaceRange(grandChildren, _index, _index + 1);
                 continue;
             }
             _children.RemoveAt(_index);

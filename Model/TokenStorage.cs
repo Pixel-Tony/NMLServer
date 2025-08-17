@@ -93,7 +93,7 @@ internal struct TokenStorage
             var (endLine, character) = oldEndPos = converter.LocalToProtocol(token.End - shift);
             lexedLineLengths[0] += startPos.Character;
             lexedLineLengths[^1] += _lineLengths[endLine] - character;
-            _lineLengths.ReplaceRange((startPos.Line, endLine + 1), lexedLineLengths);
+            _lineLengths.ReplaceRange(lexedLineLengths, startPos.Line, endLine + 1);
 
             resultRange.end = oldTokenIndex;
             newEndPos = new Position(startPos.Line + lexedLineLengths.Count, lexedLineLengths[^1]);
@@ -105,11 +105,11 @@ internal struct TokenStorage
     label_ReachedEOF:
         oldEndPos = new Position(_lineLengths.Count, _lineLengths[^1]);
         lexedLineLengths[0] += startPos.Character;
-        _lineLengths.ReplaceRange((startPos.Line, _lineLengths.Count), lexer.LineLengths);
+        _lineLengths.ReplaceRange(lexedLineLengths, startPos.Line);
         resultRange.end = Items.Count;
         newEndPos = new(_lineLengths.Count, _lineLengths[^1]);
     label_End:
-        Items.ReplaceRange(resultRange, lexedTokens);
+        Items.ReplaceRange(lexedTokens, resultRange.start, resultRange.end);
         return ((startPos, oldEndPos, newEndPos), resultRange);
     }
 
