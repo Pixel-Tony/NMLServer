@@ -183,6 +183,7 @@ production_rate_2
 pseudo_random_bits
 rail_continuation
 rail_present
+railtype
 random_bits
 random_bits_station
 random_bits_tile
@@ -190,6 +191,7 @@ relative_pos
 relative_x
 relative_y
 reliability
+roadtype
 same_class_count_map
 same_class_count_town
 same_house_count_map
@@ -214,6 +216,7 @@ town_zone_3_radius_square
 town_zone_4_radius_square
 track_type
 traffic_side
+tramtype
 transported_last_month_1
 transported_last_month_2
 transported_last_month_pct
