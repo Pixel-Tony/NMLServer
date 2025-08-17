@@ -19,7 +19,6 @@ internal sealed class Document
 
     public readonly DefinitionProcessor Definitions = new();
     public readonly FoldingRangeProcessor FoldingRanges = new();
-    public readonly DocumentSymbolProcessor DocumentSymbols = new();
     public readonly DiagnosticProcessor Diagnostics = new();
 
     private readonly IIncrementalNodeProcessor[] _processorsPipeline;
@@ -31,7 +30,6 @@ internal sealed class Document
         _processorsPipeline = [
             FoldingRanges,
             Definitions,
-            DocumentSymbols,
             Diagnostics
         ];
         _AST = new AbstractSyntaxTree(item.Text);

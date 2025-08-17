@@ -21,7 +21,6 @@ internal static class Program
         Server.AddHandler(new TextDocumentSyncHandler(storage))
             .AddHandler(new DefinitionHandler(storage))
             .AddHandler(new SemanticTokensHandler(storage))
-            // .AddHandler(new DocumentSymbolHandler(storage))
             .AddHandler(new FoldingRangeHandler(storage))
             .AddHandler(new CompletionHandler(storage))
             .AddHandler(new DiagnosticsHandler(storage))
