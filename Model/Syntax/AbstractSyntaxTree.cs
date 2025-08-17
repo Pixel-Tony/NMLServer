@@ -11,7 +11,7 @@ internal struct AbstractSyntaxTree
     public TokenStorage Tokens;
     public List<BaseStatement> Nodes { readonly get; private set; }
 
-    private List<BaseToken> _unexpectedTokens = [];
+    private readonly List<BaseToken> _unexpectedTokens = [];
 
     public AbstractSyntaxTree(string text)
     {
@@ -70,6 +70,7 @@ internal struct AbstractSyntaxTree
 
         ParsingState state;
         AmendingTreeTraverser traverser;
+        int startOffset;
         {
             ParentStack navigation = [];
             BaseParentStatement? parent = null;
@@ -95,7 +96,7 @@ internal struct AbstractSyntaxTree
             traverser = new AmendingTreeTraverser(navigation, Nodes, parent, index);
             result = new TreeTraverser(new AmendingTreeTraverser(ref traverser));
 
-            var startOffset = traverser.Current?.Start ?? 0;
+            startOffset = traverser.Current?.Start ?? 0;
             var startIndex = items.FindWhereOffset<IHasStart, int>(startOffset, firstChangedToken);
             state = new(items, int.Max(startIndex, 0));
             // TODO
@@ -144,12 +145,8 @@ internal struct AbstractSyntaxTree
             traverser.Increment();
         }
         traverser.Trim();
-
-        // TODO
-        {
-            var x = new AbstractSyntaxTree(Tokens.Source);
-            _unexpectedTokens = x._unexpectedTokens;
-        }
+        _unexpectedTokens.ReplaceRange(state.UnexpectedTokens,
+            int.Max(0, _unexpectedTokens.FindLastBefore<IHasEnd, int>(startOffset)));
         return null;
 
         // static Traverser MakeOldTraverser(int offset, List<BaseStatement> nodes)
