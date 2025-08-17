@@ -37,8 +37,8 @@ internal struct TokenStorage
     public readonly void ProvideSemanticTokens(SemanticTokensBuilder builder, Range range, DefinitionBag bag)
     {
         var localRange = ProtocolToLocal(range);
-        var start = Items.FindLastBefore(localRange.start);
-        var end = Items.FindFirstAfter(localRange.end, start + 1);
+        var start = Items.FindLastBefore<IHasEnd, int>(localRange.start);
+        var end = Items.FindFirstAfter<IHasStart, int>(localRange.end, start + 1);
         ProvideSemanticTokens(builder, (int.Max(start, 0), end), bag);
     }
 
@@ -53,8 +53,8 @@ internal struct TokenStorage
             : string.Concat(sourceSpan[..start], replacement, sourceSpan[end..]);
 
         // Calculate minimum token bounds to amend
-        var firstDirtyToken = Items.FindLastBefore(start);
-        var firstCleanToken = Items.FindFirstAfter(end, firstDirtyToken + 1);
+        var firstDirtyToken = Items.FindLastBefore<IHasEnd, int>(start);
+        var firstCleanToken = Items.FindFirstAfter<IHasStart, int>(end, firstDirtyToken + 1);
         var startOffset = firstDirtyToken is -1 ? 0 : Items[firstDirtyToken].Start;
 
         // Shift tokens after the changed region

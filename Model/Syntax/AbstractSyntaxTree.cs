@@ -80,7 +80,7 @@ internal struct AbstractSyntaxTree
             var offset = items.Count > 0 ? items[firstChangedToken].Start : 0;
             while (true)
             {
-                index = children.FindLastNotAfter(offset);
+                index = children.FindLastBefore<IHasStart, int>(offset);
                 if (index == -1
                     || children[index] is not BaseParentStatement { Children: { } grandChildren } newParent
                     || grandChildren[0].Start > offset)
@@ -96,7 +96,7 @@ internal struct AbstractSyntaxTree
             result = new TreeTraverser(new AmendingTreeTraverser(ref traverser));
 
             var startOffset = traverser.Current?.Start ?? 0;
-            var startIndex = items.FindWhereStart(startOffset, firstChangedToken);
+            var startIndex = items.FindWhereOffset<IHasStart, int>(startOffset, firstChangedToken);
             state = new(items, int.Max(startIndex, 0));
             // TODO
             // var endOffset = firstUnchangedToken != items.Count ? items[firstUnchangedToken].Start : sourceLength;

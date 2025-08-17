@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using NMLServer.Model;
 
 namespace NMLServer.Extensions;
 
@@ -15,21 +14,6 @@ internal static class ListExtensions
     }
 
     public static List<T>? ToMaybeList<T>(this List<T> target) => target.Count > 0 ? target : null;
-
-    public static int FindFirstNotBefore<T>(this List<T> source, int offset) where T : IHasEnd
-        => source.ToReadOnlySpan().FindFirstNotBefore(offset);
-
-    public static int FindLastBefore<T>(this List<T> source, int offset) where T : IHasEnd
-        => source.ToReadOnlySpan().FindLastBefore(offset);
-
-    public static int FindFirstAfter<T>(this List<T> source, int offset, int start = 0) where T : IHasStart
-        => source.ToReadOnlySpan().FindFirstAfter(offset, start);
-
-    public static int FindLastNotAfter<T>(this List<T> source, int offset, int end = int.MaxValue) where T : IHasStart
-        => source.ToReadOnlySpan().FindLastNotAfter(offset, end);
-
-    public static int FindWhereStart<T>(this List<T> source, int offset, int end = int.MaxValue) where T : IHasStart
-        => source.ToReadOnlySpan().FindWhereStart(offset, end);
 
     public static void ReplaceRange<T>(this List<T> destination, List<T> source, int start, int end = int.MaxValue)
     {
