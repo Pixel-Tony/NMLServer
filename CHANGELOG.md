@@ -1,6 +1,9 @@
 
 ## 1.x
 
+### v1.0.2
+- Fixed incorrect argument passed to FindWhereOffset in AbstractSyntaxTree
+
 ### v1.0.1
 - Fixed false error highlight for template identifiers.
 
