@@ -1,8 +1,14 @@
+
+## 1.x
+
+### v1.0
+
+- Initial public release.
+
 ## 0.x
 
 ### v0.2
 
-#### fixed:
 - Add: completion suggestions for positions outside of tokens
 - Fix: corner case for TokenStorage.Rebuild if old count is 0
 
