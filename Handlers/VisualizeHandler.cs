@@ -66,7 +66,7 @@ internal partial class VisualizeHandler(SourceStorage storage) : IJsonHandler
             }
             var n = node.Visualize(graph, parent, source);
             if (trv.IsOnLastChild)
-                parent = parents.Pop();
+                parent = parents.Count > 0 ? parents.Pop() : root;
             if (node is BaseParentStatement)
             {
                 parents.Push(parent);
