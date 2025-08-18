@@ -71,7 +71,7 @@ internal abstract class BaseBlockStatement : BaseStatement
     {
         ProcessArguments(context);
         if (OpeningBracket is null)
-            context.Add(ErrorStrings.Err_ExpectedLeftCurlyBracket, Keyword.End);
+            context.Add(ErrorStrings.Err_ExpectedLeftCurlyBracket, Arguments?.End ?? Keyword.End);
         if (ClosingBracket is null)
             context.Add(ErrorStrings.Err_ExpectedRightCurlyBracket, End);
     }
