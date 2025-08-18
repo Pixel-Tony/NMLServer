@@ -17,7 +17,7 @@ internal sealed class DiagnosticProcessor : IIncrementalNodeProcessor
             node.ProvideDiagnostics(diagnostics);
 
         foreach (var token in ast.UnexpectedTokens)
-            diagnostics.Add(ErrorStrings.UnexpectedToken, token);
+            diagnostics.Add(ErrorStrings.Err_UnexpectedToken, token);
 
         Content = diagnostics.BuildDiagnostics(in ast.Tokens);
     }

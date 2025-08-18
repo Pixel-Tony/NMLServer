@@ -73,9 +73,9 @@ internal abstract class BaseBlockStatement : BaseStatement
     {
         ProcessArguments(context);
         if (OpeningBracket is null)
-            context.Add("Expecting opening '{' bracket", Keyword.End);
+            context.Add(ErrorStrings.Err_ExpectedLeftCurlyBracket, Keyword.End);
         if (ClosingBracket is null)
-            context.Add("Expected closing '}' bracket", End);
+            context.Add(ErrorStrings.Err_ExpectedRightCurlyBracket, End);
     }
 
     protected virtual void ProcessArguments(DiagnosticContext context) => ProcessArgumentList(context, Keyword, Keyword.End, Arguments);

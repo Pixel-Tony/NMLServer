@@ -6,6 +6,8 @@ using NMLServer.Model.Grammar;
 using NMLServer.Model.Processors.Diagnostics;
 using NMLServer.Model.Tokens;
 
+using static NMLServer.Model.Processors.Diagnostics.ErrorStrings;
+
 namespace NMLServer.Model.Statements;
 
 internal abstract class BaseStatement : IHasBounds, IVisualProvider
@@ -59,10 +61,10 @@ internal abstract class BaseStatement : IHasBounds, IVisualProvider
             if (minCount > 0)
             {
                 if (arguments is null)
-                    context.Add("Expected parameters for block", fallback);
+                    context.Add(Err_ExpectedBlockArguments, fallback);
             }
             else if (arguments is not null)
-                context.Add("Unexpected parameters for block", arguments);
+                context.Add(Err_UnexpectedBlockArguments, arguments);
             return;
         }
 
@@ -83,35 +85,34 @@ internal abstract class BaseStatement : IHasBounds, IVisualProvider
                 ClosingBracket: var closingParen
             })
         {
-            const string errorParamListExpected = "Expected parameter list enclosed in brackets";
             var (start, end) = arguments is null
-                ? (keyword.End, keyword.End)
+                ? (fallback, fallback)
                 : (arguments.Start, arguments.End);
-            context.Add(errorParamListExpected, start, end);
+            context.Add(Err_ArgumentListInParensExpected, start, end);
             return;
         }
         if (openingParen is null)
-            context.Add("Missing '(' paren", (inner?.Start - 1) ?? fallback);
+            context.Add(Err_MissingLeftParen, (inner?.Start - 1) ?? fallback);
         else
         {
             BeforeSymbol = openingParen;
             if (openingParen.Bracket is not '(')
-                context.Add("Incorrect paren type, expected '('", openingParen.Start);
+                context.Add(Err_IncorrectParenTypeLeftParenExpected, openingParen.Start);
         }
 
         if (closingParen is null)
-            context.Add("Missing ')' paren", inner?.End ?? openingParen?.End ?? fallback);
+            context.Add(Err_MissingRightParen, inner?.End ?? openingParen?.End ?? fallback);
         else
         {
             AfterSymbol = closingParen;
             if (closingParen.Bracket is not ')')
-                context.Add("Incorrect paren type, expected ')'", closingParen.Start);
+                context.Add(Err_IncorrectParenTypeRightParenExpected, closingParen.Start);
         }
 
         if (inner is not { } expr)
         {
             if (minCount > 0)
-                context.Add("Expected parameters", arguments);
+                context.Add(Err_ExpectedArguments, arguments);
             return;
         }
         uint argCount = 0;
@@ -144,16 +145,16 @@ internal abstract class BaseStatement : IHasBounds, IVisualProvider
         if (argCount < minCount)
         {
             if (arguments is null)
-                context.Add(minCount > 1 ? "Block expects arguments" : "Block expects argument", keyword);
+                context.Add(minCount > 1 ? Err_BlockExpectsArguments : Err_BlockExpectsArgument, keyword);
             else
-                context.Add("Not enough arguments for block", arguments);
+                context.Add(Err_NotEnoughBlockArgs, arguments);
         }
 
         if (_excessArgs)
         {
             var start = _excess?.Start ?? prevComma?.Start ?? arguments!.Start;
             var end = _excess?.End ?? arguments!.End;
-            context.Add("Excess arguments for block", start, end);
+            context.Add(Err_ExcessBlockArgs, start, end);
         }
 
         if ((AfterSymbol is not null)
@@ -163,7 +164,7 @@ internal abstract class BaseStatement : IHasBounds, IVisualProvider
         {
             var start = Symbol?.Start ?? BeforeSymbol?.End ?? fallback;
             var end = Symbol?.End ?? AfterSymbol!.Start;
-            context.Add("Expected block identifier", start, end);
+            context.Add(Err_ExpectedBlockIdentifier, start, end);
         }
 
         // public void VerifyContext(ref readonly DiagnosticContext context, DefinitionBag definitions)

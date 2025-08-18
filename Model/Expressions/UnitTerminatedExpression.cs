@@ -14,7 +14,7 @@ internal sealed class UnitTerminatedExpression(BaseExpression? child, UnitToken 
     {
         if (child is null)
         {
-            context.Add(ErrorStrings.ErrorMissingExpr, int.Max(Start - 1, 0));
+            context.Add(ErrorStrings.Err_MissingExpression, int.Max(Start - 1, 0));
             return;
         }
         child.VerifySyntax(context);

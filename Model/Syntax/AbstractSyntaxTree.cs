@@ -104,7 +104,6 @@ internal struct AbstractSyntaxTree
             // oldTraverser = MakeOldTraverser(endOffset, Nodes);
         }
 
-        // TODO
         while (state.CurrentToken is { } token)
         {
             KeywordToken? keyword = null;

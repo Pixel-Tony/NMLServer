@@ -40,10 +40,10 @@ internal sealed class BinaryOperation(BaseExpression? parent, BinaryOpToken op) 
         if (Left is not null)
             Left.VerifySyntax(context);
         else if (OperatorType is not (OperatorType.Plus or OperatorType.Minus))
-            context.Add(ErrorStrings.ErrorMissingExpr, int.Max(Operator.Start - 1, 0));
+            context.Add(ErrorStrings.Err_MissingExpression, int.Max(Operator.Start - 1, 0));
 
         if (Right is null)
-            context.Add(ErrorStrings.ErrorMissingExpr, Operator.End);
+            context.Add(ErrorStrings.Err_MissingExpression, Operator.End);
         else
             Right.VerifySyntax(context);
     }

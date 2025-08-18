@@ -19,10 +19,10 @@ internal sealed class FunctionCall(BaseExpression? parent, BaseMulticharToken fu
     public override void VerifySyntax(DiagnosticContext context)
     {
         if (Function is not (IdentifierToken or KeywordToken { IsExpressionUsable: true }))
-            context.Add("Invalid function identifier", Function);
+            context.Add(ErrorStrings.Err_InvalidFunctionId, Function);
         if (Arguments is null)
         {
-            context.Add("Expected function arguments", Function.End);
+            context.Add(ErrorStrings.Err_ExpectedFuncArguments, Function.End);
             return;
         }
         Arguments.VerifySyntax(context);

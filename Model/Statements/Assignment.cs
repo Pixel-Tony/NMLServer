@@ -61,7 +61,7 @@ internal sealed class Assignment : BaseStatement
     {
         if (_equalsSign is null)
         {
-            context.Add(ErrorStrings.UnexpectedTopLevelExpr, _lhs);
+            context.Add(ErrorStrings.Err_UnexpectedTopLevelExpr, _lhs);
             return;
         }
         switch (_lhs)
@@ -75,15 +75,15 @@ internal sealed class Assignment : BaseStatement
                 Arguments: { OpeningBracket: { } opening, ClosingBracket: var closing } arguments
             }:
                 if (opening.Bracket is not '[')
-                    context.Add(ErrorStrings.ExpectedSquareBracket, opening);
+                    context.Add(ErrorStrings.Err_ExpectedSquareBracket, opening);
                 if (closing is null)
-                    context.Add(ErrorStrings.MissingClosingBracket, arguments.End);
+                    context.Add(ErrorStrings.Err_MissingClosingBracket, arguments.End);
                 else if (closing.Bracket is not ']')
-                    context.Add(ErrorStrings.ExpectedSquareBracket, closing.Start);
+                    context.Add(ErrorStrings.Err_ExpectedSquareBracket, closing.Start);
                 break;
 
             default:
-                context.Add(ErrorStrings.InvalidTarget, _lhs);
+                context.Add(ErrorStrings.Err_InvalidTarget, _lhs);
                 break;
         }
         var pos = _equalsSign.End;
@@ -93,9 +93,9 @@ internal sealed class Assignment : BaseStatement
             pos = _value.End;
         }
         else
-            context.Add(ErrorStrings.MissingAssignedValue, pos);
+            context.Add(ErrorStrings.Err_MissingAssignedValue, pos);
         if (_semicolon is null)
-            context.Add(ErrorStrings.MissingSemicolon, pos);
+            context.Add(ErrorStrings.Err_MissingSemicolon, pos);
     }
 
     public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)

@@ -21,17 +21,17 @@ internal sealed class Template(ref ParsingState state, KeywordToken keyword)
         switch (Arguments)
         {
             case null:
-                context.Add(ErrorStrings.UniqueIdentifierArgsExpected, Keyword.End);
+                context.Add(ErrorStrings.Err_UniqueIdentifierArgsExpected, Keyword.End);
                 return;
 
             case FunctionCall call:
                 if (call.Function is var token and not IdentifierToken { Kind: SymbolKind.None })
-                    context.Add(ErrorStrings.UniqueIdentifierExpected, token);
+                    context.Add(ErrorStrings.Err_UniqueIdentifierExpected, token);
                 args = call.Arguments;
                 break;
 
             case ParentedExpression expr:
-                context.Add(ErrorStrings.UniqueIdentifierExpected, expr.Start - 1);
+                context.Add(ErrorStrings.Err_UniqueIdentifierExpected, expr.Start - 1);
                 args = expr;
                 break;
         }

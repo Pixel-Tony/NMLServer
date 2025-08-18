@@ -29,7 +29,7 @@ internal sealed class Procedure : BaseStatement
     {
         ProcessArgumentList(context, _keyword, _keyword.End, _arguments);
         if (_semicolon is null)
-            context.Add("Missing semicolon", End);
+            context.Add(ErrorStrings.Err_MissingSemicolon, End);
     }
 
     public override DotNode Visualize(DotGraph graph, DotNode parent, StringView ctx)
