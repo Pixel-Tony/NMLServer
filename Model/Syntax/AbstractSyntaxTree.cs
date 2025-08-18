@@ -97,7 +97,7 @@ internal struct AbstractSyntaxTree
             result = new TreeTraverser(new AmendingTreeTraverser(ref traverser));
 
             startOffset = traverser.Current?.Start ?? 0;
-            var startIndex = items.FindWhereOffset<IHasStart, int>(startOffset, firstChangedToken);
+            var startIndex = items.FindWhereOffset<IHasStart, int>(startOffset, end: firstChangedToken);
             state = new(items, int.Max(startIndex, 0));
             // TODO
             // var endOffset = firstUnchangedToken != items.Count ? items[firstUnchangedToken].Start : sourceLength;
