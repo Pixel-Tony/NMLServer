@@ -68,8 +68,10 @@ internal abstract class BaseStatement : IHasBounds, IVisualProvider
             case FunctionCall call:
                 args = call.Arguments;
                 if (isIdentifierRequired)
+                {
                     if (call.Function is not IdentifierToken { Kind: SymbolKind.None })
                         context.Add(Err_UniqueIdentifierExpected, call.Function);
+                }
                 else
                     context.Add(Err_UnexpectedToken, call.Function);
                 break;

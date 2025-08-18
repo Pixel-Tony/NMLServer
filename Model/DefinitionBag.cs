@@ -21,7 +21,7 @@ internal sealed class DefinitionBag : Dictionary<string, List<(IdentifierToken i
         if (!lookup.TryGetValue(context, out var definitions))
         {
             definitions = [];
-            this[new string(context)] = definitions;
+            lookup[context] = definitions;
         }
         definitions.Add((symbol, kind));
     }
