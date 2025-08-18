@@ -6,8 +6,6 @@ using DotNetGraph.Extensions;
 using NMLServer.Extensions;
 using NMLServer.Model.Processors.Diagnostics;
 using NMLServer.Model.Grammar;
-using System.Runtime.CompilerServices;
-using NMLServer.Logging;
 
 namespace NMLServer.Model.Statements.Blocks;
 
@@ -78,7 +76,7 @@ internal abstract class BaseBlockStatement : BaseStatement
             context.Add(ErrorStrings.Err_ExpectedRightCurlyBracket, End);
     }
 
-    protected virtual void ProcessArguments(DiagnosticContext context) => ProcessArgumentList(context, Keyword, Keyword.End, Arguments);
+    protected virtual void ProcessArguments(DiagnosticContext context) => ProcessArgumentList(context, Keyword, Arguments);
 
     public override void ProvideFoldingRanges(List<FoldingRange> ranges, ref PositionConverter converter)
         => IFoldingRangeProvider.RangeFromBrackets(OpeningBracket, ClosingBracket, ranges, ref converter);

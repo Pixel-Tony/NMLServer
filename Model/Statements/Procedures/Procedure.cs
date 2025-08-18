@@ -27,7 +27,7 @@ internal sealed class Procedure : BaseStatement
 
     public override void ProvideDiagnostics(DiagnosticContext context)
     {
-        ProcessArgumentList(context, _keyword, _keyword.End, _arguments);
+        ProcessArgumentList(context, _keyword, _arguments);
         if (_semicolon is null)
             context.Add(ErrorStrings.Err_MissingSemicolon, End);
     }

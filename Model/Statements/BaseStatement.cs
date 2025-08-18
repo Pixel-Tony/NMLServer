@@ -52,9 +52,41 @@ internal abstract class BaseStatement : IHasBounds, IVisualProvider
         }
     }
 
-    protected static void ProcessArgumentList(DiagnosticContext context, KeywordToken keyword,
-        int fallback, BaseExpression? arguments)
+    protected static void ProcessFunctionSyntax(DiagnosticContext context, KeywordToken keyword,
+        BaseExpression? arguments, bool isIdentifierRequired)
     {
+        ParentedExpression? args = null;
+        switch (arguments)
+        {
+            case null:
+                context.Add(isIdentifierRequired
+                    ? Err_UniqueIdentifierArgsExpected
+                    : Err_ExpectedBlockArguments,
+                    keyword.End);
+                return;
+
+            case FunctionCall call:
+                args = call.Arguments;
+                if (isIdentifierRequired)
+                    if (call.Function is not IdentifierToken { Kind: SymbolKind.None })
+                        context.Add(Err_UniqueIdentifierExpected, call.Function);
+                else
+                    context.Add(Err_UnexpectedToken, call.Function);
+                break;
+
+            case ParentedExpression expr:
+                if (isIdentifierRequired)
+                    context.Add(Err_UniqueIdentifierExpected, expr.Start - 1);
+                args = expr;
+                break;
+        }
+        ProcessArgumentList(context, keyword, args);
+    }
+
+    protected static void ProcessArgumentList(DiagnosticContext context, KeywordToken keyword,
+        BaseExpression? arguments)
+    {
+        var fallback = keyword.End;
         var minCount = keyword.MinParams;
         if (!keyword.RequiresParens)
         {
