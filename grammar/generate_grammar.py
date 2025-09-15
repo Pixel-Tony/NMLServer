@@ -1,13 +1,18 @@
-# import itertools
-# import os
 from typing import Iterable
 import nml.editors.extract_tables as extracted
+import nml.global_constants as glob_consts
+
 
 def write(fname: str, content: Iterable[str]):
     with open(fname, "w", encoding="utf8") as file:
         file.write("\n".join(content))
 
-write("./constants.txt", sorted(extracted.constant_names))
+
+write("./constants.txt", sorted([
+    constant
+    for item in glob_consts.const_list
+    for constant in (item[0] if isinstance(item, tuple) else item)
+]))
 
 write("./features.txt", extracted.feature_names_table)
 
