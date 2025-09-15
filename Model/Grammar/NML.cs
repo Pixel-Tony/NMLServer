@@ -105,7 +105,7 @@ internal static class NML
         foreach (var (filename, kind) in entries)
         {
             var path = Path.Join(AppContext.BaseDirectory, "grammar", filename);
-            var symbols = File.ReadAllText(path, Encoding.UTF8).Split('\n');
+            var symbols = File.ReadAllText(path, Encoding.UTF8).Split('\n', StringSplitOptions.TrimEntries);
             allSymbols.EnsureCapacity(allSymbols.Count + symbols.Length);
             foreach (var symbol in symbols)
                 allSymbols[symbol] = kind;
