@@ -1,6 +1,9 @@
 
 ## 1.x
 
+### v1.0.3
+- Fixed CR whitespace in builtin symbols after splitting grammar files on Windows
+
 ### v1.0.2
 - Fixed incorrect argument passed to FindWhereOffset in AbstractSyntaxTree
 
