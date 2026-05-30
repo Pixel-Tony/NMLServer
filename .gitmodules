@@ -1,0 +1,3 @@
+[submodule "grammar/nml"]
+	path = grammar/nml_src
+	url = git@github.com:OpenTTD/nml.git
