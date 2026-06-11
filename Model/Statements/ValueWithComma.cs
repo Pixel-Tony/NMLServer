@@ -46,6 +46,8 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
             }
         }
     label_End:
+        if (current is not null)
+            chain.Add(new ValueWithComma<T>(current, null));
         return chain.ToMaybeList();
     }
 
