@@ -29,6 +29,8 @@ internal static class ErrorStrings
         Err_BlockExpectsArguments = "Block expects arguments",
         Err_BlockExpectsArgument = "Block expects argument",
         Err_ExpectedLeftCurlyBracket = "Expecting opening '{' bracket",
-        Err_ExpectedRightCurlyBracket = "Expected closing '}' bracket"
+        Err_ExpectedRightCurlyBracket = "Expected closing '}' bracket",
+        Err_MissingComma = "Missing comma",
+        Err_ExpectedString = "Expected string literal"
     ;
 }

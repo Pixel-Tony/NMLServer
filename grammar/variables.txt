@@ -40,6 +40,7 @@ company_colour2
 company_num
 company_type
 construction_state
+count_has_badge
 count_veh_id
 counter
 current_callback
@@ -77,6 +78,7 @@ gs_disallows_closure
 gs_disallows_prod_decrease
 gs_disallows_prod_increase
 had_vehicle_of_type
+has_badge
 has_church
 has_stadium
 house_tile

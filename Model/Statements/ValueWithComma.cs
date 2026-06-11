@@ -9,6 +9,8 @@ internal readonly struct ValueWithComma<T>(T identifier, BinaryOpToken? comma)
     : IBlockContents<ValueWithComma<T>> where T : BaseValueToken
 {
     public int End => comma?.End ?? identifier.End;
+    public T Identifier => identifier;
+    public BinaryOpToken? Comma => comma;
 
     public static List<ValueWithComma<T>>? ParseSomeInBlock(ref ParsingState state, ref BracketToken? closingBracket)
     {

@@ -89,7 +89,7 @@ internal enum Keyword
     TramTypeTable           = (37 << _Type_Shift) | _Kind_Block | _MinParams_0 | _MaxParams_0,
     Var                     = (38 << _Type_Shift) | _Kind_ExpressionUsable | _MinParams_4 | _MaxParams_4 | _RequiresParens,
     While                   = (39 << _Type_Shift) | _Kind_Block | _MinParams_1 | _MaxParams_1 | _RequiresParens,
-
+    Badgetable              = (40 << _Type_Shift) | _Kind_Block | _MinParams_0 | _MaxParams_0,
     _AllowsRedefinitions    = 1 << (7 * 4 + 2),
     _RequiresParens         = 1 << (7 * 4 + 3),
 #pragma warning restore format

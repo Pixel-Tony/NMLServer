@@ -23,6 +23,7 @@ internal static class Parser
         return node ?? keyword switch
         {
             Keyword.AlternativeSprites => new AlternativeSprites(ref state, keywordToken),
+            Keyword.Badgetable => new Badgetable(ref state, keywordToken),
             Keyword.BaseCost => new Basecost(ref state, keywordToken),
             Keyword.BaseGraphics => new BaseGraphics(ref state, keywordToken),
             Keyword.CargoTable => new Cargotable(ref state, keywordToken),

@@ -6,7 +6,10 @@ additional_text
 ai_engine_rank
 ai_special_flag
 air_drag_coefficient
+aircraft
 aircraft_type
+airports
+airporttiles
 alternative_railtype_list
 alternative_roadtype_list
 alternative_tramtype_list
@@ -22,6 +25,7 @@ autoreplace_text
 autoslope
 availability
 availability_mask
+badges
 bit
 bitmask_vehicle_info
 bridge_surfaces
@@ -91,6 +95,7 @@ extra_text_fund
 extra_text_industry
 extra_weight_per_wagon
 fences
+flags
 foundations
 fund_cost_multiplier
 graphic_flags
@@ -102,6 +107,9 @@ grfid
 gui
 height
 hide_sprite
+houses
+industries
+industrytiles
 input_multiplier_1
 input_multiplier_2
 input_multiplier_3
@@ -145,6 +153,7 @@ non_refittable_cargo_classes
 num_views
 number
 object_flags
+objects
 ocean_speed_fraction
 override
 palette
@@ -185,6 +194,7 @@ purchase_speed
 purchase_tractive_effort_coefficient
 purchase_weight
 railtype_flags
+railtypes
 random_colours
 random_prod_change
 random_sound_effects
@@ -206,11 +216,14 @@ reverse_build_probability
 road_type
 roadstops
 roadtype_flags
+roadtypes
+roadvehs
 rotor
 running_cost_base
 running_cost_factor
 select_sprite_layout
 select_tile_type
+ships
 signals
 single_penalty_length
 size
@@ -228,6 +241,7 @@ start_stop
 station_graphics
 station_list_colour
 station_rating
+stations
 stop_accept_cargo
 substitute
 tile_check
@@ -239,8 +253,10 @@ town_production_multiplier
 track_overlay
 track_type
 tractive_effort_coefficient
+trains
 tram_type
 tramtype_flags
+tramtypes
 ttd_airport_type
 tunnel_overlay
 tunnels

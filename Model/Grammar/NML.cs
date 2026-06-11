@@ -34,6 +34,7 @@ internal static class NML
             ["snowline"] = Keyword.SnowLine,
             ["template"] = Keyword.Template,
             ["spriteset"] = Keyword.SpriteSet,
+            ["badgetable"] = Keyword.Badgetable,
             ["cargotable"] = Keyword.CargoTable,
             ["deactivate"] = Keyword.Deactivate,
             ["font_glyph"] = Keyword.FontGlyph,
