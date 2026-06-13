@@ -145,7 +145,7 @@ internal struct AbstractSyntaxTree
         }
         traverser.Trim();
         _unexpectedTokens.ReplaceRange(state.UnexpectedTokens,
-            int.Max(0, _unexpectedTokens.FindLastBefore<IHasEnd, int>(startOffset)));
+            int.Max(0, _unexpectedTokens.FindFirstAfter<IHasEnd, int>(startOffset)));
         return null;
 
         // static Traverser MakeOldTraverser(int offset, List<BaseStatement> nodes)
