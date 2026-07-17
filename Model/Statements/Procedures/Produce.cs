@@ -127,12 +127,11 @@ internal sealed partial class Produce : BaseStatement
                     when innerState is InnerState.RunAgain:
 
                     _runAgain = BaseExpression.TryParse(ref state);
-                    /* Expression parser will consume final ')' paren as part of expression, we have to undo this */
-                    if (_runAgain is ParentedExpression { ClosingBracket.Bracket: ']' } parented)
+                    // Expression parser will consume final ')' paren as part of expression
+                    if (_runAgain is ParentedExpression { ClosingBracket.Bracket: ')' } parented)
                     {
                         _closingBracket = parented.ClosingBracket;
                         _runAgain = parented.Expression;
-                        state.Increment();
                         return;
                     }
                     innerState = InnerState.ClosingBracket;

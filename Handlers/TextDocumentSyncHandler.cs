@@ -41,7 +41,7 @@ internal class TextDocumentSyncHandler(SourceStorage storage, ClientProxy client
         }
         catch (Exception e)
         {
-            await NotifyOnFail(e).ConfigureAwait(false);
+            await NotifyOnFail(e);
             throw;
         }
     }
@@ -58,7 +58,7 @@ internal class TextDocumentSyncHandler(SourceStorage storage, ClientProxy client
         }
         catch (Exception e)
         {
-            await NotifyOnFail(e).ConfigureAwait(false);
+            await NotifyOnFail(e);
             throw;
         }
     }
