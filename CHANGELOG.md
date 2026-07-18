@@ -1,6 +1,14 @@
 
 ## 1.x
 
+### v1.0.4
+- Bumped targeted .NET version to 10.0;
+- Added support for `badgetable` blocks and related variables;
+- Added diagnostics for `cargotable` blocks;
+- Fixed last value in comma-separated list being disregarded;
+- Fixed incorrect updates to unexpected tokens list during AST rebuild;
+- Fixed wrong paren being matched in `produce` block parser.
+
 ### v1.0.3
 - Fixed CR whitespace in builtin symbols after splitting grammar files on Windows
 
